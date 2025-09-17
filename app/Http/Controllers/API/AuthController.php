@@ -18,7 +18,7 @@ class AuthController extends BaseController
     public function register(Request $request){
 
 
-        
+
         $validator = Validator::make($request->all(),[
             "loginType"=> "required",
             "name" => "required",
@@ -57,56 +57,56 @@ class AuthController extends BaseController
     }
 
 
-    public function login(Request $request){
+   public function login(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        "email" => "required|email",
+        "password" => "required|min:8",
+        "loginType" => "required"
+    ]);
 
-        $validator = Validator::make($request->all(),[
-            "email" => "required|email",
-            "password" => "required|min:8",
-            "loginType" => "required"
-        ]);
+    if ($validator->fails()) {
+        return $this->errorResponse(
+            "Validation error",
+            Arr::first(Arr::flatten($validator->messages()->get('*'))),
+            401
+        );
+    }
 
-        if ($validator->fails()){
-            return $this->errorResponse("Validation error",Arr::first(Arr::flatten($validator->messages()->get('*'))),401);
+    // Social login
+    if ($request->loginType === "facebook" || $request->loginType === "google") {
+
+        if ($request->loginType === "facebook") {
+            $user = User::where('email', $request->email)
+                        ->where('facebook_id', $request->password)
+                        ->first();
+        } else {
+            $user = User::where('email', $request->email)
+                        ->where('google_id', $request->password)
+                        ->first();
         }
 
-        if ( $request->loginType === "facebook" || $request->loginType === "google"  ){
-            
-            if ( $request->loginType === "facebook" ){
-                $user = User::where('email',$request->email)->where('facebook_id',$request->password)->first();
-            }else{
-                $user = User::where('email',$request->email)->where('google_id',$request->password)->first();
-            }
-            
-            //$pass = $user->password;
-            if ( $user ){
-                if ( Auth::loginUsingId($user->id) )
-                {
-                  $user = Auth::user();
-                  $success["token"] = $user->createToken("authToken")->accessToken;
-                  $success["user"] = $user;
-                  return $this->okResponse($success,"User login Successfully ...");
-                  }
-                  //return $this->errorResponse("Invalid email or password",[],401);
-            }
-            return $this->errorResponse("Invalid email or password",[],401);
-           
-            
-
-        }
-
-
-       
-
-        if ( Auth::attempt(['email' => $request->email, 'password' => $request->password]) ){
-            $user = Auth::user();
+        if ($user) {
+            // Directly create a token without logging in
             $success["token"] = $user->createToken("authToken")->accessToken;
             $success["user"] = $user;
-            return $this->okResponse($success,"User login Successfully ...");
-        }else{
-            return $this->errorResponse("Invalid email or password",[],401);
+            return $this->okResponse($success, "User login Successfully ...");
         }
- 
+
+        return $this->errorResponse("Invalid email or password", [], 401);
     }
+
+    // Normal email/password login
+    if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+        $user = Auth::user();
+        $success["token"] = $user->createToken("authToken")->accessToken;
+        $success["user"] = $user;
+        return $this->okResponse($success, "User login Successfully ...");
+    }
+
+    return $this->errorResponse("Invalid email or password", [], 401);
+}
+
 
 }
 
