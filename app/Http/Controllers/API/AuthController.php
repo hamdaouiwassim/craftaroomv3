@@ -74,15 +74,19 @@ class AuthController extends BaseController
     }
 
     // Social login
-    if ($request->loginType === "facebook" || $request->loginType === "google") {
+    if ($request->loginType === "facebook" || $request->loginType === "google" || $request->loginType === "apple") {
 
         if ($request->loginType === "facebook") {
             $user = User::where('email', $request->email)
                         ->where('facebook_id', $request->password)
                         ->first();
-        } else {
+        } else if ($request->loginType === "google") {
             $user = User::where('email', $request->email)
                         ->where('google_id', $request->password)
+                        ->first();
+        }else {
+            $user = User::where('email', $request->email)
+                        ->where('apple_id', $request->password)
                         ->first();
         }
 

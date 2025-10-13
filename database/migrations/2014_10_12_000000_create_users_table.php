@@ -20,9 +20,9 @@ return new class extends Migration
             $table->string('lastname')->nullable();
             $table->string('facebook_id')->nullable();
             $table->string('google_id')->nullable();
-            $table->enum('role', ['Designer', 'Customer','Constructor','Admin'])->default('Customer');
-            $table->enum('loginType', ['standart','facebook', 'google','apple'])->default('standart');
-            $table->enum('type', ['Freelancer ','Company']);
+            $table->integer('role')->unsigned()->default(0);
+            $table->integer('loginType')->unsigned()->default(0);
+            $table->integer('type')->unsigned()->default(0);
             $table->string('adress')->nullable();
             $table->string('country')->nullable();
             $table->string('phone')->nullable();

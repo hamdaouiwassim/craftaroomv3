@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use Auth;
 use Hash;
+use Illuminate\Support\Arr;
 use Validator;
 use Laravel\Passport\Token;
 use App\Models\User;
@@ -31,8 +32,25 @@ class UserController extends BaseController
     }
 
     public function updateUser(Request $request){
+
         try{
-            $user = $this->getUserFromToken($request);
+               $user = $this->getUserFromToken($request);
+            $validator = Validator::make($request->all(),[
+                "name" => "sometimes|string|max:255",
+                "country" => "sometimes|string|max:255",
+                "phone" => "sometimes|string|max:20",
+                "adress" => "sometimes|string|max:255",
+                "role" => "sometimes|string|in:Designer,Customer,Constructor",
+                "photoUrl" => "sometimes|mimes:jpeg,png,jpg|max:2024",
+                "currency" => "sometimes|string|in:USD,EUR",
+                "language" => "sometimes|string|in:en,fr",
+            ]);
+
+            if ($validator->fails()){
+                return $this->errorResponse(Arr::first(Arr::flatten($validator->messages()->get('*'))),[],422);
+            }
+
+
 
             if ($user){
 
@@ -40,14 +58,11 @@ class UserController extends BaseController
            (!empty($request->country)) && $user->country = $request->country;
            (!empty($request->phone)) && $user->phone = $request->phone;
            (!empty($request->adress)) && $user->adress = $request->adress;
+           (!empty($request->role)) && $user->role = $request->role;
+           (!empty($request->currency)) && $user->currency = $request->currency;
+           (!empty($request->language)) && $user->language = $request->language;
            if ( $request->hasFile('photoUrl') ){
-            $validator = Validator::make($request->all(),[
-                "photoUrl" => "required|mimes:jpeg,png,jpg|max:2024",
-            ]);
 
-            if ($validator->fails()){
-                return $this->errorResponse(Arr::first(Arr::flatten($validator->messages()->get('*'))),[],401);
-            }
             $filePath = $request->file('photoUrl');
             $fileName = uniqid('avatar_').".". $filePath->getClientOriginalExtension();
             $filePath->storeAs('uploads/avatars/', $fileName, 'public');
@@ -66,7 +81,7 @@ class UserController extends BaseController
                 return $this->okResponse($user,"User updated successfully ...");
              }
             else { return $this->errorResponse('Can\'t found user',[],404); }
-        }catch(Exception $e){
+        }catch(\Exception $e){
             return $this->errorResponse($e->getMessage(),[],500);
         }
     }
