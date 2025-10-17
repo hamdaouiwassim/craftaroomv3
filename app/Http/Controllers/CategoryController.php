@@ -128,7 +128,45 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        //
+          $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'type' => 'required|in:main,sub',
+            'category_id' => 'nullable|exists:categories,id',
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+
+        ]);
+        DB::beginTransaction();
+        try{
+
+                //$category = Category::create($validated);
+                if ($request->hasFile('icon')) {
+                    $category->icon()->delete();
+                    $iconPath = $request->file('icon');
+                    $iconName = uniqid('avatar_') . "." . $iconPath->getClientOriginalExtension();
+                    $iconPath->storeAs('uploads/category_icons/', $iconName, 'public');
+
+                    // Assuming you have a Media model to handle media files
+                    $media = new Media();
+                    $media->name = $request->name."_Icon";
+                    $media->url = "/storage/uploads/category_icons/" . $iconName;
+                    $media->attachment_id = $category->id;
+                    $media->type = "category";
+                    $media->save();
+
+                }
+                $category->update($validated);
+
+
+                DB::commit();
+                return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully.');
+
+
+        }catch(\Exception $e){
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'An error occurred while updating the category. Please try again.', 'message' => $e->getMessage()]);
+        }
     }
 
     /**

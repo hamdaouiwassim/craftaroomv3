@@ -13,6 +13,7 @@
             @include('admin.inc.messages')
             <form action="{{ route('admin.categories.update', ['category' => $category->id]) }}" method="POST" class="mt-4"
                 enctype="multipart/form-data">
+                @method("PUT")
                 @csrf
                 <div class="mb-4">
                     <label for="name" class="block text-sm font-medium text-gray-700">Nom de la catégorie :</label>
@@ -79,7 +80,7 @@
                 <div class="mb-4">
                     <label for="icon" class="block text-sm font-medium text-gray-700">Icon de la catégorie :</label>
                     <input type="file" name="icon" id="icon"
-                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" >
                     @error('icon')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
