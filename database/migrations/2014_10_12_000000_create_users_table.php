@@ -23,11 +23,10 @@ return new class extends Migration
             $table->integer('role')->unsigned()->default(0);
             $table->integer('loginType')->unsigned()->default(0);
             $table->integer('type')->unsigned()->default(0);
-            $table->string('adress')->nullable();
-            $table->string('country')->nullable();
             $table->string('phone')->nullable();
             $table->string('photoUrl')->nullable();
-            $table->string('currency')->nullable();
+            $table->bigInteger('currency_id')->unsigned()->nullable();
+            $table->foreign('currency_id')->references('id')->on('currencies')->onDelete('cascade');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

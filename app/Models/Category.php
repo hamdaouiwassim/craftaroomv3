@@ -3,15 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Category extends Model
 {
     use HasFactory;
     protected $fillable = [
         'name',
-        'photoUrl_id'
+        'description',
+        'category_id',
+        'type',
+        'status'
 ];
 /**
  * Get all of the products for the Category
@@ -21,5 +26,35 @@ class Category extends Model
 public function products(): HasMany
 {
     return $this->hasMany(Product::class);
+}
+
+/**
+ * Get all of the sub_categories for the Category
+ *
+ * @return \Illuminate\Database\Eloquent\Relations\HasMany
+ */
+public function sub_categories(): HasMany
+{
+    return $this->hasMany(Category::class);
+}
+
+/**
+ * Get the category that owns the Category
+ *
+ * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+ */
+public function category(): BelongsTo
+{
+    return $this->belongsTo(category::class);
+}
+
+/**
+ * Get the icon associated with the Category
+ *
+ * @return \Illuminate\Database\Eloquent\Relations\HasOne
+ */
+public function icon(): HasOne
+{
+    return $this->hasOne(Media::class, 'attachment_id', 'id');
 }
 }

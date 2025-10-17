@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\ConnectedUser;
+use App\Http\Resources\UserResource;
 use Auth;
 use Hash;
 use Validator;
@@ -14,6 +16,8 @@ use App\Http\Controllers\API\BaseController as BaseController;
 class AuthController extends BaseController
 {
     //
+
+    use ConnectedUser;
 
     public function register(Request $request){
 
@@ -74,13 +78,13 @@ class AuthController extends BaseController
     }
 
     // Social login
-    if ($request->loginType === "facebook" || $request->loginType === "google" || $request->loginType === "apple") {
+    if ($request->loginType > 0 ) {
 
-        if ($request->loginType === "facebook") {
+        if ($request->loginType == 1) {
             $user = User::where('email', $request->email)
                         ->where('facebook_id', $request->password)
                         ->first();
-        } else if ($request->loginType === "google") {
+        } else if ($request->loginType == 2) {
             $user = User::where('email', $request->email)
                         ->where('google_id', $request->password)
                         ->first();
@@ -104,12 +108,27 @@ class AuthController extends BaseController
     if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
         $user = Auth::user();
         $success["token"] = $user->createToken("authToken")->accessToken;
-        $success["user"] = $user;
+        $success["user"] = UserResource::make($user);
         return $this->okResponse($success, "User login Successfully ...");
     }
 
     return $this->errorResponse("Invalid email or password", [], 401);
 }
+
+public function logout(Request $request)
+    {
+        try {
+            $user = $this->getUserFromToken($request);
+            if ($user) {
+                $request->user()->token()->revoke();
+                return $this->okResponse([], "Logout successfully ...");
+            } else {
+                return $this->errorResponse('Can\'t found user', [], 404);
+            }
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), [], 500);
+        }
+    }
 
 
 }

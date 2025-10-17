@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string("name");
             $table->string("url");
-            $table->enum('type', ['avatar', 'product','threedmodel','material']);
+            $table->enum('type', ['avatar', 'product','threedmodel','material','category','other'])->default('other');
             $table->bigInteger('attachment_id')->unsigned();
             $table->timestamps();
         });
 
 
-        
+
     }
 
     /**

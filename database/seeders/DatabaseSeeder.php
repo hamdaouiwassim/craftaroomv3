@@ -17,9 +17,11 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
+            AdminSeeder::class,
             CategoryList::class,
             RoomList::class,
             MetalList::class,
+            CountryCurrencySeeder::class,
         ]);
     }
 }

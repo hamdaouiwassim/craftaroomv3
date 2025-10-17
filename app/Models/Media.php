@@ -60,4 +60,16 @@ class Media extends Model
     {
         return $this->belongsTo(Product::class, 'attachment_id', 'id');
     }
+
+    /**
+     * Get the category that owns the Media
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'attachment_id', 'id');
+    }
+
+
 }

@@ -16,6 +16,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/myproducts', [UserController::class, 'products'])->name('user.products');
     Route::post('/user/update', [UserController::class, 'updateUser'])->name('user.update');
     Route::post('/user/password/update', [UserController::class, 'updatePassword'])->name('user.password.update');
+    Route::post('/user/address/update',[UserController::class, 'updateAddress'])->name('user.address.update');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('user.logout');
+
 });
 
 /** Guest endpoints */
