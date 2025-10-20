@@ -13,7 +13,7 @@ class CategoryController extends BaseController
     public function index(){
         try{
 
-            $categories = Category::with("sub_categories")->get();
+            $categories = Category::whereType("main")->with("sub_categories")->get();
             return $this->okResponse($categories , 'Categories retrieved successfully.',200);
 
         }catch(\Exception $e){
