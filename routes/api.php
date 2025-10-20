@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CountryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,7 @@ Route::middleware(['auth:api'])->group(function () {
 });
 
 /** Guest endpoints */
+Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('/countries', [CountryController::class, 'countries'])->name('countries');
 Route::get('/currencies', [CountryController::class, 'getAllCurrencies'])->name('currencies');
 Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');

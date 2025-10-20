@@ -8,7 +8,7 @@ class BaseController extends Controller
 {
     //
 
-    public function okResponse($result , $message ){
+    public function okResponse($result , $message ,$statusCode = 200){
 
 
         $response = [
@@ -17,7 +17,7 @@ class BaseController extends Controller
             "message" => $message
 
         ];
-        return response()->json($response, 200);
+        return response()->json($response, $statusCode);
     }
 
     public function errorResponse($error,$errorMessages = [], $code = 401 ){

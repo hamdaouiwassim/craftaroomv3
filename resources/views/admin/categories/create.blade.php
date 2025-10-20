@@ -97,7 +97,7 @@
             // 'physical' is 'Principale', so hide the parent category field
             parentCategoryGroup.style.display = 'none';
             // You might want to optionally reset the value or disable the select here
-            // document.getElementById('category_id').value = '';
+             document.getElementById('category_id').value = '';
         } else {
             // 'digital' is 'Secondaire', so show the parent category field
             parentCategoryGroup.style.display = 'block';

@@ -35,7 +35,7 @@ public function products(): HasMany
  */
 public function sub_categories(): HasMany
 {
-    return $this->hasMany(Category::class);
+    return $this->hasMany(Category::class,"category_id","id");
 }
 
 /**
@@ -43,7 +43,7 @@ public function sub_categories(): HasMany
  *
  * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
  */
-public function category(): BelongsTo
+public function main_category(): BelongsTo
 {
     return $this->belongsTo(category::class);
 }

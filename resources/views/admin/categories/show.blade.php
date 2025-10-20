@@ -10,6 +10,7 @@
 
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg"></div>
 
+        @if ($category->type === 'main')
         <div class="bg-gray-50 p-6">
             <div class="max-w-6xl mx-auto">
                 @include('admin.inc.messages')
@@ -113,6 +114,28 @@
 
             </div>
         </div>
+        @else
+        <div class="bg-gray-50 p-6">
+            <div class="max-w-6xl mx-auto">
+                @include('admin.inc.messages')
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-2xl font-semibold mb-4">{{ $category->name }}</h2>
+                    <p class="mb-2"><strong>Type :</strong> {{ ucfirst($category->type) }}</p>
+                    <p class="mb-2"><strong>Statut :</strong>
+                        @if ($category->status === 'active')
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span>
+                        @else
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactif</span>
+                        @endif
+                    </p>
+                    <p class="mb-2"><strong>Description :</strong> {{ $category->description ?? 'N/A' }}</p>
+                    <p class="mb-2"><strong>Créé le :</strong> {{ $category->created_at->format('Y-m-d') }}</p>
+                    <p class="mb-2"><strong>Mis à jour le :</strong> {{ $category->updated_at->format('Y-m-d') }}</p>
+                </div>
+            </div>
+        @endif
     </div>
     </div>
 
