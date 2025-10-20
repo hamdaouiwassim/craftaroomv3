@@ -23,7 +23,7 @@ Route::middleware(['auth:api'])->group(function () {
 });
 
 /** Guest endpoints */
-Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('/categories/{status}', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('/countries', [CountryController::class, 'countries'])->name('countries');
 Route::get('/currencies', [CountryController::class, 'getAllCurrencies'])->name('currencies');
 Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
