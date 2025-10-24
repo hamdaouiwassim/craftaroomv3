@@ -6,17 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Review extends Model
+class Size extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+            'name',
+            'value'
+    ];
+
     /**
-     * Get the product that owns the Review
+     * Get the measure that owns the Size
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function product(): BelongsTo
+    public function measure(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Measure::class);
     }
 }

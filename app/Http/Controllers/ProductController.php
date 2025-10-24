@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Currency;
 use App\Models\Room;
 use App\Models\Media;
 use App\Models\Metal;
@@ -22,6 +23,8 @@ class ProductController extends Controller
     public function index()
     {
         //
+        $products = Product::whereStatus("active")->paginate(10);
+        return view('admin.products.index',["products"=>$products]);
     }
 
     /**
@@ -32,7 +35,13 @@ class ProductController extends Controller
     public function create()
     {
         //
-        return view(strtolower(auth()->user()->role).'.products.create',['rooms'=>Room::all() ,'metals'=>Metal::all() , 'categories' => Category::all()]);
+        $categories = Category::whereType("main")->get();
+        return view('admin.products.create',[
+            'categories' => $categories,
+            'rooms'=>Room::all() ,
+            'metals'=>Metal::all(),
+            'currencies'=> Currency::all()
+             ]);
     }
 
     /**
@@ -59,19 +68,19 @@ class ProductController extends Controller
                 'metals' => 'required',
                 'currency' => 'required',
 
-                
+
             ]);
 
             $m = false;
             $measure = new Measure();
-            //$measure->save(); 
+            //$measure->save();
             if (  $request->has("length") && !empty($request->length) ) {
                 $validated = $request->validate([
                     'length' => 'required',
                     'height' => 'required',
                     'width' => 'required',
                     'unit' => 'required',
-                    
+
                 ]);
                     $dimension = new Dimension();
                     $dimension->length = $request->length;
@@ -90,7 +99,7 @@ class ProductController extends Controller
                 $validated = $request->validate([
                     'weight_value' => 'required',
                     'weight_unit' => 'required',
-                    
+
                 ]);
                 $weight = new Weight();
                 $weight->weight_value = $request->weight_value;
@@ -98,7 +107,7 @@ class ProductController extends Controller
                 $weight->measure_id = $request->unit;
                 $m = true;
             }
-         
+
             if (!$m){
                 return redirect()->back()->with('error','Please add product measure...');
             }
@@ -132,7 +141,7 @@ class ProductController extends Controller
                         $filePath = $request->file('folderModel');
                         $fileName = uniqid('product3d_').".". $filePath->getClientOriginalExtension();
                         $filePath->storeAs('uploads/models', $fileName, 'public');
-                    
+
                         Media::create([
                             'name' => $fileName,
                             'url' => "/storage/uploads/models/" .$fileName,
@@ -151,8 +160,8 @@ class ProductController extends Controller
                         echo "file ".$index;
                     $fileName = uniqid('productPhoto_').".". $file->getClientOriginalExtension();
                     $extension = $file->getClientOriginalExtension();
-              
-                    
+
+
                         echo "Photo ok ...";
                         $file->storeAs('uploads/photos', $fileName, 'public');
                         Media::create([
@@ -161,9 +170,9 @@ class ProductController extends Controller
                             'attachment_id'=> $product->id,
                             'type' => 'product'
                         ]);
-                    
-                 
-                   
+
+
+
                 }
 
             }
@@ -177,10 +186,10 @@ class ProductController extends Controller
             if ($weight) {
                 $weight->measure_id =  $measure->id;
                 $weight->save();}
-           
+
             return redirect('/'.strtolower(auth()->user()->role).'/myproducts')->with('success','Product added successfully ...');
-           
-          
+
+
         //return redirect()->back()->with('success','Added successfully ...');
         }catch(Exception $e){
             return redirect()->back()->with('error','Probleme while adedding product...');

@@ -95,4 +95,24 @@ public function user(): BelongsTo
     {
         return $this->hasOne(Measure::class, 'product_id', 'id');
     }
+
+    /**
+     * Get all of the reviews for the Product
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get the currency associated with the Product
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function currency(): HasOne
+    {
+        return $this->hasOne(Currency::class);
+    }
 }

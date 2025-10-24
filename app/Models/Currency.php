@@ -12,7 +12,7 @@ class Currency extends Model
 protected $fillable = [
         'name',
         'symbol',
-        
+
     ];
     /**
      * Get the country that owns the Currency
@@ -32,5 +32,15 @@ protected $fillable = [
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * Get the product that owns the Currency
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 }

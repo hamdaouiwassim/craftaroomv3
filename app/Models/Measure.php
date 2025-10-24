@@ -31,4 +31,14 @@ class Measure extends Model
         return $this->hasOne(Weight::class,  'measure_id', 'id');
     }
 
+    /**
+     * Get the size associated with the Measure
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function size(): HasOne
+    {
+        return $this->hasOne(Size::class);
+    }
+
 }
