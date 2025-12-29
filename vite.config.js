@@ -8,4 +8,13 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    resolve: {
+        alias: {
+            // Ensure jQuery is available for Select2
+            'jquery': 'jquery/dist/jquery.js',
+        }
+    },
+    optimizeDeps: {
+        include: ['jquery', 'select2']
+    }
 });

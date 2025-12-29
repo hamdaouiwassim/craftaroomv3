@@ -103,6 +103,26 @@ class User extends Authenticatable
         return $this->hasOne(Address::class);
     }
 
+    /**
+     * Get all of the reviews for the User
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get all of the favorites for the User
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
     public function is_admin(){
         return $this->role === 0;
     }

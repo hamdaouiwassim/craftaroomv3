@@ -20,7 +20,8 @@ class Product extends Model
         'description',
         'currency',
         'reel',
-        'user_id'
+        'user_id',
+        'status'
 ];
 
 /**

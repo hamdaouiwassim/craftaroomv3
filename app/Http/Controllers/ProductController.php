@@ -20,11 +20,29 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $products = Product::whereStatus("active")->paginate(10);
-        return view('admin.products.index',["products"=>$products]);
+        $query = Product::query();
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        } else {
+            // Default to active products
+            $query->where('status', 'active');
+        }
+
+        $products = $query->with(['photos', 'category', 'user'])->latest()->paginate(15);
+        return view('admin.products.index', ["products" => $products]);
     }
 
     /**
@@ -58,28 +76,33 @@ class ProductController extends Controller
         try{
             $validated = $request->validate([
                 'name' => 'required|max:255',
-                'price' => 'required',
-                'size' => 'required',
-                'category_id' => 'required',
-                'rooms' => 'required',
-                'description' => 'required',
-                'folderModel' => 'required',
-                'photos' => 'required',
-                'metals' => 'required',
-                'currency' => 'required',
-
-
+                'price' => 'required|numeric',
+                'size' => 'required|string',
+                'category_id' => 'required|exists:categories,id',
+                'rooms' => 'required|array',
+                'rooms.*' => 'exists:rooms,id',
+                'description' => 'required|string',
+                'folderModel' => 'required|file',
+                'photos' => 'required|array',
+                'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'metals' => 'required|array',
+                'metals.*' => 'exists:metals,id',
+                'currency' => 'required|string',
+                'status' => 'nullable|in:active,inactive',
             ]);
 
             $m = false;
             $measure = new Measure();
-            //$measure->save();
+            $dimension = null;
+            $weight = null;
+            
+            // Handle dimensions
             if (  $request->has("length") && !empty($request->length) ) {
                 $validated = $request->validate([
-                    'length' => 'required',
-                    'height' => 'required',
-                    'width' => 'required',
-                    'unit' => 'required',
+                    'length' => 'required|numeric',
+                    'height' => 'required|numeric',
+                    'width' => 'required|numeric',
+                    'unit' => 'required|in:CM,FT,INCH',
 
                 ]);
                     $dimension = new Dimension();
@@ -87,24 +110,28 @@ class ProductController extends Controller
                     $dimension->height = $request->height;
                     $dimension->width = $request->width;
                     $dimension->unit = $request->unit;
-                    $dimension->measure_id = $request->unit;
                     $m = true;
-                    //$dimension->save();
             }
-            if (  $request->has("size") && !empty($request->size) ) {
-                $measure->size = $request->size;
+            
+            // Handle measure size (enum: SMALL, MEDIUM, LARGE)
+            if (  $request->has("measure_size") && !empty($request->measure_size) ) {
+                $validated = $request->validate([
+                    'measure_size' => 'required|in:SMALL,MEDIUM,LARGE',
+                ]);
+                $measure->size = $request->measure_size;
                 $m = true;
             }
+            
+            // Handle weight
             if (  $request->has("weight_value") && !empty($request->weight_value) ) {
                 $validated = $request->validate([
-                    'weight_value' => 'required',
-                    'weight_unit' => 'required',
+                    'weight_value' => 'required|numeric',
+                    'weight_unit' => 'required|in:KG,LB',
 
                 ]);
                 $weight = new Weight();
                 $weight->weight_value = $request->weight_value;
                 $weight->weight_unit = $request->weight_unit;
-                $weight->measure_id = $request->unit;
                 $m = true;
             }
 
@@ -152,29 +179,17 @@ class ProductController extends Controller
             // upload Photos
             if($request->hasFile('photos'))
             {
-                echo "photos here ...";
-                  // dd($request);
-                    $files = $request->file('photos');
-                    //dd($files);
-                    foreach($files as $index=> $file){
-                        echo "file ".$index;
+                $files = $request->file('photos');
+                foreach($files as $file){
                     $fileName = uniqid('productPhoto_').".". $file->getClientOriginalExtension();
-                    $extension = $file->getClientOriginalExtension();
-
-
-                        echo "Photo ok ...";
-                        $file->storeAs('uploads/photos', $fileName, 'public');
-                        Media::create([
-                            'name' => $fileName,
-                            'url' => "/storage/uploads/photos/" .$fileName,
-                            'attachment_id'=> $product->id,
-                            'type' => 'product'
-                        ]);
-
-
-
+                    $file->storeAs('uploads/photos', $fileName, 'public');
+                    Media::create([
+                        'name' => $fileName,
+                        'url' => "/storage/uploads/photos/" .$fileName,
+                        'attachment_id'=> $product->id,
+                        'type' => 'product'
+                    ]);
                 }
-
             }
             $measure->product_id = $product->id;
             $measure->save();
@@ -191,7 +206,7 @@ class ProductController extends Controller
 
 
         //return redirect()->back()->with('success','Added successfully ...');
-        }catch(Exception $e){
+        }catch(\Exception $e){
             return redirect()->back()->with('error','Probleme while adedding product...');
         }
 
@@ -205,7 +220,20 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        //
+        $product->load([
+            'photos', 
+            'threedmodels', 
+            'rooms', 
+            'metals', 
+            'category', 
+            'user',
+            'measure.dimension', 
+            'measure.weight'
+        ]);
+        
+        return view('admin.products.show', [
+            'product' => $product
+        ]);
     }
 
     /**
@@ -216,8 +244,16 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        //
-        return view(strtolower(auth()->user()->role).'.products.edit',['product'=> $product,'rooms'=>Room::all() ,'metals'=>Metal::all() , 'categories' => Category::all()]);
+        $product->load(['photos', 'threedmodels', 'rooms', 'metals', 'category', 'measure.dimension', 'measure.weight']);
+        $categories = Category::whereType("main")->get();
+        
+        return view('admin.products.edit', [
+            'product' => $product,
+            'rooms' => Room::all(),
+            'metals' => Metal::all(),
+            'categories' => $categories,
+            'currencies' => Currency::all()
+        ]);
     }
 
     /**
@@ -229,16 +265,119 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-           // upload Reel
-           if($request->hasFile('reel')){
-            $filePath = $request->file('reel');
-            $fileName = uniqid('productReel_').".". $filePath->getClientOriginalExtension();
-            $filePath->storeAs('uploads/reels', $fileName, 'public');
+        try {
+            $validated = $request->validate([
+                'name' => 'required|max:255',
+                'price' => 'required|numeric',
+                'size' => 'required|string',
+                'category_id' => 'required|exists:categories,id',
+                'rooms' => 'required|array',
+                'rooms.*' => 'exists:rooms,id',
+                'description' => 'required|string',
+                'photos' => 'nullable|array',
+                'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+                'metals' => 'required|array',
+                'metals.*' => 'exists:metals,id',
+                'currency' => 'required|string',
+                'status' => 'required|in:active,inactive',
+                'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:102400',
+                'folderModel' => 'nullable|file|mimes:zip|max:51200',
+                'delete_3d_model' => 'nullable|boolean',
+            ]);
 
-           $product->reel = "/storage/uploads/reels/" .$fileName;
-           $product->update();
-         }
-         return redirect()->back();
+            // Update basic product fields
+            $product->name = $validated['name'];
+            $product->price = $validated['price'];
+            $product->size = $validated['size'];
+            $product->category_id = $validated['category_id'];
+            $product->description = $validated['description'];
+            $product->currency = $validated['currency'];
+            $product->status = $validated['status'];
+
+            // Update rooms
+            if ($request->has('rooms')) {
+                $product->rooms()->sync($request->rooms);
+            }
+
+            // Update metals
+            if ($request->has('metals')) {
+                $product->metals()->sync($request->metals);
+            }
+
+            // Upload new reel if provided
+            if ($request->hasFile('reel')) {
+                $filePath = $request->file('reel');
+                $fileName = uniqid('productReel_') . "." . $filePath->getClientOriginalExtension();
+                $filePath->storeAs('uploads/reels', $fileName, 'public');
+                $product->reel = "/storage/uploads/reels/" . $fileName;
+            }
+
+            // Handle 3D Model deletion and replacement
+            if ($request->has('delete_3d_model') && $request->delete_3d_model == '1') {
+                // Delete existing 3D model
+                $existingModel = $product->threedmodels;
+                if ($existingModel) {
+                    // Delete physical file
+                    $filePath = public_path($existingModel->url);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                    // Delete database record
+                    $existingModel->delete();
+                }
+            }
+
+            // Upload new 3D model if provided
+            if ($request->hasFile('folderModel')) {
+                // Delete old model if exists
+                $existingModel = $product->threedmodels;
+                if ($existingModel) {
+                    $filePath = public_path($existingModel->url);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                    $existingModel->delete();
+                }
+
+                // Upload new model
+                $filePath = $request->file('folderModel');
+                $fileName = uniqid('product3d_') . "." . $filePath->getClientOriginalExtension();
+                $filePath->storeAs('uploads/models', $fileName, 'public');
+                
+                Media::create([
+                    'name' => $fileName,
+                    'url' => "/storage/uploads/models/" . $fileName,
+                    'attachment_id' => $product->id,
+                    'type' => 'threedmodel'
+                ]);
+            }
+
+            $product->save();
+
+            // Upload new photos if provided
+            if ($request->hasFile('photos')) {
+                // Optionally delete old photos or keep them
+                // For now, we'll add new photos without deleting old ones
+                $files = $request->file('photos');
+                foreach ($files as $file) {
+                    $fileName = uniqid('productPhoto_') . "." . $file->getClientOriginalExtension();
+                    $file->storeAs('uploads/photos', $fileName, 'public');
+                    Media::create([
+                        'name' => $fileName,
+                        'url' => "/storage/uploads/photos/" . $fileName,
+                        'attachment_id' => $product->id,
+                        'type' => 'product'
+                    ]);
+                }
+            }
+
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Produit mis à jour avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Problème lors de la mise à jour du produit: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
@@ -253,7 +392,7 @@ class ProductController extends Controller
         try{
                 $product->delete();
                 return redirect()->back()->with('success','Product'.$product->name." deleted successfully ...");
-        }catch( Exception $e  ){
+        }catch( \Exception $e  ){
             return redirect()->back()->with('error','Error while trying to delete Product'.$product->name);
 
         }

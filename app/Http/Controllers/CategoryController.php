@@ -14,14 +14,26 @@ class CategoryController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if (auth()->user()->is_admin()) {
+            $query = Category::whereType("main");
 
-         if (auth()->user()->is_admin()) {
-        return view("admin.categories.index",[
-            'categories' => Category::whereType("main")->paginate(perPage: 3)]);
-         }
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('description', 'like', '%' . $search . '%');
+                });
+            }
+
+            $categories = $query->with(['icon', 'sub_categories'])->latest()->paginate(15);
+            
+            return view("admin.categories.index", [
+                'categories' => $categories
+            ]);
+        }
     }
 
     /**

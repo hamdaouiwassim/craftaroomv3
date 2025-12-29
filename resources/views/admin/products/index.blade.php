@@ -1,133 +1,200 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Products') }}
-        </h2>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                </div>
+                <h2 class="font-bold text-2xl bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                    Gestion des Produits
+                </h2>
+            </div>
+            <a href="{{ route('admin.products.create') }}" class="flex items-center gap-2 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:from-teal-600 hover:via-cyan-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Nouveau Produit
+            </a>
+        </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                @include('admin.inc.messages')
+            <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-teal-100">
+                <div class="p-6">
+                    @include('admin.inc.messages')
 
-
-                <div class="bg-gray-50 p-6">
-                    <div class="max-w-6xl mx-auto">
-
-                        <!-- Header -->
-                        <div class="flex items-center justify-between mb-6">
-                            <h1 class="text-2xl font-semibold text-gray-800">Liste des catégories</h1>
-
-                            <div class="flex items-center gap-3">
-                                <form method="GET" action="{{ route('admin.products.index') }}">
-                                    <input type="text" name="search" value="{{ request('search') }}"
-                                        placeholder="Rechercher une catégorie..."
-                                        class="placeholder:italic placeholder:text-slate-400 block bg-white w-72 border border-slate-200 rounded-md py-2 pl-10 pr-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-                                </form>
-
-                                <a href="{{ route('admin.products.create') }}"
-                                    class="inline-flex items-center gap-2 bg-sky-600 text-white px-4 py-2 rounded-md shadow hover:bg-sky-700 focus:outline-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4" />
+                    <!-- Search Bar -->
+                    <div class="mb-6">
+                        <form method="GET" action="{{ route('admin.products.index') }}" class="flex gap-4">
+                            <div class="flex-1 relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                                    Ajouter
+                                </div>
+                                <input type="text" 
+                                       name="search" 
+                                       value="{{ request('search') }}"
+                                       placeholder="Rechercher un produit..." 
+                                       class="block w-full pl-12 pr-4 py-3 border-2 border-teal-200 rounded-xl shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white text-gray-900 placeholder-gray-400">
+                            </div>
+                            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                Rechercher
+                            </button>
+                            @if(request('search'))
+                                <a href="{{ route('admin.products.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
+                                    Réinitialiser
                                 </a>
+                            @endif
+                        </form>
+                    </div>
+
+                    <!-- Products Table -->
+                    @if($products->count() > 0)
+                        <div class="bg-white rounded-xl shadow-sm border border-teal-100 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gradient-to-r from-teal-50 to-cyan-50">
+                                        <tr>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                #
+                                            </th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Produit
+                                            </th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Catégorie
+                                            </th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Prix
+                                            </th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Statut
+                                            </th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Date de création
+                                            </th>
+                                            <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($products as $product)
+                                            <tr class="hover:bg-teal-50/50 transition-colors">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {{ $loop->iteration }}
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                            @if($product->photos->count() > 0)
+                                                                <img src="{{ $product->photos->first()->url }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                                                            @else
+                                                                <svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                            @endif
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <div class="text-sm font-bold text-gray-900 truncate">{{ $product->name }}</div>
+                                                            @if($product->description)
+                                                                <div class="text-xs text-gray-500 line-clamp-1">{{ Str::limit($product->description, 60) }}</div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    @if($product->category)
+                                                        <span class="px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-xs font-semibold">
+                                                            {{ $product->category->name }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-xs text-gray-400">-</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="text-sm font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                                                        {{ $product->currency }}{{ number_format($product->price, 2) }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    @if($product->status === 'active')
+                                                        <span class="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full text-xs font-semibold">
+                                                            Actif
+                                                        </span>
+                                                    @else
+                                                        <span class="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full text-xs font-semibold">
+                                                            Inactif
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                    {{ $product->created_at->format('d/m/Y') }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        <a href="{{ route('admin.products.show', $product) }}" class="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors" title="Voir">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                        </a>
+                                                        <a href="{{ route('admin.products.edit', $product) }}" class="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors" title="Modifier">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </a>
+                                                        <form action="{{ route('admin.products.destroy', $product) }}" method="POST" class="inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
-                        <!-- Table -->
-                        <div class="bg-white rounded-lg shadow overflow-hidden">
-                            <table class="min-w-full table-auto">
-                                <thead class="bg-gray-100">
-                                    <tr class="text-left text-sm text-gray-600">
-                                        <th class="px-4 py-3 w-12">#</th>
-                                        <th class="px-4 py-3">Nom</th>
-                                        <th class="px-4 py-3">Description</th>
-                                        <th class="px-4 py-3">Statut</th>
-                                        <th class="px-4 py-3">Créé le</th>
-                                        <th class="px-4 py-3 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
-                                    @forelse($products as $product)
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-4 py-3">{{ $loop->iteration }}</td>
-                                            <td class="px-4 py-3 font-medium">{{ $product->name }}</td>
-                                            <td class="px-4 py-3">
-                                                {{ $product->description }}
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                @if ($product->status === 'active')
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span>
-                                                @else
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactif</span>
-                                                @endif
-                                            </td>
-                                            <td class="px-4 py-3">{{ $product->created_at->format('Y-m-d') }}</td>
-                                            <td class="px-4 py-3 text-right">
-                                                <div class="inline-flex items-center gap-2">
-                                                    <a href="{{ route('admin.products.show', $product) }}"
-                                                        class="px-3 py-1.5 border border-slate-200 rounded shadow-sm hover:bg-slate-50"
-                                                        title="Modifier">
-                                                        👁️
-                                                    </a>
-                                                    <a href="{{ route('admin.products.edit', $product) }}"
-                                                        class="px-3 py-1.5 border border-slate-200 rounded shadow-sm hover:bg-slate-50"
-                                                        title="Modifier">
-                                                        ✏️
-                                                    </a>
-                                                    <form method="POST"
-                                                        action="{{ route('admin.products.destroy', $product) }}"
-                                                        onsubmit="return confirm('Supprimer cette catégorie ?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                            class="px-3 py-1.5 border border-red-200 text-red-600 rounded shadow-sm hover:bg-red-50"
-                                                            title="Supprimer">
-                                                            🗑️
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="px-4 py-6 text-center text-gray-500">Aucune
-                                                produit trouvée.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
                         <!-- Pagination -->
-                        <div class="flex justify-end mt-4">
+                        <div class="mt-6">
                             {{ $products->links() }}
                         </div>
-
-                    </div>
+                    @else
+                        <div class="text-center py-16 bg-white rounded-xl border border-teal-100">
+                            <div class="inline-block p-4 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full mb-4">
+                                <svg class="w-16 h-16 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Aucun produit trouvé</h3>
+                            <p class="text-gray-600 mb-6">
+                                @if(request('search'))
+                                    Aucun produit ne correspond à votre recherche.
+                                @else
+                                    Aucun produit n'a été créé pour le moment.
+                                @endif
+                            </p>
+                            <a href="{{ route('admin.products.create') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:from-teal-600 hover:via-cyan-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Créer le premier produit
+                            </a>
+                        </div>
+                    @endif
                 </div>
-
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
         </div>
     </div>
-
-
 </x-admin-layout>

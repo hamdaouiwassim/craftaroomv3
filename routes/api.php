@@ -41,10 +41,10 @@ Route::any('{path}', function() {
 
 
 
-    Route::any('{path}', function() {
+Route::any('{path}', function() {
         return response()->json([
             'message' => 'Route not found'
         ], 404);
-    })->where('path', '.*');
+})->where('path', '.*');
 
 
