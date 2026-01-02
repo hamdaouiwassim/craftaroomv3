@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', function() {
             url: '#',
             autoProcessQueue: false,
             maxFiles: 1,
-            acceptedFiles: 'video/*',
+            acceptedFiles: 'video/*,.mp4,.mov,.ogg,.qt,.avi,.wmv,.flv,.webm',
             addRemoveLinks: true,
             dictDefaultMessage: 'Glissez-déposez votre vidéo ici ou cliquez pour sélectionner (Optionnel)',
             dictRemoveFile: 'Supprimer',
             dictCancelUpload: 'Annuler',
             dictInvalidFileType: 'Seuls les fichiers vidéo sont autorisés',
-            maxFilesize: 100, // MB
+            maxFilesize: 200, // MB - Updated to match server limit
         });
 
         window.reelDropzone = reelDropzone;

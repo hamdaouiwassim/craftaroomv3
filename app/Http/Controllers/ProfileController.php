@@ -21,7 +21,8 @@ class ProfileController extends Controller
             'user' => $request->user(),
         ]);
         }
-        return view('profile.edit', [
+        // Use customer profile view for regular users
+        return view('customer.profile', [
             'user' => $request->user(),
         ]);
     }

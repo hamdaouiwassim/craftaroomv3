@@ -369,6 +369,181 @@
                     width: '100%'
                 });
             }
+
+            // Handle form submission with separate reel upload
+            const form = document.getElementById('product-form');
+            const reelInput = document.getElementById('reel');
+            const submitButton = form.querySelector('button[type="submit"]');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const reelFile = reelInput.files[0];
+                const hasReel = reelFile && reelFile.size > 0;
+                
+                console.log('=== Product Update Form Submission ===');
+                console.log('Has reel file:', hasReel);
+                if (hasReel) {
+                    console.log('Reel file info:', {
+                        name: reelFile.name,
+                        size: reelFile.size,
+                        sizeMB: (reelFile.size / 1024 / 1024).toFixed(2) + ' MB',
+                        type: reelFile.type
+                    });
+                }
+
+                // Disable submit button
+                submitButton.disabled = true;
+                submitButton.textContent = 'Mise à jour en cours...';
+
+                try {
+                    // Step 1: Submit form without reel
+                    const formData = new FormData(form);
+                    if (hasReel) {
+                        formData.delete('reel'); // Remove reel from form data
+                    }
+
+                    console.log('Step 1: Submitting product data (without reel)...');
+                    const updateResponse = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json',
+                        },
+                        body: formData
+                    });
+
+                    // Check if response is redirect (success) or JSON (error)
+                    const contentType = updateResponse.headers.get('content-type');
+                    console.log('Update response content-type:', contentType);
+                    console.log('Update response status:', updateResponse.status);
+
+                    if (!updateResponse.ok && contentType && contentType.includes('application/json')) {
+                        const errorData = await updateResponse.json();
+                        console.error('Product update error:', errorData);
+                        alert('Erreur lors de la mise à jour: ' + (errorData.message || 'Erreur inconnue'));
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Mettre à jour le produit';
+                        return;
+                    }
+
+                    console.log('Step 1: Product updated successfully');
+
+                    // Step 2: Upload reel separately if provided
+                    if (hasReel) {
+                        console.log('Step 2: Uploading reel separately...');
+                        try {
+                            const reelFormData = new FormData();
+                            reelFormData.append('reel', reelFile);
+
+                            const productId = {{ $product->id }};
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+                            console.log('Uploading reel to:', `/admin/products/${productId}/reel`);
+                            console.log('Reel file details:', {
+                                name: reelFile.name,
+                                size: reelFile.size,
+                                type: reelFile.type
+                            });
+
+                            const reelResponse = await fetch(`/admin/products/${productId}/reel`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    'Accept': 'application/json',
+                                },
+                                body: reelFormData
+                            });
+
+                            console.log('Reel upload response status:', reelResponse.status);
+                            console.log('Reel upload response headers:', {
+                                'content-type': reelResponse.headers.get('content-type'),
+                                'content-length': reelResponse.headers.get('content-length')
+                            });
+
+                            // Check if response is JSON
+                            const reelContentType = reelResponse.headers.get('content-type');
+                            if (!reelContentType || !reelContentType.includes('application/json')) {
+                                const text = await reelResponse.text();
+                                console.error('Non-JSON response from reel upload:', text);
+                                console.error('Response status:', reelResponse.status);
+                                alert('Erreur lors de l\'upload du reel: Le serveur a retourné une réponse inattendue. Vérifiez la console pour plus de détails.');
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Mettre à jour le produit';
+                                return;
+                            }
+
+                            const reelResult = await reelResponse.json();
+                            console.log('Reel upload result:', reelResult);
+                            console.log('Full response details:', {
+                                status: reelResponse.status,
+                                statusText: reelResponse.statusText,
+                                headers: Object.fromEntries(reelResponse.headers.entries()),
+                                result: reelResult
+                            });
+
+                            if (!reelResponse.ok || !reelResult.success) {
+                                let errorMessage = reelResult.message || 'Erreur lors de l\'upload du reel';
+                                if (reelResult.errors) {
+                                    const errorList = Object.values(reelResult.errors).flat().join(', ');
+                                    errorMessage += ': ' + errorList;
+                                    console.error('Validation errors:', reelResult.errors);
+                                }
+                                if (reelResult.debug) {
+                                    console.error('=== DEBUG INFO FROM SERVER ===');
+                                    console.error('Debug info:', reelResult.debug);
+                                    console.error('PHP upload_max_filesize:', reelResult.debug.php_upload_max);
+                                    console.error('PHP post_max_size:', reelResult.debug.php_post_max);
+                                    console.error('Content-Length header:', reelResult.debug.content_length);
+                                    console.error('Has file:', reelResult.debug.has_file);
+                                    console.error('All files keys:', reelResult.debug.all_files);
+                                    if (reelResult.debug.note) {
+                                        console.error('NOTE:', reelResult.debug.note);
+                                    }
+                                    console.error('==============================');
+                                }
+                                console.error('Reel upload failed:', errorMessage);
+                                
+                                // Show detailed error message
+                                let detailedMessage = errorMessage;
+                                if (reelResult.debug) {
+                                    detailedMessage += '\n\nDétails techniques:\n';
+                                    detailedMessage += '- Limite PHP upload_max_filesize: ' + (reelResult.debug.php_upload_max || 'N/A') + '\n';
+                                    detailedMessage += '- Limite PHP post_max_size: ' + (reelResult.debug.php_post_max || 'N/A') + '\n';
+                                    detailedMessage += '- Taille du fichier: ' + (reelFile.size / 1024 / 1024).toFixed(2) + ' MB\n';
+                                    if (reelResult.debug.content_length) {
+                                        detailedMessage += '- Content-Length: ' + reelResult.debug.content_length + ' bytes\n';
+                                    }
+                                }
+                                
+                                alert('Le produit a été mis à jour, mais l\'upload du reel a échoué:\n\n' + detailedMessage + '\n\nVérifiez la console pour plus de détails.');
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Mettre à jour le produit';
+                                return;
+                            }
+
+                            console.log('Step 2: Reel uploaded successfully');
+                        } catch (reelError) {
+                            console.error('Reel upload exception:', reelError);
+                            console.error('Error stack:', reelError.stack);
+                            alert('Le produit a été mis à jour, mais une erreur est survenue lors de l\'upload du reel: ' + reelError.message);
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Mettre à jour le produit';
+                            return;
+                        }
+                    }
+
+                    // Success - redirect to products list
+                    console.log('=== Form submission completed successfully ===');
+                    window.location.href = '{{ route("admin.products.index") }}?success=Product updated successfully';
+                } catch (error) {
+                    console.error('Form submission error:', error);
+                    console.error('Error stack:', error.stack);
+                    alert('Erreur lors de la mise à jour: ' + error.message);
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Mettre à jour le produit';
+                }
+            });
         });
     </script>
 </x-admin-layout>

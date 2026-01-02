@@ -49,7 +49,8 @@ Route::get('/dashboard', function () {
         ];
         return view('admin.dashboard', compact('stats'));
     }
-    //return view('dashboard');
+    // Redirect customers to their dashboard
+    return redirect()->route('customer.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
@@ -58,6 +59,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::resource('categories', CategoryController::class);
     // Product Management
     Route::resource('products', ProductController::class);
+    // Separate file upload endpoints for products
+    Route::post('products/{product}/photos', [ProductController::class, 'uploadPhotos'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('products.upload-photos');
+    Route::post('products/{product}/reel', [ProductController::class, 'uploadReel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('products.upload-reel');
+    Route::post('products/{product}/model', [ProductController::class, 'uploadModel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('products.upload-model');
     // User Management
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     // Team Member Management
@@ -70,6 +75,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Customer Routes
+    Route::prefix('customer')->name('customer.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Customer\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/orders', [\App\Http\Controllers\Customer\OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{id}', [\App\Http\Controllers\Customer\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/cart', [CartController::class, 'index'])->name('cart');
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    });
+    
+    // Keep original routes for backward compatibility
+    Route::get('/my-orders', [\App\Http\Controllers\Customer\OrderController::class, 'index'])->name('my-orders');
+    Route::get('/my-cart', [CartController::class, 'index'])->name('my-cart');
+    Route::get('/my-profile', [ProfileController::class, 'edit'])->name('my-profile');
 
     // Review Routes
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->name('reviews.store');

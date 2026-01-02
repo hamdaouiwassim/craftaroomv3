@@ -120,52 +120,26 @@
                             @enderror
                         </div>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-purple-100 shadow-sm">
-                                    <label for="currency" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                        <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        Devise *
-                                    </label>
-                                    <select name="currency" id="currency" required
-                                        class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
-                                        <option value="">Sélectionner une devise</option>
-                                        @foreach ($currencies as $currency)
-                                            <option value="{{ $currency->symbol }}">{{ $currency->name }} ({{ $currency->symbol }})</option>
-                                        @endforeach
-                            </select>
-                                    @error('currency')
-                                <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-purple-100 shadow-sm">
+                                <label for="status" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    {{ $message }}
-                                </p>
-                            @enderror
-                        </div>
-
-                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-purple-100 shadow-sm">
-                                    <label for="status" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        État
-                                    </label>
-                            <select name="status" id="status"
-                                        class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
-                                <option value="active">Actif</option>
-                                <option value="inactive">Non actif</option>
-                            </select>
-                            @error('status')
-                                <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                    </svg>
-                                    {{ $message }}
-                                </p>
-                            @enderror
-                                </div>
+                                    État
+                                </label>
+                        <select name="status" id="status"
+                                    class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
+                            <option value="active">Actif</option>
+                            <option value="inactive">Non actif</option>
+                        </select>
+                        @error('status')
+                            <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
                             </div>
                         </div>
 
@@ -221,15 +195,20 @@
                                 </div>
 
                                 <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-indigo-100 shadow-sm">
-                                    <label for="size" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                        <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+                                    <label for="currency" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                        <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Taille *
+                                        Devise *
                                     </label>
-                                    <input type="text" name="size" id="size" required
+                                    <select name="currency" id="currency" required
                                         class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white">
-                                    @error('size')
+                                        <option value="">Sélectionner une devise</option>
+                                        @foreach ($currencies as $currency)
+                                            <option value="{{ $currency->symbol }}">{{ $currency->name }} ({{ $currency->symbol }})</option>
+                                        @endforeach
+                                    </select>
+                                    @error('currency')
                                         <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
                                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />

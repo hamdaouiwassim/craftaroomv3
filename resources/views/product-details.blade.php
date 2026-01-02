@@ -50,33 +50,26 @@
                         </div>
                     @endif
 
-                    <!-- 3D Model -->
-                    @if($product->threedmodels)
-                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg">
-                                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                </div>
-                                <h3 class="text-xl font-bold text-gray-900">3D Model</h3>
-                            </div>
-                            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-8 text-center border-2 border-dashed border-indigo-200">
-                                <svg class="w-24 h-24 text-indigo-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- 3D Model Viewer -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg">
+                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
-                                <p class="text-gray-600 mb-4">3D Model Available</p>
-                                <a href="{{ $product->threedmodels->url }}" 
-                                   download
-                                   class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                    Download 3D Model
-                                </a>
                             </div>
+                            <h3 class="text-xl font-bold text-gray-900">3D Model Viewer</h3>
                         </div>
-                    @endif
+                        <div class="rounded-xl overflow-hidden bg-gray-100 border-2 border-indigo-200">
+                            <iframe 
+                                src="http://craftaroomtest.atwebpages.com/index.html" 
+                                class="w-full h-[600px] border-0"
+                                allowfullscreen
+                                loading="lazy"
+                                title="3D Model Viewer">
+                            </iframe>
+                        </div>
+                    </div>
 
                     <!-- Reel Video -->
                     @if($product->reel)
