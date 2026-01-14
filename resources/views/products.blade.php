@@ -329,7 +329,7 @@
 
                     <!-- Pagination -->
                     <div class="flex justify-center mt-10">
-                        {{ $products->links() }}
+                        {{ $products->appends(request()->query())->links('vendor.pagination.products') }}
                     </div>
                 </div>
             </div>

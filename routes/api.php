@@ -31,7 +31,8 @@ Route::get('/metals', [MetalController::class, 'index'])->name('metals.index');
 Route::get('/metals/withProducts', [MetalController::class, 'withProducts'])->name('metals.withProducts');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/withProducts', [RoomController::class, 'withProducts'])->name('rooms.withProducts');
-Route::get("/products",[ProductController::class,'index'])->name('products.index');
+// API products (avoid conflict with web products.index)
+Route::get("/products",[ProductController::class,'index'])->name('api.products.index');
 Route::any('{path}', function() {
     return response()->json([
         'message' => 'Route not found'

@@ -58,12 +58,12 @@
                                             <div class="flex items-center gap-3">
                                                 <label class="text-sm font-semibold text-gray-700">Quantity:</label>
                                                 <div class="flex items-center gap-2">
-                                                    <button onclick="updateQuantity({{ $item['product']->id }}, {{ $item['quantity'] - 1 }})" 
+                                                    <button onclick="decreaseQuantity({{ $item['product']->id }})" 
                                                             class="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-600 hover:from-purple-500 hover:to-indigo-500 hover:text-white transition-all duration-300 font-bold">
                                                         -
                                                     </button>
                                                     <span id="quantity-{{ $item['product']->id }}" class="w-12 text-center font-bold text-gray-900">{{ $item['quantity'] }}</span>
-                                                    <button onclick="updateQuantity({{ $item['product']->id }}, {{ $item['quantity'] + 1 }})" 
+                                                    <button onclick="increaseQuantity({{ $item['product']->id }})" 
                                                             class="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-600 hover:from-purple-500 hover:to-indigo-500 hover:text-white transition-all duration-300 font-bold">
                                                         +
                                                     </button>
@@ -156,6 +156,26 @@
     </section>
 
     <script>
+        function increaseQuantity(productId) {
+            const quantityElement = document.getElementById(`quantity-${productId}`);
+            const currentQuantity = parseInt(quantityElement.textContent) || 1;
+            const newQuantity = currentQuantity + 1;
+            updateQuantity(productId, newQuantity);
+        }
+
+        function decreaseQuantity(productId) {
+            const quantityElement = document.getElementById(`quantity-${productId}`);
+            const currentQuantity = parseInt(quantityElement.textContent) || 1;
+            const newQuantity = currentQuantity - 1;
+            
+            if (newQuantity <= 0) {
+                removeFromCart(productId);
+                return;
+            }
+            
+            updateQuantity(productId, newQuantity);
+        }
+
         async function updateQuantity(productId, quantity) {
             if (quantity <= 0) {
                 removeFromCart(productId);

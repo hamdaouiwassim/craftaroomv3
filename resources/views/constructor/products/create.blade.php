@@ -1,4 +1,4 @@
-<x-admin-layout>
+<x-constructor-layout>
 
     @push('head')
         <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -6,26 +6,26 @@
 
     <x-slot name="header">
         <div class="flex items-center gap-3">
-            <div class="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
+            <div class="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
             </div>
-            <h2 class="font-bold text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            <h2 class="font-bold text-2xl bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                 Créer un nouvel produit
         </h2>
         </div>
     </x-slot>
 
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div class="bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 overflow-hidden shadow-xl sm:rounded-2xl border border-purple-100 dark:border-gray-700">
+        <div class="bg-gradient-to-br from-white via-orange-50/30 to-amber-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 overflow-hidden shadow-xl sm:rounded-2xl border border-orange-100 dark:border-gray-700">
             <div class="p-8">
                 <div class="max-w-6xl mx-auto">
                     @include('admin.inc.messages')
 
-                    <form action="{{ route('admin.products.store') }}" method="POST" class="mt-4"
+                    <form action="{{ route('constructor.products.store') }}" method="POST" class="mt-4"
                           enctype="multipart/form-data" id="product-form"
-                          data-route-prefix="admin"
+                          data-route-prefix="constructor"
                           x-data="productForm()">
                         @csrf
 
@@ -71,10 +71,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
-                                <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Informations de base</h3>
+                                <h3 class="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">Informations de base</h3>
                             </div>
                             
-                            <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-purple-100 shadow-sm">
+                            <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-orange-100 shadow-sm">
                                 <label for="name" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                                     <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -93,7 +93,7 @@
                             @enderror
                         </div>
 
-                            <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-purple-100 shadow-sm">
+                            <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-orange-100 shadow-sm">
                                 <label for="category_id" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                                     <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -121,26 +121,26 @@
                             @enderror
                         </div>
 
-                            <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-purple-100 shadow-sm">
+                            <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-orange-100 shadow-sm">
                                 <label for="status" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                                     <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     État
                                 </label>
-                            <select name="status" id="status"
+                        <select name="status" id="status"
                                     class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
-                                <option value="active">Actif</option>
-                                <option value="inactive">Non actif</option>
-                            </select>
-                            @error('status')
+                            <option value="active">Actif</option>
+                            <option value="inactive">Non actif</option>
+                        </select>
+                        @error('status')
                             <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                 </svg>
                                 {{ $message }}
                             </p>
-                            @enderror
+                        @enderror
                             </div>
                         </div>
 
@@ -658,4 +658,4 @@
         }
     </style>
 
-</x-admin-layout>
+</x-constructor-layout>

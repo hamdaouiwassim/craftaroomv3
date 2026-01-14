@@ -33,6 +33,7 @@
                         @endif
                     </a>
                     
+                    @if(auth()->user()->is_admin() || auth()->user()->role == 1)
                     <a href="{{ route('admin.categories.index') }}" 
                        class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.categories.*') ? 'text-blue-accent bg-blue-accent/10' : 'text-gray-700 hover:text-blue-accent hover:bg-blue-accent/10' }}">
                         <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,6 +46,7 @@
                             <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-accent to-sky-blue group-hover:w-full transition-all duration-300"></span>
                         @endif
                     </a>
+                    @endif
                     
                     <a href="{{ route('admin.products.index') }}" 
                        class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.products.*') ? 'text-sky-blue bg-sky-blue/10' : 'text-gray-700 hover:text-sky-blue hover:bg-sky-blue/10' }}">
@@ -59,6 +61,20 @@
                         @endif
                     </a>
                     
+                    <a href="{{ route('admin.favorites.index') }}" 
+                       class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.favorites.*') ? 'text-sky-blue bg-sky-blue/10' : 'text-gray-700 hover:text-sky-blue hover:bg-sky-blue/10' }}">
+                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span>Favoris</span>
+                        @if(request()->routeIs('admin.favorites.*'))
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-sky-blue to-blue-accent"></span>
+                        @else
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-sky-blue to-blue-accent group-hover:w-full transition-all duration-300"></span>
+                        @endif
+                    </a>
+                    
+                    @if(auth()->user()->is_admin() || auth()->user()->role == 1)
                     <a href="{{ route('admin.users.index') }}" 
                        class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.users.*') ? 'text-sky-blue bg-sky-blue/10' : 'text-gray-700 hover:text-sky-blue hover:bg-sky-blue/10' }}">
                         <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,6 +100,7 @@
                             <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-accent to-sky-blue group-hover:w-full transition-all duration-300"></span>
                         @endif
                     </a>
+                    @endif
                 </div>
             </div>
 
@@ -166,6 +183,55 @@
                                     </svg>
                                 </div>
                                 <span class="font-semibold">Dashboard</span>
+                            </a>
+
+                            <a href="{{ route('admin.products.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                </div>
+                                <span class="font-semibold">Products</span>
+                            </a>
+
+                            @if(auth()->user()->is_admin() || auth()->user()->role == 1)
+                            <a href="{{ route('admin.categories.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
+                                <div class="p-2 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
+                                    <svg class="w-5 h-5 text-blue-accent group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                    </svg>
+                                </div>
+                                <span class="font-semibold">Categories</span>
+                            </a>
+                            @endif
+
+                            @if(auth()->user()->is_admin() || auth()->user()->role == 1)
+                            <a href="{{ route('admin.users.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                </div>
+                                <span class="font-semibold">Users</span>
+                            </a>
+
+                            <a href="{{ route('admin.team-members.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
+                                <div class="p-2 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
+                                    <svg class="w-5 h-5 text-blue-accent group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <span class="font-semibold">Team</span>
+                            </a>
+                            @endif
+
+                            <a href="{{ route('admin.favorites.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </div>
+                                <span class="font-semibold">Favoris</span>
                             </a>
 
                             <a href="{{ route('profile.edit') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-300">
@@ -259,6 +325,7 @@
                 <span>Dashboard</span>
             </a>
 
+            @if(auth()->user()->is_admin() || auth()->user()->role == 1)
             <a href="{{ route('admin.categories.index') }}" 
                class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 {{ request()->routeIs('admin.categories.*') ? 'text-blue-accent bg-blue-accent/10' : 'text-gray-700 hover:text-blue-accent hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10' }}">
                 <div class="p-1.5 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
@@ -268,6 +335,7 @@
                 </div>
                 <span>Categories</span>
             </a>
+            @endif
 
             <a href="{{ route('admin.products.index') }}" 
                class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 {{ request()->routeIs('admin.products.*') ? 'text-sky-blue bg-sky-blue/10' : 'text-gray-700 hover:text-sky-blue hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10' }}">
@@ -279,6 +347,17 @@
                 <span>Products</span>
             </a>
 
+            <a href="{{ route('admin.favorites.index') }}" 
+               class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 {{ request()->routeIs('admin.favorites.*') ? 'text-sky-blue bg-sky-blue/10' : 'text-gray-700 hover:text-sky-blue hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10' }}">
+                <div class="p-1.5 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                </div>
+                <span>Favoris</span>
+            </a>
+
+            @if(auth()->user()->is_admin() || auth()->user()->role == 1)
             <a href="{{ route('admin.users.index') }}" 
                class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 {{ request()->routeIs('admin.users.*') ? 'text-sky-blue bg-sky-blue/10' : 'text-gray-700 hover:text-sky-blue hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10' }}">
                 <div class="p-1.5 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
@@ -298,6 +377,7 @@
                 </div>
                 <span>Team</span>
             </a>
+            @endif
 
             <div class="border-t border-gray-200 my-3"></div>
 

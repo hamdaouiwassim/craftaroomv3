@@ -1,4 +1,4 @@
-<x-admin-layout>
+<x-designer-layout>
 
     @push('head')
         <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -21,11 +21,21 @@
         <div class="bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 overflow-hidden shadow-xl sm:rounded-2xl border border-purple-100 dark:border-gray-700">
             <div class="p-8">
                 <div class="max-w-6xl mx-auto">
-                    @include('admin.inc.messages')
+                    @if(session('success'))
+                        <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                            {{ session('success') }}
+                        </div>
+                    @endif
 
-                    <form action="{{ route('admin.products.store') }}" method="POST" class="mt-4"
+                    @if(session('error'))
+                        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <form action="{{ route('designer.products.store') }}" method="POST" class="mt-4"
                           enctype="multipart/form-data" id="product-form"
-                          data-route-prefix="admin"
+                          data-route-prefix="designer"
                           x-data="productForm()">
                         @csrf
 
@@ -128,19 +138,19 @@
                                     </svg>
                                     État
                                 </label>
-                            <select name="status" id="status"
+                        <select name="status" id="status"
                                     class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
-                                <option value="active">Actif</option>
-                                <option value="inactive">Non actif</option>
-                            </select>
-                            @error('status')
+                            <option value="active">Actif</option>
+                            <option value="inactive">Non actif</option>
+                        </select>
+                        @error('status')
                             <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                 </svg>
                                 {{ $message }}
                             </p>
-                            @enderror
+                        @enderror
                             </div>
                         </div>
 

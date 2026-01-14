@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Middleware\isAdmin;
+use App\Http\Middleware\CanManageProducts;
+use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\IsDesigner;
+use App\Http\Middleware\IsConstructor;
+use App\Http\Middleware\IsCustomer;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,8 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
 
 
-        $middleware->prependToGroup('isAdmin', isAdmin::class);
-        //
+        $middleware->alias([
+            'isAdmin' => isAdmin::class,
+            'canManageProducts' => CanManageProducts::class,
+            'role' => CheckRole::class,
+            'isDesigner' => IsDesigner::class,
+            'isConstructor' => IsConstructor::class,
+            'isCustomer' => IsCustomer::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -126,4 +126,13 @@ class User extends Authenticatable
     public function is_admin(){
         return $this->role === 0;
     }
+
+    /**
+     * Check if user can manage products
+     * Allows Admin (0), Designer (1), and Constructor (3)
+     * Blocks Client (2)
+     */
+    public function canManageProducts(){
+        return in_array($this->role, [0, 1, 3]);
+    }
 }

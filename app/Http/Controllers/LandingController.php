@@ -47,38 +47,49 @@ class LandingController extends Controller
         $query = Product::where('status', 'active')
             ->with(['photos', 'category', 'user', 'rooms', 'metals']);
 
-        // Search functionality
-        if ($request->has('search') && $request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+        // Search functionality (trim to avoid spaces-only queries)
+        $search = trim($request->input('search', ''));
+        if ($search !== '') {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
             });
         }
 
-        // Filter by category
-        if ($request->has('category') && $request->category) {
-            $query->where('category_id', $request->category);
+        // Filter by category (supports main category -> subcategories)
+        $categoryId = $request->input('category');
+        if ($categoryId) {
+            $categoryIds = [$categoryId];
+            $category = Category::with('sub_categories')->find($categoryId);
+            if ($category && $category->sub_categories->count() > 0) {
+                $categoryIds = array_merge($categoryIds, $category->sub_categories->pluck('id')->all());
+            }
+            $query->whereIn('category_id', $categoryIds);
         }
 
         // Filter by price range
-        if ($request->has('min_price') && $request->min_price) {
-            $query->where('price', '>=', $request->min_price);
+        $minPriceFilter = $request->input('min_price', null);
+        $maxPriceFilter = $request->input('max_price', null);
+        if ($minPriceFilter !== null && $minPriceFilter !== '') {
+            $query->where('price', '>=', $minPriceFilter);
         }
-        if ($request->has('max_price') && $request->max_price) {
-            $query->where('price', '<=', $request->max_price);
+        if ($maxPriceFilter !== null && $maxPriceFilter !== '') {
+            $query->where('price', '<=', $maxPriceFilter);
         }
 
         // Filter by rooms
-        if ($request->has('rooms') && is_array($request->rooms) && count($request->rooms) > 0) {
-            $query->whereHas('rooms', function($q) use ($request) {
-                $q->whereIn('rooms.id', $request->rooms);
+        $rooms = $request->input('rooms', []);
+        if (is_array($rooms) && count($rooms) > 0) {
+            $query->whereHas('rooms', function($q) use ($rooms) {
+                $q->whereIn('rooms.id', $rooms);
             });
         }
 
         // Filter by metals
-        if ($request->has('metals') && is_array($request->metals) && count($request->metals) > 0) {
-            $query->whereHas('metals', function($q) use ($request) {
-                $q->whereIn('metals.id', $request->metals);
+        $metals = $request->input('metals', []);
+        if (is_array($metals) && count($metals) > 0) {
+            $query->whereHas('metals', function($q) use ($metals) {
+                $q->whereIn('metals.id', $metals);
             });
         }
 
@@ -99,7 +110,7 @@ class LandingController extends Controller
         $minPrice = Product::where('status', 'active')->min('price');
         $maxPrice = Product::where('status', 'active')->max('price');
 
-        $products = $query->latest()->paginate(12)->withQueryString();
+        $products = $query->latest()->paginate(10)->withQueryString();
 
         return view('products', [
             'products' => $products,

@@ -59,5 +59,20 @@ class FavoriteController extends Controller
             'is_favorite' => $isFavorite
         ]);
     }
+
+    /**
+     * Display all favorites for the authenticated user.
+     *
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function index()
+    {
+        $favorites = Favorite::where('user_id', Auth::id())
+            ->with(['product.photos', 'product.category'])
+            ->latest()
+            ->paginate(12);
+
+        return view('favorites.index', compact('favorites'));
+    }
 }
 

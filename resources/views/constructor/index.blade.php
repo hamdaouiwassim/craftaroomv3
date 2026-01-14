@@ -1,4 +1,4 @@
-<x-main-layout>
+<x-constructor-layout>
     <div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
@@ -72,7 +72,7 @@
                     Actions rapides
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="{{ route('products.index') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <a href="{{ route('constructor.products.index') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
@@ -103,7 +103,7 @@
                             </svg>
                             Produits sauvegardés
                         </h2>
-                        <a href="{{ route('products.index') }}" class="text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1">
+                        <a href="{{ route('constructor.products.index') }}" class="text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1">
                             Voir tout
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -121,7 +121,7 @@
                                     </div>
                                     <h3 class="font-bold text-gray-900 mb-1 truncate">{{ $favorite->product->name }}</h3>
                                     <p class="text-sm text-gray-600 mb-2">{{ $favorite->product->currency }}{{ number_format($favorite->product->price, 2) }}</p>
-                                    <a href="{{ route('products.show', $favorite->product->id) }}" class="text-amber-600 hover:text-amber-700 font-semibold text-sm">
+                                    <a href="{{ route('constructor.products.show', $favorite->product->id) }}" class="text-amber-600 hover:text-amber-700 font-semibold text-sm">
                                         Voir le produit →
                                     </a>
                                 </div>
@@ -136,7 +136,7 @@
                     </svg>
                     <h3 class="text-2xl font-bold text-gray-900 mb-2">Aucun produit sauvegardé</h3>
                     <p class="text-gray-600 mb-6">Commencez à explorer et sauvegarder vos produits préférés</p>
-                    <a href="{{ route('products.index') }}" class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <a href="{{ route('constructor.products.index') }}" class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
@@ -146,5 +146,5 @@
             @endif
         </div>
     </div>
-</x-main-layout>
+</x-constructor-layout>
 

@@ -166,31 +166,38 @@
 
                                     <!-- Menu Items -->
                                     <div class="py-2">
-                                        <a href="{{ route('dashboard') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
-                                            <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
-                                                <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                                </svg>
-                                            </div>
-                                            <span class="font-semibold">Dashboard</span>
-                                        </a>
+                                        @php
+                                            $user = auth()->user();
+                                            $isAdmin = $user->is_admin();
+                                            $isDesigner = $user->role === 1;
+                                            $isConstructor = $user->role === 3;
+                                            $isCustomer = $user->role === 2;
+                                        @endphp
 
-                                        @if(auth()->user()->is_admin())
-                                            <a href="{{ route('admin.products.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
-                                                <div class="p-2 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
-                                                    <svg class="w-5 h-5 text-blue-accent group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        @if($isAdmin)
+                                            <a href="{{ route('dashboard') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Dashboard</span>
+                                            </a>
+                                            <a href="{{ route('admin.products.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                                     </svg>
                                                 </div>
-                                                <span class="font-semibold">Gérer les produits</span>
+                                                <span class="font-semibold">Products</span>
                                             </a>
-                                            <a href="{{ route('admin.categories.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
-                                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
-                                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <a href="{{ route('admin.categories.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
+                                                <div class="p-2 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
+                                                    <svg class="w-5 h-5 text-blue-accent group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                                     </svg>
                                                 </div>
-                                                <span class="font-semibold">Gérer les catégories</span>
+                                                <span class="font-semibold">Categories</span>
                                             </a>
                                             <a href="{{ route('admin.users.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
                                                 <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
@@ -198,20 +205,118 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                                     </svg>
                                                 </div>
-                                                <span class="font-semibold">Gérer les utilisateurs</span>
+                                                <span class="font-semibold">Users</span>
                                             </a>
-                                        @else
-                                            <a href="{{ route('products.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
+                                            <a href="{{ route('admin.team-members.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
                                                 <div class="p-2 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
                                                     <svg class="w-5 h-5 text-blue-accent group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Team</span>
+                                            </a>
+                                            <a href="{{ route('admin.favorites.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Favoris</span>
+                                            </a>
+                                        @elseif($isDesigner)
+                                            <a href="{{ route('designer.dashboard') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-100/50 hover:to-indigo-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-purple-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Dashboard</span>
+                                            </a>
+                                            <a href="{{ route('designer.products.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-100/50 hover:to-indigo-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-purple-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                                     </svg>
                                                 </div>
-                                                <span class="font-semibold">Mes produits</span>
+                                                <span class="font-semibold">Mes Produits</span>
+                                            </a>
+                                            <a href="{{ route('designer.favorites.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-100/50 hover:to-indigo-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-purple-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Favoris</span>
+                                            </a>
+                                        @elseif($isConstructor)
+                                            <a href="{{ route('constructor.dashboard') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-orange-100/50 hover:to-amber-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-orange-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Dashboard</span>
+                                            </a>
+                                            <a href="{{ route('constructor.products.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-orange-100/50 hover:to-amber-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-orange-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Mes Produits</span>
+                                            </a>
+                                            <a href="{{ route('constructor.favorites.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-orange-100/50 hover:to-amber-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-orange-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Favoris</span>
+                                            </a>
+                                        @elseif($isCustomer)
+                                            <a href="{{ route('customer.dashboard') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-emerald-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-green-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Dashboard</span>
+                                            </a>
+                                            <a href="{{ route('customer.orders.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-emerald-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-green-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Mes Commandes</span>
+                                            </a>
+                                            <a href="{{ route('customer.cart') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-emerald-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-green-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Panier</span>
+                                            </a>
+                                            <a href="{{ route('customer.favorites.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-emerald-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-green-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Favoris</span>
                                             </a>
                                         @endif
 
-                                        <a href="{{ route('profile.edit') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-300">
+                                        @if($isAdmin)
+                                            <a href="{{ route('profile.edit') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-300">
+                                        @elseif($isDesigner)
+                                            <a href="{{ route('designer.profile.edit') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-300">
+                                        @elseif($isConstructor)
+                                            <a href="{{ route('constructor.profile.edit') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-300">
+                                        @else
+                                            <a href="{{ route('customer.profile') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-300">
+                                        @endif
                                             <div class="p-2 bg-cyan-100 rounded-lg group-hover:bg-cyan-500 transition-colors">
                                                 <svg class="w-5 h-5 text-cyan-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -363,7 +468,7 @@
                                 <span>Dashboard</span>
                             </a>
 
-                            @if(auth()->user()->is_admin())
+                            @if(auth()->user()->canManageProducts())
                                 <a href="{{ route('admin.products.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-gray-700 hover:text-blue-accent hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
                                     <div class="p-1.5 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
                                         <svg class="w-5 h-5 text-blue-accent group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -372,6 +477,9 @@
                                     </div>
                                     <span>Gérer les produits</span>
                                 </a>
+                            @endif
+                            
+                            @if(auth()->user()->is_admin())
                                 <a href="{{ route('admin.categories.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-gray-700 hover:text-sky-blue hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
                                     <div class="p-1.5 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
                                         <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

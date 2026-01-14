@@ -7,7 +7,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use App\Models\Currency;
 
 class ProfileController extends Controller
 {
@@ -16,14 +18,26 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $currencies = Currency::all(['id','code','symbol']);
+        $languages = [
+            'en' => 'English',
+            'fr' => 'Français',
+            'es' => 'Español',
+            'ar' => 'العربية',
+        ];
+
         if (auth()->user()->is_admin()) {
            return view('admin.profile.edit', [
-            'user' => $request->user(),
-        ]);
+                'user' => $request->user(),
+                'currencies' => $currencies,
+                'languages' => $languages,
+            ]);
         }
         // Use customer profile view for regular users
         return view('customer.profile', [
             'user' => $request->user(),
+            'currencies' => $currencies,
+            'languages' => $languages,
         ]);
     }
 
@@ -32,7 +46,15 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $data = $request->validated();
+
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $data['photoUrl'] = Storage::url($avatarPath);
+        }
+
+        $request->user()->fill($data);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;

@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\CartController;
@@ -9,11 +7,20 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\FavoriteController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+|
+| Routes accessible to all users (including guests)
+|
+*/
+
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/products', [LandingController::class, 'products'])->name('products.index');
 Route::get('/products/{id}', [LandingController::class, 'show'])->name('products.show');
 
-// Cart Routes
+// Cart Routes (public)
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
     Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
@@ -23,6 +30,7 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/count', [CartController::class, 'count'])->name('count');
 });
 
+// Static Pages
 Route::get('/terms', function () {
     return view('terms');
 })->name('terms');
@@ -31,8 +39,21 @@ Route::get('/privacy', function () {
     return view('privacy');
 })->name('privacy');
 
+/*
+|--------------------------------------------------------------------------
+| Dashboard Route (Role-based redirect)
+|--------------------------------------------------------------------------
+|
+| Redirects users to their role-specific dashboard
+|
+*/
+
 Route::get('/dashboard', function () {
-    if (auth()->user()->is_admin()) {
+    $user = auth()->user();
+    
+    // Redirect based on user role
+    if ($user->is_admin()) {
+        // Admin (role 0)
         $stats = [
             'total_products' => \App\Models\Product::count(),
             'active_products' => \App\Models\Product::where('status', 'active')->count(),
@@ -48,56 +69,68 @@ Route::get('/dashboard', function () {
             'recent_users' => \App\Models\User::with('currency')->latest()->take(5)->get(),
         ];
         return view('admin.dashboard', compact('stats'));
+    } elseif ($user->role === 1) {
+        // Designer (role 1)
+        return redirect()->route('designer.dashboard');
+    } elseif ($user->role === 3) {
+        // Constructor (role 3)
+        return redirect()->route('constructor.dashboard');
+    } else {
+        // Customer (role 2) or any other role
+        return redirect()->route('customer.dashboard');
     }
-    // Redirect customers to their dashboard
-    return redirect()->route('customer.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+/*
+|--------------------------------------------------------------------------
+| Role-based Route Files
+|--------------------------------------------------------------------------
+|
+| Routes are separated by role for better organization
+|
+*/
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
-    // Category Management
-    Route::resource('categories', CategoryController::class);
-    // Product Management
-    Route::resource('products', ProductController::class);
-    // Separate file upload endpoints for products
-    Route::post('products/{product}/photos', [ProductController::class, 'uploadPhotos'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('products.upload-photos');
-    Route::post('products/{product}/reel', [ProductController::class, 'uploadReel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('products.upload-reel');
-    Route::post('products/{product}/model', [ProductController::class, 'uploadModel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('products.upload-model');
-    // User Management
-    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
-    // Team Member Management
-    Route::resource('team-members', \App\Http\Controllers\Admin\TeamMemberController::class);
-});
+// Admin Routes
+require __DIR__.'/admin.php';
 
+// Designer Routes
+require __DIR__.'/designer.php';
+
+// Constructor Routes
+require __DIR__.'/constructor.php';
+
+// Customer Routes
+require __DIR__.'/customer.php';
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated User Routes
+|--------------------------------------------------------------------------
+|
+| Routes available to all authenticated users
+|
+*/
 
 Route::middleware('auth')->group(function () {
-
+    // Profile Management (available to all authenticated users)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Customer Routes
-    Route::prefix('customer')->name('customer.')->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\Customer\DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/orders', [\App\Http\Controllers\Customer\OrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/{id}', [\App\Http\Controllers\Customer\OrderController::class, 'show'])->name('orders.show');
-        Route::get('/cart', [CartController::class, 'index'])->name('cart');
-        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
-    });
-    
-    // Keep original routes for backward compatibility
+    // Backward Compatibility Routes
     Route::get('/my-orders', [\App\Http\Controllers\Customer\OrderController::class, 'index'])->name('my-orders');
     Route::get('/my-cart', [CartController::class, 'index'])->name('my-cart');
     Route::get('/my-profile', [ProfileController::class, 'edit'])->name('my-profile');
 
-    // Review Routes
+    // Review Routes (available to all authenticated users)
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 
-    // Favorite Routes
+    // Favorite Routes (available to all authenticated users)
     Route::post('/products/{product}/favorite', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
     Route::get('/products/{product}/favorite/check', [FavoriteController::class, 'check'])->name('favorites.check');
 });
 
+// Authentication Routes
 require __DIR__.'/auth.php';

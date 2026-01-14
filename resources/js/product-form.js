@@ -165,6 +165,9 @@ export function productFormData() {
             }
 
             try {
+                // Get route prefix from form data attribute (needed for file uploads)
+                const routePrefix = form.dataset.routePrefix || 'admin';
+                
                 // Step 1: Create product without files
                 const formData = new FormData(form);
                 
@@ -213,7 +216,7 @@ export function productFormData() {
                             photosFormData.append('photos[]', file);
                         });
 
-                        const photosResponse = await fetch(`/admin/products/${productId}/photos`, {
+                        const photosResponse = await fetch(`/${routePrefix}/products/${productId}/photos`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': csrfToken,
@@ -248,7 +251,7 @@ export function productFormData() {
                         const modelFormData = new FormData();
                         modelFormData.append('folderModel', window.modelDropzone.files[0]);
 
-                        const modelResponse = await fetch(`/admin/products/${productId}/model`, {
+                        const modelResponse = await fetch(`/${routePrefix}/products/${productId}/model`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': csrfToken,
@@ -283,7 +286,7 @@ export function productFormData() {
                         const reelFormData = new FormData();
                         reelFormData.append('reel', window.reelDropzone.files[0]);
 
-                        const reelResponse = await fetch(`/admin/products/${productId}/reel`, {
+                        const reelResponse = await fetch(`/${routePrefix}/products/${productId}/reel`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': csrfToken,
@@ -323,10 +326,10 @@ export function productFormData() {
 
                 // Redirect on success
                 if (uploadErrors.length === 0) {
-                    window.location.href = '/admin/products?success=Product created successfully';
+                    window.location.href = `/${routePrefix}/products?success=Product created successfully`;
                 } else {
                     alert('Produit créé mais certaines erreurs sont survenues:\n' + uploadErrors.join('\n'));
-                    window.location.href = '/admin/products';
+                    window.location.href = `/${routePrefix}/products`;
                 }
             } catch (error) {
                 console.error('Error:', error.message);

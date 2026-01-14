@@ -1,29 +1,40 @@
-<x-admin-layout>
+<x-designer-layout>
     @push('head')
         <meta name="csrf-token" content="{{ csrf_token() }}">
     @endpush
 
     <x-slot name="header">
         <div class="flex items-center gap-3">
-            <div class="p-2 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg">
+            <div class="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
             </div>
-            <h2 class="font-bold text-2xl bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+            <h2 class="font-bold text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                 Modifier le produit: {{ $product->name }}
             </h2>
         </div>
     </x-slot>
 
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-teal-100">
+        <div class="bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-purple-100">
             <div class="p-8">
                 <div class="max-w-6xl mx-auto">
-                    @include('admin.inc.messages')
+                    @if(session('success'))
+                        <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                            {{ session('success') }}
+                        </div>
+                    @endif
 
-                    <form action="{{ route('admin.products.update', $product) }}" method="POST" class="mt-4"
-                          enctype="multipart/form-data" id="product-form">
+                    @if(session('error'))
+                        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <form action="{{ route('designer.products.update', $product) }}" method="POST" class="mt-4"
+                          enctype="multipart/form-data" id="product-form"
+                          data-route-prefix="designer">
                         @csrf
                         @method('PUT')
 
@@ -35,7 +46,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
-                                <h3 class="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">Informations de base</h3>
+                                <h3 class="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">Informations de base</h3>
                             </div>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -427,7 +438,7 @@
 
                         <!-- Action Buttons -->
                         <div class="flex items-center justify-end gap-4 pt-6 border-t border-teal-100">
-                            <a href="{{ route('admin.products.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
+                            <a href="{{ route('designer.products.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
                                 Annuler
                             </a>
                             <button type="submit" class="px-8 py-3 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 text-white rounded-xl font-bold hover:from-teal-600 hover:via-cyan-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
@@ -679,15 +690,16 @@
 
                             const productId = {{ $product->id }};
                             const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                            const routePrefix = form.dataset.routePrefix || 'admin';
 
-                            console.log('Uploading reel to:', `/admin/products/${productId}/reel`);
+                            console.log('Uploading reel to:', `/${routePrefix}/products/${productId}/reel`);
                             console.log('Reel file details:', {
                                 name: reelFile.name,
                                 size: reelFile.size,
                                 type: reelFile.type
                             });
 
-                            const reelResponse = await fetch(`/admin/products/${productId}/reel`, {
+                            const reelResponse = await fetch(`/${routePrefix}/products/${productId}/reel`, {
                                 method: 'POST',
                                 headers: {
                                     'X-CSRF-TOKEN': csrfToken,
@@ -888,7 +900,7 @@
                     
                     // Show alert and then redirect
                     alert(alertMessage);
-                    window.location.href = '{{ route("admin.products.index") }}?success=Product updated successfully';
+                    window.location.href = '{{ route("designer.products.index") }}?success=Product updated successfully';
                 } catch (error) {
                     console.error('Form submission error:', error);
                     console.error('Error stack:', error.stack);

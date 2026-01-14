@@ -16,6 +16,62 @@ use Illuminate\Http\Request;
 class ProductController extends Controller
 {
     /**
+     * Check if user can access/modify this product
+     * Admins can access all products
+     * Designers and Constructors can only access their own products
+     */
+    private function canAccessProduct(Product $product)
+    {
+        $user = auth()->user();
+        
+        // Admins can access all products
+        if ($user->is_admin()) {
+            return true;
+        }
+        
+        // Designers and Constructors can only access their own products
+        return $product->user_id === $user->id;
+    }
+
+    /**
+     * Get the view prefix based on user role
+     * Returns: 'admin', 'designer', 'constructor', or 'customer'
+     */
+    private function getViewPrefix()
+    {
+        $user = auth()->user();
+        
+        if ($user->is_admin()) {
+            return 'admin';
+        } elseif ($user->role === 1) {
+            return 'designer';
+        } elseif ($user->role === 3) {
+            return 'constructor';
+        } else {
+            return 'customer';
+        }
+    }
+
+    /**
+     * Get the route prefix for redirects based on user role
+     * Returns: 'admin', 'designer', 'constructor', or 'customer'
+     */
+    private function getRoutePrefix()
+    {
+        $user = auth()->user();
+        
+        if ($user->is_admin()) {
+            return 'admin';
+        } elseif ($user->role === 1) {
+            return 'designer';
+        } elseif ($user->role === 3) {
+            return 'constructor';
+        } else {
+            return 'customer';
+        }
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -23,6 +79,11 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::query();
+
+        // Filter by user for non-admin users (Designers and Constructors)
+        if (!auth()->user()->is_admin()) {
+            $query->where('user_id', auth()->id());
+        }
 
         // Search functionality
         if ($request->has('search') && $request->search) {
@@ -42,7 +103,12 @@ class ProductController extends Controller
         }
 
         $products = $query->with(['photos', 'category', 'user'])->latest()->paginate(15);
-        return view('admin.products.index', ["products" => $products]);
+        $viewPrefix = $this->getViewPrefix();
+        $routePrefix = $this->getRoutePrefix();
+        return view("{$viewPrefix}.products.index", [
+            "products" => $products,
+            "routePrefix" => $routePrefix
+        ]);
     }
 
     /**
@@ -52,13 +118,16 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //
         $categories = Category::whereType("main")->get();
-        return view('admin.products.create',[
+        $viewPrefix = $this->getViewPrefix();
+        $routePrefix = $this->getRoutePrefix();
+        
+        return view("{$viewPrefix}.products.create", [
             'categories' => $categories,
-            'rooms'=>Room::all() ,
-            'metals'=>Metal::all(),
-            'currencies'=> Currency::orderBy('name', 'asc')->get()
+            'rooms' => Room::all(),
+            'metals' => Metal::all(),
+            'currencies' => Currency::orderBy('name', 'asc')->get(),
+            'routePrefix' => $routePrefix
              ]);
     }
 
@@ -156,13 +225,13 @@ class ProductController extends Controller
                 $inputs['size'] = 'N/A';
             }
             
-            $product = Product::create($inputs);
+        $product = Product::create($inputs);
 
-            foreach($request->rooms as $room){
-                $product->rooms()->attach($room);
-            }
-            foreach($request->metals as $metal){
-                $product->metals()->attach($metal);
+        foreach($request->rooms as $room){
+            $product->rooms()->attach($room);
+        }
+        foreach($request->metals as $metal){
+            $product->metals()->attach($metal);
             }
             $measure->product_id = $product->id;
             $measure->save();
@@ -185,7 +254,8 @@ class ProductController extends Controller
             }
             
             // Traditional form submission - redirect
-            return redirect('/admin/products')->with('success','Product added successfully ...');
+            $routePrefix = $this->getRoutePrefix();
+            return redirect()->route("{$routePrefix}.products.index")->with('success','Product added successfully ...');
 
 
         //return redirect()->back()->with('success','Added successfully ...');
@@ -218,6 +288,11 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            abort(403, 'Unauthorized action. You can only view your own products.');
+        }
+
         $product->load([
             'photos', 
             'threedmodels', 
@@ -229,8 +304,11 @@ class ProductController extends Controller
             'measure.weight'
         ]);
         
-        return view('admin.products.show', [
-            'product' => $product
+        $viewPrefix = $this->getViewPrefix();
+        $routePrefix = $this->getRoutePrefix();
+        return view("{$viewPrefix}.products.show", [
+            'product' => $product,
+            'routePrefix' => $routePrefix
         ]);
     }
 
@@ -242,15 +320,23 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            abort(403, 'Unauthorized action. You can only edit your own products.');
+        }
+
         $product->load(['photos', 'threedmodels', 'rooms', 'metals', 'category', 'measure.dimension', 'measure.weight']);
         $categories = Category::whereType("main")->get();
+        $viewPrefix = $this->getViewPrefix();
+        $routePrefix = $this->getRoutePrefix();
         
-        return view('admin.products.edit', [
+        return view("{$viewPrefix}.products.edit", [
             'product' => $product,
             'rooms' => Room::all(),
             'metals' => Metal::all(),
             'categories' => $categories,
-            'currencies' => Currency::orderBy('name', 'asc')->get()
+            'currencies' => Currency::orderBy('name', 'asc')->get(),
+            'routePrefix' => $routePrefix
         ]);
     }
 
@@ -263,6 +349,17 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized action. You can only update your own products.'
+                ], 403);
+            }
+            abort(403, 'Unauthorized action. You can only update your own products.');
+        }
+
         try {
             $validated = $request->validate([
                 'name' => 'required|max:255',
@@ -278,9 +375,16 @@ class ProductController extends Controller
                 'metals.*' => 'exists:metals,id',
                 'currency' => 'required|string',
                 'status' => 'required|in:active,inactive',
-                'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:102400',
+                'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt,avi,wmv,flv,webm|max:204800',
                 'folderModel' => 'nullable|file|mimes:zip|max:51200',
-                'delete_3d_model' => 'nullable|boolean',
+                // Measure fields
+                'length' => 'nullable|numeric',
+                'height' => 'nullable|numeric',
+                'width' => 'nullable|numeric',
+                'unit' => 'nullable|in:CM,FT,INCH',
+                'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
+                'weight_value' => 'nullable|numeric',
+                'weight_unit' => 'nullable|in:KG,LB',
             ]);
 
             // Update basic product fields
@@ -291,6 +395,7 @@ class ProductController extends Controller
             $product->description = $validated['description'];
             $product->currency = $validated['currency'];
             $product->status = $validated['status'];
+            $product->save();
 
             // Update rooms
             if ($request->has('rooms')) {
@@ -302,12 +407,78 @@ class ProductController extends Controller
                 $product->metals()->sync($request->metals);
             }
 
+            // Update or create measure
+            $measure = $product->measure;
+            if (!$measure) {
+                $measure = new Measure();
+                $measure->product_id = $product->id;
+            }
+
+            // Update measure size if provided
+            if ($request->has('measure_size') && !empty($request->measure_size)) {
+                $measure->size = $request->measure_size;
+                $measure->save();
+            }
+
+            // Update dimension if provided
+            if ($request->has('length') && !empty($request->length)) {
+                $dimension = $measure->dimension;
+                if (!$dimension) {
+                    $dimension = new Dimension();
+                    $dimension->measure_id = $measure->id;
+                }
+                $dimension->length = $request->length;
+                $dimension->height = $request->height;
+                $dimension->width = $request->width;
+                $dimension->unit = $request->unit;
+                $dimension->save();
+            }
+
+            // Update weight if provided
+            if ($request->has('weight_value') && !empty($request->weight_value)) {
+                $weight = $measure->weight;
+                if (!$weight) {
+                    $weight = new Weight();
+                    $weight->measure_id = $measure->id;
+                }
+                $weight->weight_value = $request->weight_value;
+                $weight->weight_unit = $request->weight_unit;
+                $weight->save();
+            }
+
+            // Note: 3D model deletion is handled automatically in uploadModel() method
+            // when a new model is uploaded via the separate endpoint
+
             // Don't handle file uploads here - they should be done via separate endpoints
             // Files are now optional in update to prevent PostTooLargeException
 
-            return redirect()->route('admin.products.index')
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product updated successfully.'
+                ]);
+            }
+
+            $routePrefix = $this->getRoutePrefix();
+            return redirect()->route("{$routePrefix}.products.index")
                 ->with('success', 'Produit mis à jour avec succès.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating product: ' . $e->getMessage()
+                ], 500);
+            }
             return redirect()->back()
                 ->with('error', 'Problème lors de la mise à jour du produit: ' . $e->getMessage())
                 ->withInput();
@@ -323,6 +494,14 @@ class ProductController extends Controller
      */
     public function uploadPhotos(Request $request, Product $product)
     {
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action. You can only upload photos to your own products.'
+            ], 403);
+        }
+
         try {
             $validated = $request->validate([
                 'photos' => 'required|array',
@@ -373,6 +552,14 @@ class ProductController extends Controller
      */
     public function uploadReel(Request $request, Product $product)
     {
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action. You can only upload reels to your own products.'
+            ], 403);
+        }
+
         try {
             // Log request details for debugging
             \Log::info('Reel upload request', [
@@ -504,6 +691,14 @@ class ProductController extends Controller
      */
     public function uploadModel(Request $request, Product $product)
     {
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action. You can only upload 3D models to your own products.'
+            ], 403);
+        }
+
         try {
             $validated = $request->validate([
                 'folderModel' => 'required|file|mimes:zip|max:51200',
@@ -565,7 +760,11 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        //
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            abort(403, 'Unauthorized action. You can only delete your own products.');
+        }
+
         try{
                 $product->delete();
                 return redirect()->back()->with('success','Product'.$product->name." deleted successfully ...");

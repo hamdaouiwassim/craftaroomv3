@@ -7,35 +7,25 @@ use Illuminate\Http\Request;
 class DesignerController extends Controller
 {
     /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
-    /**
      * Show the application dashboard.
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function dashboard()
     {
-   
-
-    return view('designer.index');
-
+        return view('designer.index');
     }
+
     /**
-     * Show the application dashboard.
+     * Display the designer's profile form.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function products()
+    public function profile(Request $request)
     {
-   
-            return view('designer.products.index');
+        return view('designer.profile', [
+            'user' => $request->user(),
+        ]);
     }
 }
