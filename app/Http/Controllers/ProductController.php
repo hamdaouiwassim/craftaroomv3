@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Concept;
 use App\Models\Currency;
 use App\Models\Room;
 use App\Models\Media;
@@ -113,22 +114,33 @@ class ProductController extends Controller
 
     /**
      * Show the form for creating a new resource.
+     * For constructor: optional concept_id pre-fills the form from that concept.
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
         $categories = Category::whereType("main")->get();
         $viewPrefix = $this->getViewPrefix();
         $routePrefix = $this->getRoutePrefix();
-        
+
+        $concept = null;
+        if ($routePrefix === 'constructor' && $request->filled('concept_id')) {
+            $concept = Concept::with([
+                'category', 'rooms', 'metals',
+                'measure.dimension', 'measure.weight',
+                'photos', 'threedmodels',
+            ])->find($request->get('concept_id'));
+        }
+
         return view("{$viewPrefix}.products.create", [
             'categories' => $categories,
             'rooms' => Room::all(),
             'metals' => Metal::all(),
             'currencies' => Currency::orderBy('name', 'asc')->get(),
-            'routePrefix' => $routePrefix
-             ]);
+            'routePrefix' => $routePrefix,
+            'concept' => $concept,
+        ]);
     }
 
     /**
@@ -219,6 +231,8 @@ class ProductController extends Controller
             
             // Don't include file uploads in initial creation
             unset($inputs['reel'], $inputs['folderModel'], $inputs['photos']);
+            $conceptId = $request->filled('concept_id') ? (int) $request->concept_id : null;
+            unset($inputs['concept_id']);
             
             // Set default size if not provided (since we removed it from the form)
             if (!isset($inputs['size']) || empty($inputs['size'])) {
@@ -243,6 +257,32 @@ class ProductController extends Controller
             if ($weight) {
                 $weight->measure_id =  $measure->id;
                 $weight->save();}
+
+            // Constructor creating from concept: if no new files will be uploaded (handled by JS), copy concept media to product so dropzone-empty = use concept media
+            if ($conceptId && $this->getRoutePrefix() === 'constructor') {
+                $concept = Concept::with(['photos', 'threedmodels'])->find($conceptId);
+                if ($concept) {
+                    foreach ($concept->photos as $photo) {
+                        Media::create([
+                            'name' => $photo->name,
+                            'url' => $photo->url,
+                            'type' => 'product',
+                            'attachment_id' => $product->id,
+                        ]);
+                    }
+                    if ($concept->threedmodels) {
+                        Media::create([
+                            'name' => $concept->threedmodels->name,
+                            'url' => $concept->threedmodels->url,
+                            'type' => 'threedmodel',
+                            'attachment_id' => $product->id,
+                        ]);
+                    }
+                    if (!empty($concept->reel)) {
+                        $product->update(['reel' => $concept->reel]);
+                    }
+                }
+            }
 
             // Return product ID for file uploads (AJAX request)
             if ($request->expectsJson() || $request->wantsJson()) {

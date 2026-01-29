@@ -20,6 +20,9 @@ Route::prefix('constructor')->name('constructor.')->middleware(['auth', 'isConst
     // Profile
     Route::get('/profile', [\App\Http\Controllers\ConstructorController::class, 'profile'])->name('profile.edit');
     
+    // Select concept (designer or library) then create product from it
+    Route::get('/concepts/select', [\App\Http\Controllers\ConstructorController::class, 'selectConcepts'])->name('concepts.select');
+
     // Product Management Routes - Specific routes must come before parameterized routes
     Route::get('/products', [\App\Http\Controllers\ConstructorController::class, 'products'])->name('products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');

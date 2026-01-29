@@ -1,6 +1,6 @@
 <x-constructor-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between" x-data="{ addProductModalOpen: false }" @open-add-product-modal.window="addProductModalOpen = true">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11,12 +11,59 @@
                     Mes Produits
                 </h2>
             </div>
-            <a href="{{ route('constructor.products.create') }}" class="flex items-center gap-2 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-bold hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+            <button type="button" @click="addProductModalOpen = true" class="flex items-center gap-2 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-bold hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 Nouveau Produit
-            </a>
+            </button>
+
+            <!-- Add Product Modal: 3 options -->
+            <template x-teleport="body">
+                <div x-show="addProductModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-modal="true" role="dialog">
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <div x-show="addProductModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-black/50" @click="addProductModalOpen = false"></div>
+                        <div x-show="addProductModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full p-6 border border-orange-100">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Ajouter un produit</h3>
+                                <button type="button" @click="addProductModalOpen = false" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 mb-6">Choisissez comment créer votre produit :</p>
+                            <div class="grid gap-4 sm:grid-cols-1">
+                                <a href="{{ route('constructor.products.create') }}" class="flex items-center gap-4 p-4 rounded-xl border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
+                                    <div class="p-3 bg-orange-100 rounded-xl group-hover:bg-orange-200 transition-colors">
+                                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-gray-900 dark:text-white">Produit vide</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Créer un produit vide en remplissant le formulaire.</p>
+                                    </div>
+                                </a>
+                                <a href="{{ route('constructor.concepts.select', ['source' => 'designer']) }}" class="flex items-center gap-4 p-4 rounded-xl border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
+                                    <div class="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors">
+                                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-gray-900 dark:text-white">À partir d’un concept designer</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Choisir un concept créé par un designer et pré-remplir le formulaire (modifiable).</p>
+                                    </div>
+                                </a>
+                                <a href="{{ route('constructor.concepts.select', ['source' => 'library']) }}" class="flex items-center gap-4 p-4 rounded-xl border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
+                                    <div class="p-3 bg-teal-100 rounded-xl group-hover:bg-teal-200 transition-colors">
+                                        <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-gray-900 dark:text-white">À partir de la bibliothèque</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Choisir un concept de la bibliothèque (ajouté par l’administration) et pré-remplir le formulaire.</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
     </x-slot>
 
@@ -195,7 +242,7 @@
                                     Vous n'avez pas encore créé de produit.
                                 @endif
                             </p>
-                            <a href="{{ route('constructor.products.create') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-bold hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            <a href="#" onclick="window.dispatchEvent(new CustomEvent('open-add-product-modal')); return false;" class="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-bold hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>

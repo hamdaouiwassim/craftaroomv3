@@ -15,8 +15,31 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
+    // Library concepts (for constructors: "from library" option)
+    Route::get('library-concepts', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'index'])->name('library-concepts.index');
+    Route::get('library-concepts/create', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'create'])->name('library-concepts.create');
+    Route::post('library-concepts', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'store'])->name('library-concepts.store');
+    Route::get('library-concepts/{library_concept}', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'show'])->name('library-concepts.show');
+    Route::get('library-concepts/{library_concept}/edit', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'edit'])->name('library-concepts.edit');
+    Route::put('library-concepts/{library_concept}', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'update'])->name('library-concepts.update');
+    Route::get('library-concepts/{library_concept}/customize', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'customize'])->name('library-concepts.customize');
+    Route::post('library-concepts/{library_concept}/customize', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'saveCustomize'])->name('library-concepts.save-customize');
+    Route::delete('library-concepts/{library_concept}', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'destroy'])->name('library-concepts.destroy');
+    Route::post('library-concepts/{library_concept}/photos', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'uploadPhotos'])->name('library-concepts.upload-photos');
+    Route::post('library-concepts/{library_concept}/reel', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'uploadReel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('library-concepts.upload-reel');
+    Route::post('library-concepts/{library_concept}/model', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'uploadModel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('library-concepts.upload-model');
+
     // Category Management
     Route::resource('categories', CategoryController::class);
+    
+    // Metal Management
+    Route::resource('metals', \App\Http\Controllers\Admin\MetalController::class);
+    Route::prefix('metals/{metal}')->name('metals.options.')->group(function () {
+        Route::post('options', [\App\Http\Controllers\Admin\MetalOptionController::class, 'store'])->name('store');
+        Route::get('options/{option}/edit', [\App\Http\Controllers\Admin\MetalOptionController::class, 'edit'])->name('edit');
+        Route::put('options/{option}', [\App\Http\Controllers\Admin\MetalOptionController::class, 'update'])->name('update');
+        Route::delete('options/{option}', [\App\Http\Controllers\Admin\MetalOptionController::class, 'destroy'])->name('destroy');
+    });
     
     // User Management
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);

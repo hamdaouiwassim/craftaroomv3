@@ -10,9 +10,23 @@ class Metal extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'ref',
+        'name',
+        'image_url',
+        'photoUrl_id',
+    ];
 
-       /**
-     * The users that belong to the role.
+    /**
+     * Sub options for this metal.
+     */
+    public function metalOptions()
+    {
+        return $this->hasMany(MetalOption::class);
+    }
+
+    /**
+     * Products linked to this metal.
      */
     public function products(): BelongsToMany
     {

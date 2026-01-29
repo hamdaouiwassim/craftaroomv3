@@ -78,6 +78,10 @@ export function productFormData() {
                 }
             }
             if (step === 3) {
+                const hasConcept = document.querySelector('input[name="concept_id"]')?.value?.trim() !== '';
+                if (hasConcept) {
+                    return true;
+                }
                 const photos = window.photosDropzone?.files.length || 0;
                 const model = window.modelDropzone?.files.length || 0;
                 if (photos === 0 || model === 0) {

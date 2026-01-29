@@ -2,11 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Concept;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ConstructorController extends Controller
 {
+    /**
+     * List concepts by source (designer or library) so constructor can pick one to create a product.
+     */
+    public function selectConcepts(Request $request)
+    {
+        $source = $request->get('source', 'designer');
+        if (!in_array($source, ['designer', 'library'], true)) {
+            $source = 'designer';
+        }
+
+        $concepts = Concept::where('source', $source)
+            ->where('status', 'active')
+            ->with(['category', 'photos', 'rooms', 'metals'])
+            ->latest()
+            ->paginate(12);
+
+        return view('constructor.concepts.select', [
+            'concepts' => $concepts,
+            'source' => $source,
+        ]);
+    }
     /**
      * Show the application dashboard.
      *

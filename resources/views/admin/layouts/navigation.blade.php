@@ -33,7 +33,6 @@
                         @endif
                     </a>
                     
-                    @if(auth()->user()->is_admin() || auth()->user()->role == 1)
                     <a href="{{ route('admin.categories.index') }}" 
                        class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.categories.*') ? 'text-blue-accent bg-blue-accent/10' : 'text-gray-700 hover:text-blue-accent hover:bg-blue-accent/10' }}">
                         <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,7 +45,32 @@
                             <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-accent to-sky-blue group-hover:w-full transition-all duration-300"></span>
                         @endif
                     </a>
-                    @endif
+
+                    <a href="{{ route('admin.metals.index') }}" 
+                       class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.metals.*') ? 'text-blue-accent bg-blue-accent/10' : 'text-gray-700 hover:text-blue-accent hover:bg-blue-accent/10' }}">
+                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h4l1-2h8l1 2h4v11H3z" />
+                        </svg>
+                        <span>Metals</span>
+                        @if(request()->routeIs('admin.metals.*'))
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-accent to-sky-blue"></span>
+                        @else
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-accent to-sky-blue group-hover:w-full transition-all duration-300"></span>
+                        @endif
+                    </a>
+
+                    <a href="{{ route('admin.library-concepts.index') }}" 
+                       class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.library-concepts.*') ? 'text-teal-600 bg-teal-50' : 'text-gray-700 hover:text-teal-600 hover:bg-teal-50' }}">
+                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        <span>Bibliothèque concepts</span>
+                        @if(request()->routeIs('admin.library-concepts.*'))
+                            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-teal-500"></span>
+                        @else
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-500 group-hover:w-full transition-all duration-300"></span>
+                        @endif
+                    </a>
                     
                     <a href="{{ route('admin.products.index') }}" 
                        class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('admin.products.*') ? 'text-sky-blue bg-sky-blue/10' : 'text-gray-700 hover:text-sky-blue hover:bg-sky-blue/10' }}">

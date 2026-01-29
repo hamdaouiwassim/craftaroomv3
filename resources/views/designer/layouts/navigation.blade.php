@@ -33,13 +33,13 @@
                         @endif
                     </a>
                     
-                    <a href="{{ route('designer.products.index') }}" 
-                       class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('designer.products.*') ? 'text-purple-600 bg-purple-100/50' : 'text-gray-700 hover:text-purple-600 hover:bg-purple-100/30' }}">
+                    <a href="{{ route('designer.concepts.index') }}" 
+                       class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 relative {{ request()->routeIs('designer.concepts.*') ? 'text-purple-600 bg-purple-100/50' : 'text-gray-700 hover:text-purple-600 hover:bg-purple-100/30' }}">
                         <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <span>Mes Produits</span>
-                        @if(request()->routeIs('designer.products.*'))
+                        <span>Mes Concepts</span>
+                        @if(request()->routeIs('designer.concepts.*'))
                             <span class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500"></span>
                         @else
                             <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 group-hover:w-full transition-all duration-300"></span>
@@ -140,15 +140,6 @@
                                 <span class="font-semibold">Dashboard</span>
                             </a>
 
-                            <a href="{{ route('designer.products.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-100/50 hover:to-indigo-100/50 transition-all duration-300">
-                                <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-500 transition-colors">
-                                    <svg class="w-5 h-5 text-purple-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                </div>
-                                <span class="font-semibold">Mes Produits</span>
-                            </a>
-
                             <a href="{{ route('designer.favorites.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-100/50 hover:to-indigo-100/50 transition-all duration-300">
                                 <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-500 transition-colors">
                                     <svg class="w-5 h-5 text-purple-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,16 +238,6 @@
                     </svg>
                 </div>
                 <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('designer.products.index') }}" 
-               class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 {{ request()->routeIs('designer.products.*') ? 'text-purple-600 bg-purple-100/50' : 'text-gray-700 hover:text-purple-600 hover:bg-gradient-to-r hover:from-purple-100/50 hover:to-indigo-100/50' }}">
-                <div class="p-1.5 bg-purple-100 rounded-lg group-hover:bg-purple-500 transition-colors">
-                    <svg class="w-5 h-5 text-purple-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                </div>
-                <span>Mes Produits</span>
             </a>
 
             <a href="{{ route('designer.favorites.index') }}" 
