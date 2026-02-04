@@ -32,4 +32,12 @@ class Metal extends Model
     {
         return $this->belongsToMany(Product::class);
     }
+
+    /**
+     * Concepts linked to this metal.
+     */
+    public function concepts(): BelongsToMany
+    {
+        return $this->belongsToMany(Concept::class);
+    }
 }

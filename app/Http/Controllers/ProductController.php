@@ -113,8 +113,31 @@ class ProductController extends Controller
     }
 
     /**
+     * List concepts by source (designer or library) so admin/constructor can pick one to create a product.
+     */
+    public function selectConcepts(Request $request)
+    {
+        $source = $request->get('source', 'designer');
+        if (!in_array($source, ['designer', 'library'], true)) {
+            $source = 'designer';
+        }
+
+        $concepts = Concept::where('source', $source)
+            ->where('status', 'active')
+            ->with(['category', 'photos', 'rooms', 'metals'])
+            ->latest()
+            ->paginate(12);
+
+        $viewPrefix = $this->getViewPrefix();
+        return view("{$viewPrefix}.concepts.select", [
+            'concepts' => $concepts,
+            'source' => $source,
+        ]);
+    }
+
+    /**
      * Show the form for creating a new resource.
-     * For constructor: optional concept_id pre-fills the form from that concept.
+     * For admin/constructor: optional concept_id pre-fills the form from that concept.
      *
      * @return \Illuminate\Http\Response
      */
@@ -125,7 +148,7 @@ class ProductController extends Controller
         $routePrefix = $this->getRoutePrefix();
 
         $concept = null;
-        if ($routePrefix === 'constructor' && $request->filled('concept_id')) {
+        if (in_array($routePrefix, ['admin', 'constructor']) && $request->filled('concept_id')) {
             $concept = Concept::with([
                 'category', 'rooms', 'metals',
                 'measure.dimension', 'measure.weight',

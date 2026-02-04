@@ -30,8 +30,9 @@
                     </div>
                     <div class="hidden md:flex items-center space-x-8">
                         <a href="/" class="text-gray-700 hover:text-gray-900 font-medium">Home</a>
-                        <a href="#products" class="text-gray-700 hover:text-gray-900 font-medium">Products</a>
-                        <a href="#about" class="text-gray-700 hover:text-gray-900 font-medium">About</a>
+                        <a href="/#products" class="text-gray-700 hover:text-gray-900 font-medium">Products</a>
+                        <a href="/concepts" class="text-gray-700 hover:text-gray-900 font-medium">Concepts</a>
+                        <a href="/#about" class="text-gray-700 hover:text-gray-900 font-medium">About</a>
                         @auth
                             <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-gray-900 font-medium">Dashboard</a>
                         @else

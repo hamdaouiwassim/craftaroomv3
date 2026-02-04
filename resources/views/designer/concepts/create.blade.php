@@ -35,6 +35,21 @@
                           @submit.prevent="currentStep === totalSteps && submitForm()">
                         @csrf
 
+                        <!-- In-view validation / error message -->
+                        <div x-show="errorMessage" x-cloak
+                             class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p x-text="errorMessage"></p>
+                                <a x-show="uploadErrorRedirectUrl" :href="uploadErrorRedirectUrl"
+                                   class="inline-block mt-2 text-sm font-semibold underline hover:no-underline">
+                                    Continuer vers la personnalisation
+                                </a>
+                            </div>
+                            <button type="button" @click="errorMessage = ''; uploadErrorRedirectUrl = ''" class="flex-shrink-0 p-1 rounded hover:bg-red-200 transition-colors" aria-label="Fermer">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+
                         <!-- Stepper progress -->
                         <div class="mb-10">
                             <div class="flex items-center justify-between mb-4">
@@ -138,6 +153,7 @@
                                         <p class="text-xs text-gray-500 mt-1">JPG, PNG jusqu'à 5MB (max 10 fichiers)</p>
                                     </div>
                                 </div>
+                                <p x-show="photosError" x-cloak x-text="photosError" class="mt-2 text-sm text-red-600"></p>
                             </div>
                             <div class="bg-white/60 rounded-xl p-5 border border-teal-100">
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">Modèle 3D (ZIP)</label>
@@ -147,6 +163,7 @@
                                         <p class="text-xs text-gray-500 mt-1">Fichier ZIP jusqu'à 50MB</p>
                                     </div>
                                 </div>
+                                <p x-show="modelError" x-cloak x-text="modelError" class="mt-2 text-sm text-red-600"></p>
                             </div>
                             <div class="bg-white/60 rounded-xl p-5 border border-teal-100">
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">Reel (Vidéo) <span class="text-gray-500 font-normal">(Optionnel)</span></label>
@@ -211,7 +228,7 @@
                         </div>
 
                         <!-- Step 5: Review -->
-                        <div x-show="currentStep === 5" x-init="$watch('currentStep', value => { if (value === 5) updateReview(); })" class="space-y-6">
+                        <div x-show="currentStep === 5" x-cloak class="space-y-6">
                             <h3 class="text-xl font-bold text-green-600">Vérification</h3>
                             <div class="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-6">
                                 <p class="text-sm font-semibold text-green-800">Vérifiez les informations avant de créer le concept.</p>

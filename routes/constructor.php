@@ -23,6 +23,12 @@ Route::prefix('constructor')->name('constructor.')->middleware(['auth', 'isConst
     // Select concept (designer or library) then create product from it
     Route::get('/concepts/select', [\App\Http\Controllers\ConstructorController::class, 'selectConcepts'])->name('concepts.select');
 
+    // Construction Requests
+    Route::get('/construction-requests', [\App\Http\Controllers\ConstructionRequestController::class, 'index'])->name('construction-requests.index');
+    Route::get('/construction-requests/{id}', [\App\Http\Controllers\ConstructionRequestController::class, 'show'])->name('construction-requests.show');
+    Route::post('/construction-requests/{id}/status', [\App\Http\Controllers\ConstructionRequestController::class, 'updateStatus'])->name('construction-requests.update-status');
+    Route::post('/construction-requests/{id}/offer', [\App\Http\Controllers\ConstructionRequestController::class, 'submitOffer'])->name('construction-requests.submit-offer');
+
     // Product Management Routes - Specific routes must come before parameterized routes
     Route::get('/products', [\App\Http\Controllers\ConstructorController::class, 'products'])->name('products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');

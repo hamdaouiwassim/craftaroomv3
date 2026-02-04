@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
             uploadMultiple: true,
             parallelUploads: 10,
             maxFiles: 10,
-            acceptedFiles: 'image/*',
+            acceptedFiles: 'image/*,.webp',
             addRemoveLinks: true,
             dictDefaultMessage: 'Glissez-déposez vos photos ici ou cliquez pour sélectionner',
             dictRemoveFile: 'Supprimer',

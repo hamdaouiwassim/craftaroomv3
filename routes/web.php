@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/products', [LandingController::class, 'products'])->name('products.index');
 Route::get('/products/{id}', [LandingController::class, 'show'])->name('products.show');
+Route::get('/concepts', [LandingController::class, 'concepts'])->name('concepts.index');
+Route::get('/concepts/{id}', [LandingController::class, 'showConcept'])->name('concepts.show');
+
+// Construction Requests (authenticated users)
+Route::middleware('auth')->group(function () {
+    Route::post('/concepts/{concept}/request-construction', [\App\Http\Controllers\ConstructionRequestController::class, 'store'])->name('construction-requests.store');
+});
 
 // Cart Routes (public)
 Route::prefix('cart')->name('cart.')->group(function () {

@@ -17,11 +17,19 @@ class Room extends Model
 
 
     /**
-     * The users that belong to the role.
+     * The products that belong to the room.
      */
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);
+    }
+
+    /**
+     * The concepts that belong to the room.
+     */
+    public function concepts(): BelongsToMany
+    {
+        return $this->belongsToMany(Concept::class);
     }
 
 }

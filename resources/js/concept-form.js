@@ -1,29 +1,33 @@
 /**
  * Concept Form Stepper Logic
- * Multi-step form for designer concepts (no price/currency).
- * Create: 5 steps (Informations, Détails, Médias, Mesures, Vérification).
- * Edit: 4 steps (no Médias).
+ * Multi-step form for designer/admin concepts (no price/currency).
+ * Create and Edit: 5 steps (Informations, Détails, Médias, Mesures, Vérification).
  */
 
 export function conceptFormData() {
-    const isEdit = typeof document !== 'undefined' && document.querySelector('input[name="_method"][value="PUT"]');
-    const totalSteps = isEdit ? 4 : 5;
-    const stepLabels = isEdit
-        ? { 1: 'Informations', 2: 'Détails', 3: 'Mesures', 4: 'Vérification' }
-        : { 1: 'Informations', 2: 'Détails', 3: 'Médias', 4: 'Mesures', 5: 'Vérification' };
+    const totalSteps = 5;
+    const stepLabels = { 1: 'Informations', 2: 'Détails', 3: 'Médias', 4: 'Mesures', 5: 'Vérification' };
 
     return {
         currentStep: 1,
         totalSteps,
         stepLabels,
+        errorMessage: '',
+        uploadErrorRedirectUrl: '',
+        photosError: '',
+        modelError: '',
         get steps() {
             return Array.from({ length: this.totalSteps }, (_, i) => i + 1);
         },
         nextStep() {
+            this.errorMessage = '';
+            this.photosError = '';
+            this.modelError = '';
             if (this.validateStep(this.currentStep)) {
                 if (this.currentStep < this.totalSteps) {
                     this.currentStep++;
                     if (this.currentStep === 2 && window.initSelect2) setTimeout(() => window.initSelect2(), 200);
+                    if (this.currentStep === 5 && typeof this.updateReview === 'function') this.updateReview();
                 }
             }
         },
@@ -35,7 +39,7 @@ export function conceptFormData() {
                 const name = document.getElementById('name')?.value?.trim();
                 const category = document.getElementById('category_id')?.value;
                 if (!name || !category) {
-                    alert('Veuillez remplir le nom et la catégorie.');
+                    this.errorMessage = 'Veuillez remplir le nom et la catégorie.';
                     return false;
                 }
             }
@@ -46,22 +50,14 @@ export function conceptFormData() {
                 const rooms = roomsSelect ? Array.from(roomsSelect.selectedOptions).map(o => o.value) : [];
                 const metals = metalsSelect ? Array.from(metalsSelect.selectedOptions).map(o => o.value) : [];
                 if (!description || rooms.length === 0 || metals.length === 0) {
-                    alert('Veuillez remplir la description et sélectionner au moins une pièce et un métal.');
+                    this.errorMessage = 'Veuillez remplir la description et sélectionner au moins une pièce et un métal.';
                     return false;
                 }
             }
-            if (step === 3 && this.totalSteps === 4) {
-                const measureSize = document.getElementById('measure_size')?.value;
-                const length = document.getElementById('length')?.value;
-                const width = document.getElementById('width')?.value;
-                const height = document.getElementById('height')?.value;
-                const weightValue = document.getElementById('weight_value')?.value;
-                const weightUnit = document.getElementById('weight_unit')?.value;
-                const hasSize = !!measureSize;
-                const hasDimensions = length && width && height;
-                const hasWeight = weightValue && weightUnit;
-                if (!hasSize && !hasDimensions && !hasWeight) {
-                    alert('Veuillez renseigner au moins une mesure (taille, dimensions ou poids).');
+            if (step === 3 && this.totalSteps === 5) {
+                this.photosError = '';
+                this.modelError = '';
+                if (!this.validateMedia()) {
                     return false;
                 }
             }
@@ -76,19 +72,24 @@ export function conceptFormData() {
                 const hasDimensions = length && width && height;
                 const hasWeight = weightValue && weightUnit;
                 if (!hasSize && !hasDimensions && !hasWeight) {
-                    alert('Veuillez renseigner au moins une mesure (taille, dimensions ou poids).');
+                    this.errorMessage = 'Veuillez renseigner au moins une mesure (taille, dimensions ou poids).';
                     return false;
                 }
             }
             return true;
         },
         goToStep(step) {
+            this.errorMessage = '';
+            this.photosError = '';
+            this.modelError = '';
             if (step < this.currentStep || step === 1) {
                 this.currentStep = step;
                 if (step === 2 && window.initSelect2) setTimeout(() => window.initSelect2(), 200);
+                if (step === 5 && typeof this.updateReview === 'function') this.updateReview();
             } else if (step === this.currentStep + 1 && this.validateStep(this.currentStep)) {
                 this.currentStep = step;
                 if (step === 2 && window.initSelect2) setTimeout(() => window.initSelect2(), 200);
+                if (step === 5 && typeof this.updateReview === 'function') this.updateReview();
             }
         },
         updateReview() {
@@ -120,6 +121,61 @@ export function conceptFormData() {
                 }
             }, 100);
         },
+        validateMedia() {
+            const photosErrors = [];
+            const modelErrors = [];
+            const PHOTOS_MAX = 10;
+            const PHOTO_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+            const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
+            const MODEL_MAX_SIZE = 50 * 1024 * 1024; // 50MB
+            const REEL_MAX_SIZE = 200 * 1024 * 1024; // 200MB
+            const REEL_EXT = ['.mp4', '.mov', '.ogg', '.qt', '.avi', '.wmv', '.flv', '.webm'];
+
+            const hasPhotos = window.photosDropzone && window.photosDropzone.files.length > 0;
+            const hasModel = window.modelDropzone && window.modelDropzone.files.length > 0;
+            const isEdit = typeof document !== 'undefined' && document.getElementById('concept-form')?.querySelector('input[name="_method"][value="PUT"]');
+
+            if (!isEdit) {
+                if (!hasPhotos) photosErrors.push('Veuillez ajouter au moins une photo.');
+                if (!hasModel) modelErrors.push('Veuillez ajouter un modèle 3D.');
+            }
+
+            if (hasPhotos) {
+                const files = window.photosDropzone.files;
+                if (files.length > PHOTOS_MAX) {
+                    photosErrors.push(`Maximum ${PHOTOS_MAX} fichiers.`);
+                }
+                files.forEach((f, i) => {
+                    const okType = PHOTO_TYPES.some(t => f.type === t) || /\.(jpe?g|png|gif|svg|webp)$/i.test(f.name);
+                    if (!okType) photosErrors.push(`Photo ${i + 1} : type non autorisé (jpeg, png, jpg, gif, svg, webp).`);
+                    if (f.size > PHOTO_MAX_SIZE) photosErrors.push(`Photo ${i + 1} : taille max 5 Mo.`);
+                });
+            }
+
+            if (hasModel) {
+                const f = window.modelDropzone.files[0];
+                if (f.size > MODEL_MAX_SIZE) modelErrors.push('Taille max 50 Mo.');
+                const isZip = f.type === 'application/zip' || f.name.toLowerCase().endsWith('.zip');
+                if (!isZip) modelErrors.push('Seul un fichier ZIP est accepté.');
+            }
+
+            if (window.reelDropzone && window.reelDropzone.files.length > 0) {
+                const f = window.reelDropzone.files[0];
+                if (f.size > REEL_MAX_SIZE) {
+                    this.errorMessage = 'Reel (vidéo) : taille max 200 Mo.';
+                    return false;
+                }
+                const ext = f.name.toLowerCase().slice(f.name.lastIndexOf('.'));
+                if (!REEL_EXT.includes(ext) && !f.type.startsWith('video/')) {
+                    this.errorMessage = 'Reel : format vidéo requis (mp4, mov, ogg, etc.).';
+                    return false;
+                }
+            }
+
+            this.photosError = photosErrors.length ? photosErrors.join(' ') : '';
+            this.modelError = modelErrors.length ? modelErrors.join(' ') : '';
+            return photosErrors.length === 0 && modelErrors.length === 0;
+        },
         async submitForm() {
             const form = document.getElementById('concept-form');
             if (!form || form.querySelector('input[name="_method"][value="PUT"]')) return;
@@ -129,6 +185,17 @@ export function conceptFormData() {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="animate-pulse">Création en cours...</span>';
             }
+
+            this.photosError = '';
+            this.modelError = '';
+            if (!this.validateMedia()) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Créer le concept';
+                }
+                return;
+            }
+            this.errorMessage = '';
 
             const routePrefix = form.dataset.routePrefix || 'designer';
             const conceptPath = form.dataset.conceptPath || 'concepts';
@@ -162,7 +229,13 @@ export function conceptFormData() {
                 }
                 const result = await response.json();
                 if (!response.ok || !result.success) {
-                    throw new Error(result.message || (result.errors ? Object.values(result.errors).flat().join(', ') : 'Erreur lors de la création du concept'));
+                    let errMsg = result.message;
+                    if (result.errors && typeof result.errors === 'object') {
+                        const parts = Object.values(result.errors).flat().filter(Boolean);
+                        if (parts.length) errMsg = parts.join(' ');
+                    }
+                    if (!errMsg) errMsg = 'Erreur lors de la création du concept';
+                    throw new Error(errMsg);
                 }
 
                 const conceptId = result.concept_id;
@@ -220,12 +293,16 @@ export function conceptFormData() {
                 if (uploadErrors.length === 0) {
                     window.location.href = redirectUrl;
                 } else {
-                    alert('Concept créé mais erreurs upload:\n' + uploadErrors.join('\n'));
-                    window.location.href = redirectUrl;
+                    this.errorMessage = 'Concept créé mais erreurs upload : ' + uploadErrors.join(' ') + '. Vous pouvez continuer vers la personnalisation.';
+                    this.uploadErrorRedirectUrl = redirectUrl;
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Créer le concept';
+                    }
                 }
             } catch (err) {
                 console.error(err);
-                alert('Erreur: ' + err.message);
+                this.errorMessage = 'Erreur : ' + err.message;
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Créer le concept';

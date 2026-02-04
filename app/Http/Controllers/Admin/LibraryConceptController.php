@@ -62,7 +62,7 @@ class LibraryConceptController extends Controller
             'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:102400',
             'folderModel' => 'nullable|file|mimes:zip|max:51200',
             'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
             'length' => 'nullable|numeric',
             'height' => 'nullable|numeric',
             'width' => 'nullable|numeric',
@@ -221,7 +221,7 @@ class LibraryConceptController extends Controller
         $this->ensureLibraryConcept($library_concept);
         $request->validate([
             'photos' => 'required|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
         ]);
         $uploaded = [];
         foreach ($request->file('photos') ?? [] as $file) {
@@ -279,6 +279,42 @@ class LibraryConceptController extends Controller
         return response()->json(['success' => true, 'message' => 'Modèle 3D uploadé.']);
     }
 
+    public function deletePhoto(Concept $library_concept, Media $media)
+    {
+        $this->ensureLibraryConcept($library_concept);
+        if ($media->attachment_id != $library_concept->id || $media->type !== 'concept') {
+            abort(404, 'Photo not found.');
+        }
+        if (file_exists(public_path($media->url))) {
+            unlink(public_path($media->url));
+        }
+        $media->delete();
+        return redirect()->route('admin.library-concepts.edit', $library_concept)->with('success', 'Photo supprimée.');
+    }
+
+    public function deleteReel(Concept $library_concept)
+    {
+        $this->ensureLibraryConcept($library_concept);
+        if ($library_concept->reel && file_exists(public_path($library_concept->reel))) {
+            unlink(public_path($library_concept->reel));
+        }
+        $library_concept->update(['reel' => null]);
+        return redirect()->route('admin.library-concepts.edit', $library_concept)->with('success', 'Reel supprimé.');
+    }
+
+    public function deleteModel(Concept $library_concept)
+    {
+        $this->ensureLibraryConcept($library_concept);
+        $existing = $library_concept->threedmodels;
+        if ($existing) {
+            if (file_exists(public_path($existing->url))) {
+                unlink(public_path($existing->url));
+            }
+            $existing->delete();
+        }
+        return redirect()->route('admin.library-concepts.edit', $library_concept)->with('success', 'Modèle 3D supprimé.');
+    }
+
     public function show(Concept $library_concept)
     {
         $this->ensureLibraryConcept($library_concept);
@@ -292,7 +328,7 @@ class LibraryConceptController extends Controller
     public function edit(Concept $library_concept)
     {
         $this->ensureLibraryConcept($library_concept);
-        $library_concept->load(['rooms', 'metals', 'measure.dimension', 'measure.weight']);
+        $library_concept->load(['photos', 'threedmodels', 'rooms', 'metals', 'measure.dimension', 'measure.weight']);
         return view('admin.library-concepts.edit', [
             'concept' => $library_concept,
             'categories' => Category::whereType('main')->get(),

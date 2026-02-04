@@ -28,6 +28,9 @@
                           data-route-prefix="admin"
                           x-data="productForm()">
                         @csrf
+                        @if(isset($concept) && $concept)
+                            <input type="hidden" name="concept_id" value="{{ $concept->id }}">
+                        @endif
 
                         <!-- Enhanced Stepper Progress -->
                         <div class="mb-10">
@@ -82,6 +85,7 @@
                                     Nom du produit *
                                 </label>
                                 <input type="text" name="name" id="name" required
+                                    value="{{ old('name', optional($concept)->name ?? '') }}"
                                     class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
                             @error('name')
                                 <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -106,7 +110,7 @@
                                 @foreach ($categories as $category)
                                     <optgroup label="{{ $category->name }}">
                                         @foreach ($category->sub_categories as $cat)
-                                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                                <option value="{{ $cat->id }}" {{ old('category_id', optional($concept)->category_id ?? null) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                                         @endforeach
                                     </optgroup>
                                 @endforeach
@@ -164,7 +168,7 @@
                                     Description *
                                 </label>
                                 <textarea name="description" id="description" rows="5" required
-                                    class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white resize-none"></textarea>
+                                    class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white resize-none">{{ old('description', optional($concept)->description ?? '') }}</textarea>
                             @error('description')
                                 <p class="text-red-500 text-sm mt-1 flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -229,8 +233,9 @@
                                 </label>
                                 <select name="rooms[]" id="rooms" multiple required
                                     class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white">
+                                    @php $selectedRoomIds = old('rooms', $concept ? $concept->rooms->pluck('id')->all() : []); @endphp
                                     @foreach ($rooms as $room)
-                                        <option value="{{ $room->id }}">{{ $room->name }}</option>
+                                        <option value="{{ $room->id }}" {{ in_array($room->id, $selectedRoomIds) ? 'selected' : '' }}>{{ $room->name }}</option>
                                     @endforeach
                                 </select>
                                 <p class="text-xs text-indigo-600 mt-2 flex items-center gap-1">
@@ -258,8 +263,9 @@
                                 </label>
                                 <select name="metals[]" id="metals" multiple required
                                     class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white">
+                                    @php $selectedMetalIds = old('metals', $concept ? $concept->metals->pluck('id')->toArray() : []); @endphp
                                     @foreach ($metals as $metal)
-                                        <option value="{{ $metal->id }}">{{ $metal->name }}</option>
+                                        <option value="{{ $metal->id }}" {{ in_array($metal->id, $selectedMetalIds) ? 'selected' : '' }}>{{ $metal->name }}</option>
                                     @endforeach
                                 </select>
                                 <p class="text-xs text-indigo-600 mt-2 flex items-center gap-1">
@@ -289,6 +295,50 @@
                                 </div>
                                 <h3 class="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">Médias</h3>
                             </div>
+
+                            @if($concept && ($concept->photos->count() > 0 || $concept->threedmodels || $concept->reel))
+                            <div class="bg-amber-50/80 border-2 border-amber-200 rounded-xl p-5 mb-6">
+                                <h4 class="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Médias du concept (référence)
+                                </h4>
+                                <p class="text-xs text-amber-700 mb-4">Ces médias proviennent du concept sélectionné. Vous pouvez les consulter ci-dessous et ajouter vos propres fichiers dans les zones de dépôt.</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    @if($concept->photos->count() > 0)
+                                        <div>
+                                            <p class="text-xs font-semibold text-amber-800 mb-2">Photos du concept ({{ $concept->photos->count() }})</p>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach($concept->photos as $photo)
+                                                    <a href="{{ $photo->url }}" target="_blank" rel="noopener" class="block w-20 h-20 rounded-lg overflow-hidden border-2 border-amber-200 hover:border-amber-400 shadow-sm">
+                                                        <img src="{{ $photo->url }}" alt="{{ $photo->name }}" class="w-full h-full object-cover">
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                    @if($concept->threedmodels)
+                                        <div>
+                                            <p class="text-xs font-semibold text-amber-800 mb-2">Modèle 3D du concept</p>
+                                            <a href="{{ $concept->threedmodels->url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                                {{ $concept->threedmodels->name ?? 'Télécharger' }}
+                                            </a>
+                                        </div>
+                                    @endif
+                                    @if($concept->reel)
+                                        <div class="sm:col-span-2">
+                                            <p class="text-xs font-semibold text-amber-800 mb-2">Reel / Vidéo du concept</p>
+                                            <a href="{{ $concept->reel }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                                Voir la vidéo
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                            @endif
                             
                             <!-- Photos Dropzone -->
                             <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm">
@@ -391,13 +441,14 @@
                             
                             <div class="p-6 border-2 border-amber-200 rounded-xl bg-gradient-to-br from-amber-50/50 to-orange-50/50 backdrop-blur-sm shadow-sm">
                                 <div class="mb-4">
+                                    @php $measureSize = old('measure_size', optional(optional($concept)->measure)->size ?? ''); @endphp
                                     <label for="measure_size" class="block text-sm font-medium text-gray-700">Taille de mesure</label>
                                     <select name="measure_size" id="measure_size"
                                         class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                         <option value="">Sélectionner une taille</option>
-                                        <option value="SMALL">Petit (SMALL)</option>
-                                        <option value="MEDIUM">Moyen (MEDIUM)</option>
-                                        <option value="LARGE">Grand (LARGE)</option>
+                                        <option value="SMALL" {{ $measureSize === 'SMALL' ? 'selected' : '' }}>Petit (SMALL)</option>
+                                        <option value="MEDIUM" {{ $measureSize === 'MEDIUM' ? 'selected' : '' }}>Moyen (MEDIUM)</option>
+                                        <option value="LARGE" {{ $measureSize === 'LARGE' ? 'selected' : '' }}>Grand (LARGE)</option>
                                     </select>
                                     @error('measure_size')
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -405,9 +456,11 @@
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-4 mb-4">
+                                    @php $dim = optional(optional($concept)->measure)->dimension; @endphp
                                     <div>
                                         <label for="length" class="block text-sm font-medium text-gray-700">Longueur</label>
                                         <input type="number" step="0.01" name="length" id="length"
+                                            value="{{ old('length', $dim?->length ?? '') }}"
                                             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                         @error('length')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -416,6 +469,7 @@
                                     <div>
                                         <label for="width" class="block text-sm font-medium text-gray-700">Largeur</label>
                                         <input type="number" step="0.01" name="width" id="width"
+                                            value="{{ old('width', $dim?->width ?? '') }}"
                                             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                         @error('width')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -427,6 +481,7 @@
                                     <div>
                                         <label for="height" class="block text-sm font-medium text-gray-700">Hauteur</label>
                                         <input type="number" step="0.01" name="height" id="height"
+                                            value="{{ old('height', $dim?->height ?? '') }}"
                                             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                         @error('height')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -437,9 +492,9 @@
                                         <select name="unit" id="unit"
                                             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                             <option value="">Sélectionner une unité</option>
-                                            <option value="CM">CM (Centimètres)</option>
-                                            <option value="FT">FT (Pieds)</option>
-                                            <option value="INCH">INCH (Pouces)</option>
+                                            <option value="CM" {{ old('unit', $dim?->unit ?? 'CM') === 'CM' ? 'selected' : '' }}>CM (Centimètres)</option>
+                                            <option value="FT" {{ old('unit', $dim?->unit) === 'FT' ? 'selected' : '' }}>FT (Pieds)</option>
+                                            <option value="INCH" {{ old('unit', $dim?->unit) === 'INCH' ? 'selected' : '' }}>INCH (Pouces)</option>
                                         </select>
                                         @error('unit')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -448,9 +503,11 @@
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-4">
+                                    @php $weight = optional(optional($concept)->measure)->weight; @endphp
                                     <div>
                                         <label for="weight_value" class="block text-sm font-medium text-gray-700">Valeur du poids</label>
                                         <input type="number" step="0.01" name="weight_value" id="weight_value"
+                                            value="{{ old('weight_value', $weight?->weight_value ?? '') }}"
                                             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                         @error('weight_value')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -461,8 +518,8 @@
                                         <select name="weight_unit" id="weight_unit"
                                             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                             <option value="">Sélectionner une unité</option>
-                                            <option value="KG">KG (Kilogrammes)</option>
-                                            <option value="LB">LB (Livres)</option>
+                                            <option value="KG" {{ old('weight_unit', $weight?->weight_unit ?? 'KG') === 'KG' ? 'selected' : '' }}>KG (Kilogrammes)</option>
+                                            <option value="LB" {{ old('weight_unit', $weight?->weight_unit) === 'LB' ? 'selected' : '' }}>LB (Livres)</option>
                                         </select>
                                         @error('weight_unit')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

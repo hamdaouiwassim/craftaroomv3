@@ -29,6 +29,16 @@ public function products(): HasMany
 }
 
 /**
+ * Get all of the concepts for the Category
+ *
+ * @return \Illuminate\Database\Eloquent\Relations\HasMany
+ */
+public function concepts(): HasMany
+{
+    return $this->hasMany(Concept::class);
+}
+
+/**
  * Get all of the sub_categories for the Category
  *
  * @return \Illuminate\Database\Eloquent\Relations\HasMany

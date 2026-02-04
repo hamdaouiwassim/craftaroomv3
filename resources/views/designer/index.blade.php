@@ -1,4 +1,4 @@
-<x-main-layout>
+<x-designer-layout>
     <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
@@ -151,5 +151,5 @@
             </div>
         </div>
     </div>
-</x-main-layout>
+</x-designer-layout>
 

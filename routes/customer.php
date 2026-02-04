@@ -28,6 +28,11 @@ Route::prefix('customer')->name('customer.')->middleware(['auth', 'isCustomer'])
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     
+    // Construction Requests
+    Route::get('/construction-requests', [\App\Http\Controllers\ConstructionRequestController::class, 'customerIndex'])->name('construction-requests.index');
+    Route::get('/construction-requests/{id}/offers', [\App\Http\Controllers\ConstructionRequestController::class, 'showOffers'])->name('construction-requests.offers');
+    Route::post('/construction-requests/{requestId}/offers/{offerId}/accept', [\App\Http\Controllers\ConstructionRequestController::class, 'acceptOffer'])->name('construction-requests.accept-offer');
+    
     // Favorites
     Route::get('/favorites', [\App\Http\Controllers\FavoriteController::class, 'index'])->name('favorites.index');
 });

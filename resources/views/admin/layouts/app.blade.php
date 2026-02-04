@@ -20,22 +20,25 @@
         </style>
     </head>
     <body class="font-sans antialiased bg-gradient-to-br from-gray-50 via-sky-blue/10 to-blue-accent/10">
-        <div class="min-h-screen">
+        <div class="min-h-screen flex">
             @include('admin.layouts.navigation')
 
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-gradient-to-r from-white via-sky-blue/10 to-blue-accent/10 border-b border-sky-blue/20 shadow-sm">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
+            <!-- Main Content Area -->
+            <div class="flex-1 flex flex-col md:ml-64">
+                <!-- Page Heading -->
+                @isset($header)
+                    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm sticky top-0 z-40">
+                        <div class="py-6 px-4 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
+                    </header>
+                @endisset
 
-            <!-- Page Content -->
-            <main class="min-h-screen">
-               {{ $slot }}
-            </main>
+                <!-- Page Content -->
+                <main class="flex-1 overflow-y-auto">
+                   {{ $slot }}
+                </main>
+            </div>
         </div>
     </body>
 </html>

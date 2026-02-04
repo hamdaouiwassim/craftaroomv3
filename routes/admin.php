@@ -26,14 +26,26 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::post('library-concepts/{library_concept}/customize', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'saveCustomize'])->name('library-concepts.save-customize');
     Route::delete('library-concepts/{library_concept}', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'destroy'])->name('library-concepts.destroy');
     Route::post('library-concepts/{library_concept}/photos', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'uploadPhotos'])->name('library-concepts.upload-photos');
+    Route::delete('library-concepts/{library_concept}/photos/{media}', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'deletePhoto'])->name('library-concepts.delete-photo');
     Route::post('library-concepts/{library_concept}/reel', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'uploadReel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('library-concepts.upload-reel');
+    Route::delete('library-concepts/{library_concept}/reel', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'deleteReel'])->name('library-concepts.delete-reel');
     Route::post('library-concepts/{library_concept}/model', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'uploadModel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('library-concepts.upload-model');
+    Route::delete('library-concepts/{library_concept}/model', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'deleteModel'])->name('library-concepts.delete-model');
+
+    // Select concepts (designer or library) for creating products
+    Route::get('/concepts/select', [ProductController::class, 'selectConcepts'])->name('concepts.select');
 
     // Category Management
     Route::resource('categories', CategoryController::class);
     
     // Metal Management
     Route::resource('metals', \App\Http\Controllers\Admin\MetalController::class);
+    
+    // Room Management
+    Route::resource('rooms', \App\Http\Controllers\RoomController::class);
+    
+    // Concept Management (Designer concepts)
+    Route::resource('concepts', \App\Http\Controllers\ConceptController::class);
     Route::prefix('metals/{metal}')->name('metals.options.')->group(function () {
         Route::post('options', [\App\Http\Controllers\Admin\MetalOptionController::class, 'store'])->name('store');
         Route::get('options/{option}/edit', [\App\Http\Controllers\Admin\MetalOptionController::class, 'edit'])->name('edit');

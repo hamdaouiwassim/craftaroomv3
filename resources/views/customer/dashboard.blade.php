@@ -1,4 +1,4 @@
-<x-main-layout>
+<x-customer-layout>
     <!-- Dashboard Header -->
     <section class="relative bg-gradient-to-br from-main-blue via-dark-blue to-sky-blue text-white py-16 lg:py-20 overflow-hidden">
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -269,4 +269,4 @@
                 console.error('Error loading cart count:', error);
             });
     </script>
-</x-main-layout>
+</x-customer-layout>

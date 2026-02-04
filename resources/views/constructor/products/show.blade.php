@@ -1,4 +1,4 @@
-<x-admin-layout>
+<x-constructor-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -317,5 +317,5 @@
             document.body.style.overflow = 'auto';
         }
     </script>
-</x-admin-layout>
+</x-constructor-layout>
 

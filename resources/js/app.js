@@ -3,6 +3,7 @@ import './dropzone-config';
 import 'dropzone/dist/dropzone.css';
 import './product-form';
 import './concept-form';
+import { conceptEditFormData } from './concept-edit-form';
 
 // Import Select2 wrapper (handles jQuery and Select2 initialization)
 import './select2-wrapper';
@@ -14,5 +15,6 @@ import './select2-init';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
+Alpine.data('conceptEditForm', conceptEditFormData);
 
 Alpine.start();

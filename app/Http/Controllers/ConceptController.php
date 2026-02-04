@@ -65,16 +65,16 @@ class ConceptController extends Controller
             'description' => 'required|string',
             'status' => 'nullable|in:active,inactive',
             'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:102400',
-            'folderModel' => 'nullable|file|mimes:zip|max:51200',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
-            'length' => 'nullable|numeric',
-            'height' => 'nullable|numeric',
-            'width' => 'nullable|numeric',
-            'unit' => 'nullable|in:CM,FT,INCH',
-            'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
-            'weight_value' => 'nullable|numeric',
-            'weight_unit' => 'nullable|in:KG,LB',
+            'folderModel' => 'required|file|mimes:zip|max:51200',
+            'photos' => 'required|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
+            'length' => 'required|numeric',
+            'height' => 'required|numeric',
+            'width' => 'required|numeric',
+            'unit' => 'required|in:CM,FT,INCH',
+            'measure_size' => 'required|in:SMALL,MEDIUM,LARGE',
+            'weight_value' => 'required|numeric',
+            'weight_unit' => 'required|in:KG,LB',
         ]);
 
         $hasMeasure = $request->filled('measure_size')
@@ -82,7 +82,14 @@ class ConceptController extends Controller
             || ($request->filled('weight_value') && $request->filled('weight_unit'));
 
         if (!$hasMeasure) {
-            return redirect()->back()->with('error', 'Please add at least one measure (size, dimensions, or weight).')->withInput();
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Veuillez ajouter au moins une mesure (taille, dimensions ou poids).',
+                    'errors' => ['measure' => ['Au moins une mesure est requise (taille, dimensions ou poids).']],
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Veuillez ajouter au moins une mesure (taille, dimensions ou poids).')->withInput();
         }
 
         $concept = Concept::create([
@@ -343,7 +350,7 @@ class ConceptController extends Controller
         }
         $request->validate([
             'photos' => 'required|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
         ]);
         $uploaded = [];
         foreach ($request->file('photos') ?? [] as $file) {
@@ -403,5 +410,47 @@ class ConceptController extends Controller
             'type' => 'concept_threedmodel',
         ]);
         return response()->json(['success' => true, 'message' => '3D model uploaded.']);
+    }
+
+    public function deletePhoto(Concept $concept, Media $media)
+    {
+        if (!$this->canAccessConcept($concept)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+        if ($media->attachment_id != $concept->id || $media->type !== 'concept') {
+            abort(404, 'Photo not found.');
+        }
+        if (file_exists(public_path($media->url))) {
+            unlink(public_path($media->url));
+        }
+        $media->delete();
+        return redirect()->route('designer.concepts.edit', $concept)->with('success', 'Photo supprimée.');
+    }
+
+    public function deleteReel(Concept $concept)
+    {
+        if (!$this->canAccessConcept($concept)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+        if ($concept->reel && file_exists(public_path($concept->reel))) {
+            unlink(public_path($concept->reel));
+        }
+        $concept->update(['reel' => null]);
+        return redirect()->route('designer.concepts.edit', $concept)->with('success', 'Reel supprimé.');
+    }
+
+    public function deleteModel(Concept $concept)
+    {
+        if (!$this->canAccessConcept($concept)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+        $existing = $concept->threedmodels;
+        if ($existing) {
+            if (file_exists(public_path($existing->url))) {
+                unlink(public_path($existing->url));
+            }
+            $existing->delete();
+        }
+        return redirect()->route('designer.concepts.edit', $concept)->with('success', 'Modèle 3D supprimé.');
     }
 }

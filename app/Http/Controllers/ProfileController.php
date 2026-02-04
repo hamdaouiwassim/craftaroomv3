@@ -18,7 +18,7 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $currencies = Currency::all(['id','code','symbol']);
+        $currencies = Currency::all();
         $languages = [
             'en' => 'English',
             'fr' => 'Français',
