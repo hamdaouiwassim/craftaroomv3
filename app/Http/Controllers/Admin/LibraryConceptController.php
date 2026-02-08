@@ -235,7 +235,13 @@ class LibraryConceptController extends Controller
             ]);
             $uploaded[] = $media;
         }
-        return response()->json(['success' => true, 'message' => 'Photos uploadées.', 'photos' => $uploaded]);
+        
+        // Check if request is AJAX
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Photos uploadées.', 'photos' => $uploaded]);
+        }
+        
+        return redirect()->route('admin.library-concepts.show', $library_concept)->with('success', 'Photos ajoutées avec succès.');
     }
 
     public function uploadReel(Request $request, Concept $library_concept)
@@ -251,7 +257,13 @@ class LibraryConceptController extends Controller
         $fileName = uniqid('conceptReel_') . '.' . $file->getClientOriginalExtension();
         $file->storeAs('uploads/reels', $fileName, 'public');
         $library_concept->update(['reel' => '/storage/uploads/reels/' . $fileName]);
-        return response()->json(['success' => true, 'message' => 'Reel uploadé.', 'reel_url' => $library_concept->reel]);
+        
+        // Check if request is AJAX
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Reel uploadé.', 'reel_url' => $library_concept->reel]);
+        }
+        
+        return redirect()->route('admin.library-concepts.show', $library_concept)->with('success', 'Reel ajouté avec succès.');
     }
 
     public function uploadModel(Request $request, Concept $library_concept)
@@ -276,7 +288,13 @@ class LibraryConceptController extends Controller
             'attachment_id' => $library_concept->id,
             'type' => 'concept_threedmodel',
         ]);
-        return response()->json(['success' => true, 'message' => 'Modèle 3D uploadé.']);
+        
+        // Check if request is AJAX
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Modèle 3D uploadé.']);
+        }
+        
+        return redirect()->route('admin.library-concepts.show', $library_concept)->with('success', 'Modèle 3D ajouté avec succès.');
     }
 
     public function deletePhoto(Concept $library_concept, Media $media)
@@ -289,7 +307,7 @@ class LibraryConceptController extends Controller
             unlink(public_path($media->url));
         }
         $media->delete();
-        return redirect()->route('admin.library-concepts.edit', $library_concept)->with('success', 'Photo supprimée.');
+        return redirect()->route('admin.library-concepts.show', $library_concept)->with('success', 'Photo supprimée.');
     }
 
     public function deleteReel(Concept $library_concept)
@@ -299,7 +317,7 @@ class LibraryConceptController extends Controller
             unlink(public_path($library_concept->reel));
         }
         $library_concept->update(['reel' => null]);
-        return redirect()->route('admin.library-concepts.edit', $library_concept)->with('success', 'Reel supprimé.');
+        return redirect()->route('admin.library-concepts.show', $library_concept)->with('success', 'Reel supprimé.');
     }
 
     public function deleteModel(Concept $library_concept)
@@ -312,7 +330,7 @@ class LibraryConceptController extends Controller
             }
             $existing->delete();
         }
-        return redirect()->route('admin.library-concepts.edit', $library_concept)->with('success', 'Modèle 3D supprimé.');
+        return redirect()->route('admin.library-concepts.show', $library_concept)->with('success', 'Modèle 3D supprimé.');
     }
 
     public function show(Concept $library_concept)
@@ -322,7 +340,18 @@ class LibraryConceptController extends Controller
             'category', 'rooms', 'metals', 'photos', 'threedmodels', 'measure.dimension', 'measure.weight',
             'conceptMetalOptions.metalOption.metal',
         ]);
-        return view('admin.library-concepts.show', ['concept' => $library_concept]);
+        
+        // Load data for edit modals
+        $categories = Category::whereType('main')->with('sub_categories')->get();
+        $rooms = Room::all();
+        $metals = Metal::all();
+        
+        return view('admin.library-concepts.show', [
+            'concept' => $library_concept,
+            'categories' => $categories,
+            'rooms' => $rooms,
+            'metals' => $metals
+        ]);
     }
 
     public function edit(Concept $library_concept)
@@ -429,5 +458,105 @@ class LibraryConceptController extends Controller
         if ($concept->source !== 'library') {
             abort(404, 'Concept non trouvé ou non géré ici.');
         }
+    }
+
+    /**
+     * Update basic information section
+     */
+    public function updateBasic(Request $request, Concept $library_concept)
+    {
+        $this->ensureLibraryConcept($library_concept);
+
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'status' => 'required|in:active,inactive',
+            'description' => 'required|string',
+        ]);
+
+        $library_concept->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Informations de base mises à jour avec succès.'
+        ]);
+    }
+
+    /**
+     * Update specifications section (rooms, metals, measurements)
+     */
+    public function updateSpecifications(Request $request, Concept $library_concept)
+    {
+        $this->ensureLibraryConcept($library_concept);
+
+        $validated = $request->validate([
+            'rooms' => 'required|array',
+            'rooms.*' => 'exists:rooms,id',
+            'metals' => 'required|array',
+            'metals.*' => 'exists:metals,id',
+            'length' => 'nullable|numeric',
+            'height' => 'nullable|numeric',
+            'width' => 'nullable|numeric',
+            'unit' => 'nullable|in:CM,FT,INCH',
+            'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
+            'weight_value' => 'nullable|numeric',
+            'weight_unit' => 'nullable|in:KG,LB',
+        ]);
+
+        // Update rooms and metals
+        $library_concept->rooms()->sync($request->rooms);
+        $library_concept->metals()->sync($request->metals);
+
+        // Update measurements
+        $measure = $library_concept->measure;
+        if (!$measure) {
+            $measure = ConceptMeasure::create([
+                'concept_id' => $library_concept->id,
+                'size' => $request->get('measure_size', 'MEDIUM')
+            ]);
+        } elseif ($request->filled('measure_size')) {
+            $measure->update(['size' => $request->measure_size]);
+        }
+
+        // Update dimensions
+        if ($request->filled('length') && $request->filled('height') && $request->filled('width')) {
+            $dim = $measure->dimension;
+            if (!$dim) {
+                $measure->dimension()->create([
+                    'length' => $request->length,
+                    'height' => $request->height,
+                    'width' => $request->width,
+                    'unit' => $request->get('unit', 'CM'),
+                ]);
+            } else {
+                $dim->update([
+                    'length' => $request->length,
+                    'height' => $request->height,
+                    'width' => $request->width,
+                    'unit' => $request->get('unit', 'CM'),
+                ]);
+            }
+        }
+
+        // Update weight
+        if ($request->filled('weight_value') && $request->filled('weight_unit')) {
+            $w = $measure->weight;
+            if (!$w) {
+                $measure->weight()->create([
+                    'weight_value' => $request->weight_value,
+                    'weight_unit' => $request->weight_unit,
+                ]);
+            } else {
+                $w->update([
+                    'weight_value' => $request->weight_value,
+                    'weight_unit' => $request->weight_unit,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Spécifications mises à jour avec succès.'
+        ]);
     }
 }

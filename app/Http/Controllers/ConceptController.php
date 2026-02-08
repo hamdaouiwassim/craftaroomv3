@@ -64,17 +64,19 @@ class ConceptController extends Controller
             'metals.*' => 'exists:metals,id',
             'description' => 'required|string',
             'status' => 'nullable|in:active,inactive',
+            // Files are uploaded separately via API after concept creation
             'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:102400',
-            'folderModel' => 'required|file|mimes:zip|max:51200',
-            'photos' => 'required|array',
+            'folderModel' => 'nullable|file|mimes:zip|max:51200',
+            'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
-            'length' => 'required|numeric',
-            'height' => 'required|numeric',
-            'width' => 'required|numeric',
-            'unit' => 'required|in:CM,FT,INCH',
-            'measure_size' => 'required|in:SMALL,MEDIUM,LARGE',
-            'weight_value' => 'required|numeric',
-            'weight_unit' => 'required|in:KG,LB',
+            // Measurements
+            'length' => 'nullable|numeric',
+            'height' => 'nullable|numeric',
+            'width' => 'nullable|numeric',
+            'unit' => 'nullable|in:CM,FT,INCH',
+            'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
+            'weight_value' => 'nullable|numeric',
+            'weight_unit' => 'nullable|in:KG,LB',
         ]);
 
         $hasMeasure = $request->filled('measure_size')
@@ -237,7 +239,13 @@ class ConceptController extends Controller
             'measure.dimension', 'measure.weight',
             'conceptMetalOptions.metalOption.metal',
         ]);
-        return view('designer.concepts.show', compact('concept'));
+        
+        // Load data for edit modals
+        $categories = Category::whereType('main')->with('sub_categories')->get();
+        $rooms = Room::all();
+        $metals = Metal::all();
+        
+        return view('designer.concepts.show', compact('concept', 'categories', 'rooms', 'metals'));
     }
 
     public function edit(Concept $concept)
@@ -346,7 +354,7 @@ class ConceptController extends Controller
     public function uploadPhotos(Request $request, Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
         $request->validate([
             'photos' => 'required|array',
@@ -364,13 +372,19 @@ class ConceptController extends Controller
             ]);
             $uploaded[] = $media;
         }
-        return response()->json(['success' => true, 'message' => 'Photos uploaded.', 'photos' => $uploaded]);
+        
+        // Check if request is AJAX
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Photos uploaded.', 'photos' => $uploaded]);
+        }
+        
+        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Photos ajoutées avec succès.');
     }
 
     public function uploadReel(Request $request, Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
         $request->validate([
             'reel' => 'required|file|mimes:mp4,mov,ogg,qt,avi,wmv,flv,webm|max:204800',
@@ -382,13 +396,19 @@ class ConceptController extends Controller
         $fileName = uniqid('conceptReel_') . '.' . $file->getClientOriginalExtension();
         $file->storeAs('uploads/reels', $fileName, 'public');
         $concept->update(['reel' => '/storage/uploads/reels/' . $fileName]);
-        return response()->json(['success' => true, 'message' => 'Reel uploaded.', 'reel_url' => $concept->reel]);
+        
+        // Check if request is AJAX
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Reel uploaded.', 'reel_url' => $concept->reel]);
+        }
+        
+        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Reel ajouté avec succès.');
     }
 
     public function uploadModel(Request $request, Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
         $request->validate([
             'folderModel' => 'required|file|mimes:zip|max:51200',
@@ -409,13 +429,19 @@ class ConceptController extends Controller
             'attachment_id' => $concept->id,
             'type' => 'concept_threedmodel',
         ]);
-        return response()->json(['success' => true, 'message' => '3D model uploaded.']);
+        
+        // Check if request is AJAX
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => '3D model uploaded.']);
+        }
+        
+        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Modèle 3D ajouté avec succès.');
     }
 
     public function deletePhoto(Concept $concept, Media $media)
     {
         if (!$this->canAccessConcept($concept)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
         if ($media->attachment_id != $concept->id || $media->type !== 'concept') {
             abort(404, 'Photo not found.');
@@ -424,25 +450,25 @@ class ConceptController extends Controller
             unlink(public_path($media->url));
         }
         $media->delete();
-        return redirect()->route('designer.concepts.edit', $concept)->with('success', 'Photo supprimée.');
+        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Photo supprimée.');
     }
 
     public function deleteReel(Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
         if ($concept->reel && file_exists(public_path($concept->reel))) {
             unlink(public_path($concept->reel));
         }
         $concept->update(['reel' => null]);
-        return redirect()->route('designer.concepts.edit', $concept)->with('success', 'Reel supprimé.');
+        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Reel supprimé.');
     }
 
     public function deleteModel(Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
         $existing = $concept->threedmodels;
         if ($existing) {
@@ -451,6 +477,110 @@ class ConceptController extends Controller
             }
             $existing->delete();
         }
-        return redirect()->route('designer.concepts.edit', $concept)->with('success', 'Modèle 3D supprimé.');
+        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Modèle 3D supprimé.');
+    }
+
+    /**
+     * Update basic information section
+     */
+    public function updateBasic(Request $request, Concept $concept)
+    {
+        if (!$this->canAccessConcept($concept)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'status' => 'required|in:active,inactive',
+            'description' => 'required|string',
+        ]);
+
+        $concept->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Informations de base mises à jour avec succès.'
+        ]);
+    }
+
+    /**
+     * Update specifications section (rooms, metals, measurements)
+     */
+    public function updateSpecifications(Request $request, Concept $concept)
+    {
+        if (!$this->canAccessConcept($concept)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $validated = $request->validate([
+            'rooms' => 'required|array',
+            'rooms.*' => 'exists:rooms,id',
+            'metals' => 'required|array',
+            'metals.*' => 'exists:metals,id',
+            'length' => 'nullable|numeric',
+            'height' => 'nullable|numeric',
+            'width' => 'nullable|numeric',
+            'unit' => 'nullable|in:CM,FT,INCH',
+            'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
+            'weight_value' => 'nullable|numeric',
+            'weight_unit' => 'nullable|in:KG,LB',
+        ]);
+
+        // Update rooms and metals
+        $concept->rooms()->sync($request->rooms);
+        $concept->metals()->sync($request->metals);
+
+        // Update measurements
+        $measure = $concept->measure;
+        if (!$measure) {
+            $measure = ConceptMeasure::create([
+                'concept_id' => $concept->id,
+                'size' => $request->get('measure_size', 'MEDIUM')
+            ]);
+        } elseif ($request->filled('measure_size')) {
+            $measure->update(['size' => $request->measure_size]);
+        }
+
+        // Update dimensions
+        if ($request->filled('length') && $request->filled('height') && $request->filled('width')) {
+            $dim = $measure->dimension;
+            if (!$dim) {
+                $measure->dimension()->create([
+                    'length' => $request->length,
+                    'height' => $request->height,
+                    'width' => $request->width,
+                    'unit' => $request->get('unit', 'CM'),
+                ]);
+            } else {
+                $dim->update([
+                    'length' => $request->length,
+                    'height' => $request->height,
+                    'width' => $request->width,
+                    'unit' => $request->get('unit', 'CM'),
+                ]);
+            }
+        }
+
+        // Update weight
+        if ($request->filled('weight_value') && $request->filled('weight_unit')) {
+            $w = $measure->weight;
+            if (!$w) {
+                $measure->weight()->create([
+                    'weight_value' => $request->weight_value,
+                    'weight_unit' => $request->weight_unit,
+                ]);
+            } else {
+                $w->update([
+                    'weight_value' => $request->weight_value,
+                    'weight_unit' => $request->weight_unit,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Spécifications mises à jour avec succès.'
+        ]);
     }
 }

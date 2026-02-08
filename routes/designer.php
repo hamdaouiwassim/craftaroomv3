@@ -43,6 +43,10 @@ Route::prefix('designer')->name('designer.')->middleware(['auth', 'isDesigner'])
         ->name('concepts.upload-model');
     Route::delete('/concepts/{concept}/model', [ConceptController::class, 'deleteModel'])->name('concepts.delete-model');
     
+    // Section-specific concept updates
+    Route::post('/concepts/{concept}/update-basic', [ConceptController::class, 'updateBasic'])->name('concepts.update-basic');
+    Route::post('/concepts/{concept}/update-specifications', [ConceptController::class, 'updateSpecifications'])->name('concepts.update-specifications');
+    
     // Favorites
     Route::get('/favorites', [\App\Http\Controllers\FavoriteController::class, 'index'])->name('favorites.index');
 });

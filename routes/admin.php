@@ -31,6 +31,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::delete('library-concepts/{library_concept}/reel', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'deleteReel'])->name('library-concepts.delete-reel');
     Route::post('library-concepts/{library_concept}/model', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'uploadModel'])->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)->name('library-concepts.upload-model');
     Route::delete('library-concepts/{library_concept}/model', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'deleteModel'])->name('library-concepts.delete-model');
+    
+    // Section-specific library concept updates
+    Route::post('library-concepts/{library_concept}/update-basic', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'updateBasic'])->name('library-concepts.update-basic');
+    Route::post('library-concepts/{library_concept}/update-specifications', [\App\Http\Controllers\Admin\LibraryConceptController::class, 'updateSpecifications'])->name('library-concepts.update-specifications');
 
     // Select concepts (designer or library) for creating products
     Route::get('/concepts/select', [ProductController::class, 'selectConcepts'])->name('concepts.select');
