@@ -54,6 +54,10 @@ Route::prefix('constructor')->name('constructor.')->middleware(['auth', 'isConst
         ->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)
         ->name('products.upload-model');
     
+    // Delete photo from product
+    Route::delete('/products/{product}/photos/{photo}', [ProductController::class, 'deletePhoto'])
+        ->name('products.delete-photo');
+    
     // Favorites
     Route::get('/favorites', [\App\Http\Controllers\FavoriteController::class, 'index'])->name('favorites.index');
 });

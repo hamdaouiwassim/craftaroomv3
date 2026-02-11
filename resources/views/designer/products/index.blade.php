@@ -7,16 +7,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                 </div>
-                <h2 class="font-bold text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Mes Produits
-                </h2>
+                <div>
+                    <h2 class="font-bold text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                        Produits basés sur mes concepts
+                    </h2>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Produits créés par les constructeurs à partir de vos concepts
+                    </p>
+                </div>
             </div>
-            <a href="{{ route('designer.products.create') }}" class="flex items-center gap-2 bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:from-purple-600 hover:via-indigo-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Nouveau Produit
-            </a>
         </div>
     </x-slot>
 
@@ -76,7 +75,10 @@
                                                 Produit
                                             </th>
                                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                                Catégorie
+                                                Mon Concept
+                                            </th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Créé par
                                             </th>
                                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                                 Prix
@@ -85,7 +87,7 @@
                                                 Statut
                                             </th>
                                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                                Date de création
+                                                Date
                                             </th>
                                             <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
                                                 Actions
@@ -118,10 +120,38 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
-                                                    @if($product->category)
-                                                        <span class="px-3 py-1 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 rounded-full text-xs font-semibold">
-                                                            {{ $product->category->name }}
-                                                        </span>
+                                                    @if($product->concept)
+                                                        <div class="flex items-center gap-2">
+                                                            <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span class="text-sm font-medium text-gray-900">{{ $product->concept->name }}</span>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-xs text-gray-400">-</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    @if($product->user)
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center overflow-hidden">
+                                                                @if($product->user->photoUrl)
+                                                                    <img src="{{ $product->user->photoUrl }}" alt="{{ $product->user->name }}" class="w-full h-full object-cover">
+                                                                @else
+                                                                    <span class="text-xs font-bold text-teal-600">{{ substr($product->user->name, 0, 1) }}</span>
+                                                                @endif
+                                                            </div>
+                                                            <div>
+                                                                <div class="text-sm font-medium text-gray-900">{{ $product->user->name }}</div>
+                                                                <div class="text-xs text-gray-500">
+                                                                    @if($product->user->role === 3)
+                                                                        Constructor
+                                                                    @elseif($product->user->is_admin())
+                                                                        Admin
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     @else
                                                         <span class="text-xs text-gray-400">-</span>
                                                     @endif
@@ -147,26 +177,13 @@
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div class="flex items-center justify-end gap-2">
-                                                        <a href="{{ route('designer.products.show', $product) }}" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Voir">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <a href="{{ route('products.show', $product->id) }}" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 flex items-center gap-2" title="Voir le produit">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                             </svg>
+                                                            Voir
                                                         </a>
-                                                        <a href="{{ route('designer.products.edit', $product) }}" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Modifier">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                            </svg>
-                                                        </a>
-                                                        <form action="{{ route('designer.products.delete', $product) }}" method="POST" class="inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
-                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            </button>
-                                                        </form>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -192,15 +209,11 @@
                                 @if(request('search'))
                                     Aucun produit ne correspond à votre recherche.
                                 @else
-                                    Vous n'avez pas encore créé de produit.
+                                    Aucun produit n'a encore été créé à partir de vos concepts.
+                                    <br>
+                                    <span class="text-sm text-gray-500">Les constructeurs peuvent créer des produits en utilisant vos concepts.</span>
                                 @endif
                             </p>
-                            <a href="{{ route('designer.products.create') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:from-purple-600 hover:via-indigo-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                Créer votre premier produit
-                            </a>
                         </div>
                     @endif
                 </div>

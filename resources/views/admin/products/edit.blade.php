@@ -313,24 +313,75 @@
 
                             <!-- Current Photos -->
                             @if($product->photos->count() > 0)
-                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm mb-6">
+                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm mb-6"
+                                     x-data="{ 
+                                        photos: {{ $product->photos->pluck('id')->toJson() }},
+                                        deletePhoto(photoId) {
+                                            if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
+                                                return;
+                                            }
+                                            
+                                            fetch(`/admin/products/{{ $product->id }}/photos/${photoId}`, {
+                                                method: 'DELETE',
+                                                headers: {
+                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content,
+                                                    'Accept': 'application/json',
+                                                }
+                                            })
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                if (data.success) {
+                                                    this.photos = this.photos.filter(id => id !== photoId);
+                                                    alert('✅ Photo supprimée avec succès !');
+                                                } else {
+                                                    alert('❌ Erreur: ' + (data.message || 'Impossible de supprimer la photo'));
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error('Error:', error);
+                                                alert('❌ Erreur lors de la suppression de la photo');
+                                            });
+                                        },
+                                        validatePhotos() {
+                                            const remainingPhotos = this.photos.length;
+                                            const newPhotosInput = document.getElementById('photos');
+                                            const newPhotosCount = newPhotosInput && newPhotosInput.files ? newPhotosInput.files.length : 0;
+                                            
+                                            if (remainingPhotos === 0 && newPhotosCount === 0) {
+                                                alert('❌ Erreur: Le produit doit avoir au moins une photo.\n\nVous avez supprimé toutes les photos existantes. Veuillez télécharger au moins une nouvelle photo.');
+                                                return false;
+                                            }
+                                            return true;
+                                        }
+                                     }"
+                                     x-ref="photoSection">
                                     <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
                                         <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                        Photos actuelles
+                                        Photos actuelles (<span x-text="photos.length"></span>)
                                     </label>
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         @foreach($product->photos as $photo)
-                                            <div class="relative group">
-                                                <img src="{{ $photo->url }}" alt="Photo" class="w-full h-32 object-cover rounded-lg">
-                                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                                    <span class="text-white text-sm">Photo actuelle</span>
+                                            <template x-if="photos.includes({{ $photo->id }})">
+                                                <div class="relative group">
+                                                    <img src="{{ $photo->url }}" alt="Photo" class="w-full h-32 object-cover rounded-lg">
+                                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                        <button 
+                                                            type="button"
+                                                            @click="deletePhoto({{ $photo->id }})"
+                                                            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                            Supprimer
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            </template>
                                         @endforeach
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-2">Les nouvelles photos remplaceront les anciennes</p>
+                                    <p class="text-xs text-gray-500 mt-2">💡 Survolez une photo pour afficher le bouton de suppression</p>
                                 </div>
                             @endif
 
@@ -339,7 +390,11 @@
                                     <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    Nouvelles photos (optionnel)
+                                    @if($product->photos->count() > 0)
+                                        Nouvelles photos (optionnel)
+                                    @else
+                                        Nouvelles photos (au moins une photo requise) *
+                                    @endif
                                 </label>
                                 <input type="file" name="photos[]" id="photos" multiple accept="image/*"
                                     class="mt-1 block w-full border-2 border-teal-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-teal-500 file:to-cyan-500 file:text-white hover:file:from-teal-600 hover:file:to-cyan-600">
@@ -590,6 +645,19 @@
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
+                // Validate photos first
+                const photoSection = document.querySelector('[x-ref="photoSection"]');
+                if (photoSection) {
+                    const alpineData = Alpine.$data(photoSection);
+                    if (alpineData && !alpineData.validatePhotos()) {
+                        return; // Stop form submission if validation fails
+                    }
+                }
+                
+                const photosInput = document.getElementById('photos');
+                const photosFiles = photosInput?.files;
+                const hasPhotos = photosFiles && photosFiles.length > 0;
+                
                 const reelFile = reelInput?.files[0];
                 const hasReel = reelFile && reelFile.size > 0;
                 
@@ -670,9 +738,79 @@
                     // Get updated fields before file uploads (will be updated with file uploads later)
                     let updatedFields = getUpdatedFields();
 
-                    // Step 2: Upload reel separately if provided
+                    // Step 2: Upload photos separately if provided
+                    if (hasPhotos) {
+                        console.log('Step 2: Uploading photos separately...');
+                        try {
+                            const photosFormData = new FormData();
+                            for (let i = 0; i < photosFiles.length; i++) {
+                                photosFormData.append('photos[]', photosFiles[i]);
+                            }
+
+                            const productId = {{ $product->id }};
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                            const routePrefix = form.dataset.routePrefix || 'admin';
+
+                            console.log('Uploading photos to:', `/${routePrefix}/products/${productId}/photos`);
+                            console.log('Number of photos:', photosFiles.length);
+
+                            const photosResponse = await fetch(`/${routePrefix}/products/${productId}/photos`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    'Accept': 'application/json',
+                                },
+                                body: photosFormData
+                            });
+
+                            console.log('Photos upload response status:', photosResponse.status);
+
+                            const photosContentType = photosResponse.headers.get('content-type');
+                            if (!photosContentType || !photosContentType.includes('application/json')) {
+                                const text = await photosResponse.text();
+                                console.error('Non-JSON response from photos upload:', text);
+                                alert('Erreur lors de l\'upload des photos: Le serveur a retourné une réponse inattendue.');
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Mettre à jour le produit';
+                                return;
+                            }
+
+                            const photosResult = await photosResponse.json();
+                            console.log('Photos upload result:', photosResult);
+
+                            if (!photosResponse.ok || !photosResult.success) {
+                                let errorMessage = photosResult.message || 'Erreur lors de l\'upload des photos';
+                                if (photosResult.errors) {
+                                    const errorList = Object.values(photosResult.errors).flat().join(', ');
+                                    errorMessage += ': ' + errorList;
+                                }
+                                console.error('Photos upload failed:', errorMessage);
+                                alert('Le produit a été mis à jour, mais l\'upload des photos a échoué:\n\n' + errorMessage);
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Mettre à jour le produit';
+                                return;
+                            }
+
+                            console.log('Step 2: Photos uploaded successfully');
+                            
+                            updatedFields.push({
+                                field: 'Photos',
+                                old: '',
+                                new: `${photosFiles.length} nouvelle(s) photo(s) ajoutée(s)`
+                            });
+                        } catch (photosError) {
+                            console.error('Photos upload exception:', photosError);
+                            console.error('Error stack:', photosError.stack);
+                            alert('Le produit a été mis à jour, mais une erreur est survenue lors de l\'upload des photos: ' + photosError.message);
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Mettre à jour le produit';
+                            return;
+                        }
+                    }
+
+                    // Step 3: Upload reel separately if provided
                     if (hasReel) {
-                        console.log('Step 2: Uploading reel separately...');
+                        console.log('Step 3: Uploading reel separately...');
                         try {
                             const reelFormData = new FormData();
                             reelFormData.append('reel', reelFile);
@@ -763,7 +901,7 @@
                                 return;
                             }
 
-                            console.log('Step 2: Reel uploaded successfully');
+                            console.log('Step 3: Reel uploaded successfully');
                             
                             // Add reel to updated fields
                             updatedFields.push({
@@ -781,9 +919,9 @@
                         }
                     }
 
-                    // Step 3: Upload 3D model separately if provided
+                    // Step 4: Upload 3D model separately if provided
                     if (hasModel) {
-                        console.log('Step 3: Uploading 3D model separately...');
+                        console.log('Step 4: Uploading 3D model separately...');
                         try {
                             const modelFormData = new FormData();
                             modelFormData.append('folderModel', modelFile);
@@ -837,7 +975,7 @@
                                 return;
                             }
 
-                            console.log('Step 3: 3D model uploaded successfully');
+                            console.log('Step 4: 3D model uploaded successfully');
                             
                             // Add model to updated fields
                             updatedFields.push({

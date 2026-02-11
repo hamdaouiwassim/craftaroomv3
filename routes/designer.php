@@ -47,6 +47,9 @@ Route::prefix('designer')->name('designer.')->middleware(['auth', 'isDesigner'])
     Route::post('/concepts/{concept}/update-basic', [ConceptController::class, 'updateBasic'])->name('concepts.update-basic');
     Route::post('/concepts/{concept}/update-specifications', [ConceptController::class, 'updateSpecifications'])->name('concepts.update-specifications');
     
+    // Products based on designer's concepts
+    Route::get('/products', [\App\Http\Controllers\DesignerController::class, 'products'])->name('products.index');
+    
     // Favorites
     Route::get('/favorites', [\App\Http\Controllers\FavoriteController::class, 'index'])->name('favorites.index');
 });

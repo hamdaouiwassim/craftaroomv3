@@ -21,7 +21,8 @@ class Product extends Model
         'currency',
         'reel',
         'user_id',
-        'status'
+        'status',
+        'concept_id'
 ];
 
 /**
@@ -32,6 +33,16 @@ class Product extends Model
 public function user(): BelongsTo
 {
     return $this->belongsTo(User::class, 'user_id', 'id');
+}
+
+/**
+ * Get the concept that the product is based on
+ *
+ * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+ */
+public function concept(): BelongsTo
+{
+    return $this->belongsTo(Concept::class, 'concept_id', 'id');
 }
 
     /**

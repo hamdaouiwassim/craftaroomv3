@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Dimension;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -163,7 +164,7 @@ class ProductController extends Controller
             'currencies' => Currency::orderBy('name', 'asc')->get(),
             'routePrefix' => $routePrefix,
             'concept' => $concept,
-        ]);
+             ]);
     }
 
     /**
@@ -193,7 +194,24 @@ class ProductController extends Controller
                 'currency' => 'required|string',
                 'status' => 'nullable|in:active,inactive',
                 'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:102400',
+                'concept_id' => 'nullable|exists:concepts,id',
+                'concept_photos' => 'nullable|array',
+                'concept_photos.*' => 'nullable|string',
+                'concept_3d_model' => 'nullable|string',
+                'concept_reel' => 'nullable|string',
             ]);
+            
+            // Validate that products have either uploaded 3D model OR concept 3D model
+            if (!$request->hasFile('folderModel') && !$request->filled('concept_3d_model')) {
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Le modèle 3D est obligatoire. Veuillez télécharger un fichier ZIP ou utiliser le modèle 3D du concept.',
+                        'errors' => ['folderModel' => ['Le modèle 3D est obligatoire.']]
+                    ], 422);
+                }
+                return redirect()->back()->withErrors(['folderModel' => 'Le modèle 3D est obligatoire.'])->withInput();
+            }
 
             $m = false;
             $measure = new Measure();
@@ -255,7 +273,13 @@ class ProductController extends Controller
             // Don't include file uploads in initial creation
             unset($inputs['reel'], $inputs['folderModel'], $inputs['photos']);
             $conceptId = $request->filled('concept_id') ? (int) $request->concept_id : null;
-            unset($inputs['concept_id']);
+            
+            // Keep concept_id in inputs if it exists
+            if ($conceptId) {
+                $inputs['concept_id'] = $conceptId;
+            } else {
+                unset($inputs['concept_id']);
+            }
             
             // Set default size if not provided (since we removed it from the form)
             if (!isset($inputs['size']) || empty($inputs['size'])) {
@@ -282,18 +306,27 @@ class ProductController extends Controller
                 $weight->save();}
 
             // Constructor creating from concept: if no new files will be uploaded (handled by JS), copy concept media to product so dropzone-empty = use concept media
-            if ($conceptId && $this->getRoutePrefix() === 'constructor') {
+            if ($conceptId && in_array($this->getRoutePrefix(), ['constructor', 'admin'])) {
                 $concept = Concept::with(['photos', 'threedmodels'])->find($conceptId);
                 if ($concept) {
-                    foreach ($concept->photos as $photo) {
-                        Media::create([
-                            'name' => $photo->name,
-                            'url' => $photo->url,
-                            'type' => 'product',
-                            'attachment_id' => $product->id,
-                        ]);
+                    // Only copy concept photos that weren't deleted (i.e., present in concept_photos input)
+                    if ($request->has('concept_photos')) {
+                        $conceptPhotosToKeep = $request->input('concept_photos', []);
+                        foreach ($concept->photos as $photo) {
+                            // Only create media if this photo ID is in the concept_photos array
+                            if (isset($conceptPhotosToKeep[$photo->id])) {
+                                Media::create([
+                                    'name' => $photo->name,
+                                    'url' => $photo->url,
+                                    'type' => 'product',
+                                    'attachment_id' => $product->id,
+                                ]);
+                            }
+                        }
                     }
-                    if ($concept->threedmodels) {
+                    
+                    // Only use concept 3D model if user didn't upload a new one
+                    if ($concept->threedmodels && $request->has('concept_3d_model') && !$request->hasFile('folderModel')) {
                         Media::create([
                             'name' => $concept->threedmodels->name,
                             'url' => $concept->threedmodels->url,
@@ -301,7 +334,9 @@ class ProductController extends Controller
                             'attachment_id' => $product->id,
                         ]);
                     }
-                    if (!empty($concept->reel)) {
+                    
+                    // Only use concept reel if it wasn't deleted and user didn't upload a new one
+                    if (!empty($concept->reel) && $request->has('concept_reel') && !$request->hasFile('reel')) {
                         $product->update(['reel' => $concept->reel]);
                     }
                 }
@@ -449,6 +484,25 @@ class ProductController extends Controller
                 'weight_value' => 'nullable|numeric',
                 'weight_unit' => 'nullable|in:KG,LB',
             ]);
+
+            // Validate that product will have at least one photo after update
+            // Count current photos + new photos being uploaded
+            $currentPhotosCount = $product->photos()->count();
+            $newPhotosCount = $request->hasFile('photos') ? count($request->file('photos')) : 0;
+            
+            // If no current photos and no new photos being uploaded, reject the update
+            if ($currentPhotosCount === 0 && $newPhotosCount === 0) {
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Le produit doit avoir au moins une photo.',
+                        'errors' => ['photos' => ['Le produit doit avoir au moins une photo. Veuillez télécharger au moins une photo.']]
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->withErrors(['photos' => 'Le produit doit avoir au moins une photo. Veuillez télécharger au moins une photo.'])
+                    ->withInput();
+            }
 
             // Update basic product fields
             $product->name = $validated['name'];
@@ -821,6 +875,52 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
+    /**
+     * Delete a specific photo from a product
+     */
+    public function deletePhoto(Product $product, $photoId)
+    {
+        // Check if user can access this product
+        if (!$this->canAccessProduct($product)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action. You can only delete photos from your own products.'
+            ], 403);
+        }
+
+        try {
+            $photo = Media::where('id', $photoId)
+                ->where('attachment_id', $product->id)
+                ->where('type', 'product')
+                ->first();
+
+            if (!$photo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Photo not found or does not belong to this product.'
+                ], 404);
+            }
+
+            // Delete the file from storage if it exists
+            if ($photo->url && \Storage::disk('public')->exists($photo->url)) {
+                \Storage::disk('public')->delete($photo->url);
+            }
+
+            // Delete the database record
+            $photo->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Photo deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting photo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function destroy(Product $product)
     {
         // Check if user can access this product

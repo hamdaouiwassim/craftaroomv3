@@ -10,7 +10,7 @@
                 <div>
                     <h2 class="font-bold text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                         Tableau de bord
-                    </h2>
+        </h2>
                     <p class="text-sm text-gray-600 mt-1">Bienvenue, {{ Auth::user()->name }}</p>
                 </div>
             </div>

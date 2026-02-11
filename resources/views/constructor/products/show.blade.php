@@ -224,7 +224,7 @@
                 </div>
 
                 <!-- Sidebar -->
-                <div class="space-y-6">
+                <div class="flex flex-col gap-16">
                     <!-- Product Info Card -->
                     <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-teal-100 sticky top-24">
                         <div class="p-6">
@@ -254,7 +254,7 @@
 
                     <!-- Producer Info -->
                     @if($product->user)
-                        <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-teal-100">
+                        <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-teal-100 md:mt-12">
                             <div class="p-6">
                                 <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                     <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

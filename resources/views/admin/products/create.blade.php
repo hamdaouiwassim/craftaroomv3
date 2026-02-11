@@ -26,7 +26,11 @@
                     <form action="{{ route('admin.products.store') }}" method="POST" class="mt-4"
                           enctype="multipart/form-data" id="product-form"
                           data-route-prefix="admin"
-                          x-data="productForm()">
+                          @if(isset($concept) && $concept)
+                          x-data="productFormWithConceptData({{ $concept->photos ? json_encode($concept->photos->pluck('id')->toArray()) : '[]' }}, {{ $concept->reel ? 'true' : 'false' }})"
+                          @else
+                          x-data="productFormData()"
+                          @endif
                         @csrf
                         @if(isset($concept) && $concept)
                             <input type="hidden" name="concept_id" value="{{ $concept->id }}">
@@ -304,37 +308,73 @@
                                     </svg>
                                     Médias du concept (référence)
                                 </h4>
-                                <p class="text-xs text-amber-700 mb-4">Ces médias proviennent du concept sélectionné. Vous pouvez les consulter ci-dessous et ajouter vos propres fichiers dans les zones de dépôt.</p>
+                                <p class="text-xs text-amber-700 mb-4">
+                                    Ces médias proviennent du concept sélectionné. Vous pouvez les supprimer ou ajouter vos propres fichiers.
+                                    <span class="font-semibold text-red-600">⚠️ Supprimer un média du concept ne l'affecte pas dans le concept original.</span>
+                                </p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     @if($concept->photos->count() > 0)
                                         <div>
                                             <p class="text-xs font-semibold text-amber-800 mb-2">Photos du concept ({{ $concept->photos->count() }})</p>
                                             <div class="flex flex-wrap gap-2">
                                                 @foreach($concept->photos as $photo)
-                                                    <a href="{{ $photo->url }}" target="_blank" rel="noopener" class="block w-20 h-20 rounded-lg overflow-hidden border-2 border-amber-200 hover:border-amber-400 shadow-sm">
-                                                        <img src="{{ $photo->url }}" alt="{{ $photo->name }}" class="w-full h-full object-cover">
-                                                    </a>
+                                                    <template x-if="!conceptPhotosToDelete.includes({{ $photo->id }})">
+                                                        <div class="relative group w-20 h-20">
+                                                            <a href="{{ $photo->url }}" target="_blank" rel="noopener" class="block w-full h-full rounded-lg overflow-hidden border-2 border-amber-200 hover:border-amber-400 shadow-sm">
+                                                                <img src="{{ $photo->url }}" alt="{{ $photo->name }}" class="w-full h-full object-cover">
+                                                            </a>
+                                                            <button 
+                                                                type="button"
+                                                                @click="removeConceptPhoto({{ $photo->id }})"
+                                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                            <input type="hidden" name="concept_photos[{{ $photo->id }}]" value="{{ $photo->url }}">
+                                                        </div>
+                                                    </template>
                                                 @endforeach
                                             </div>
                                         </div>
                                     @endif
                                     @if($concept->threedmodels)
-                                        <div>
-                                            <p class="text-xs font-semibold text-amber-800 mb-2">Modèle 3D du concept</p>
-                                            <a href="{{ $concept->threedmodels->url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                                                {{ $concept->threedmodels->name ?? 'Télécharger' }}
-                                            </a>
-                                        </div>
+                                        <template x-if="true">
+                                            <div>
+                                                <p class="text-xs font-semibold text-amber-800 mb-2">Modèle 3D du concept</p>
+                                                <div class="flex items-center gap-2">
+                                                    <a href="{{ $concept->threedmodels->url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                                        {{ $concept->threedmodels->name ?? 'Télécharger' }}
+                                                    </a>
+                                                    <input type="hidden" name="concept_3d_model" value="{{ $concept->threedmodels->url }}">
+                                                </div>
+                                                <p class="text-xs text-gray-500 mt-1">Le modèle 3D du concept sera utilisé si vous n'en téléchargez pas un nouveau.</p>
+                                            </div>
+                                        </template>
                                     @endif
                                     @if($concept->reel)
-                                        <div class="sm:col-span-2">
-                                            <p class="text-xs font-semibold text-amber-800 mb-2">Reel / Vidéo du concept</p>
-                                            <a href="{{ $concept->reel }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                                                Voir la vidéo
-                                            </a>
-                                        </div>
+                                        <template x-if="!conceptReelDeleted">
+                                            <div class="sm:col-span-2">
+                                                <p class="text-xs font-semibold text-amber-800 mb-2">Reel / Vidéo du concept</p>
+                                                <div class="flex items-center gap-2">
+                                                    <a href="{{ $concept->reel }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                                        Voir la vidéo
+                                                    </a>
+                                                    <button 
+                                                        type="button"
+                                                        @click="removeConceptReel()"
+                                                        class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors">
+                                                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        Supprimer
+                                                    </button>
+                                                    <input type="hidden" name="concept_reel" value="{{ $concept->reel }}">
+                                                </div>
+                                            </div>
+                                        </template>
                                     @endif
                                 </div>
                             </div>

@@ -80,6 +80,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'canManageProducts']
     Route::post('products/{product}/model', [ProductController::class, 'uploadModel'])
         ->middleware(\App\Http\Middleware\IncreaseUploadLimits::class)
         ->name('products.upload-model');
+    
+    // Delete photo from product
+    Route::delete('products/{product}/photos/{photo}', [ProductController::class, 'deletePhoto'])
+        ->name('products.delete-photo');
 });
 
 // Favorites route for admin

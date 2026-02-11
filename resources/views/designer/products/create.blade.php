@@ -36,7 +36,7 @@
                     <form action="{{ route('designer.products.store') }}" method="POST" class="mt-4"
                           enctype="multipart/form-data" id="product-form"
                           data-route-prefix="designer"
-                          x-data="productForm()">
+                          x-data="productFormData()">
                         @csrf
 
                         <!-- Enhanced Stepper Progress -->
