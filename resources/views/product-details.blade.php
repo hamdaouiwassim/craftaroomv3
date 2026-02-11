@@ -71,6 +71,70 @@
                         </div>
                     </div>
 
+                    <!-- Product Specifications -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Specifications
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Size</p>
+                                <p class="font-semibold text-gray-900">{{ $product->size }}</p>
+                            </div>
+                            @if($product->rooms->count() > 0)
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Rooms</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($product->rooms as $room)
+                                            <span class="px-3 py-1 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 rounded-full text-sm font-medium">
+                                                {{ $room->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            @if($product->metals->count() > 0)
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Metals</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($product->metals as $metal)
+                                            <span class="px-3 py-1 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 rounded-full text-sm font-medium">
+                                                {{ $metal->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            @if($product->measure)
+                                @if($product->measure->dimension)
+                                    <div>
+                                        <p class="text-sm text-gray-500 mb-1">Dimensions</p>
+                                        <p class="font-semibold text-gray-900">
+                                            {{ $product->measure->dimension->length }} × {{ $product->measure->dimension->width }} × {{ $product->measure->dimension->height }} {{ $product->measure->dimension->unit }}
+                                        </p>
+                                    </div>
+                                @endif
+                                @if($product->measure->weight)
+                                    <div>
+                                        <p class="text-sm text-gray-500 mb-1">Weight</p>
+                                        <p class="font-semibold text-gray-900">
+                                            {{ $product->measure->weight->weight_value }} {{ $product->measure->weight->weight_unit }}
+                                        </p>
+                                    </div>
+                                @endif
+                                @if($product->measure->size)
+                                    <div>
+                                        <p class="text-sm text-gray-500 mb-1">Measure Size</p>
+                                        <p class="font-semibold text-gray-900">{{ $product->measure->size }}</p>
+                                    </div>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+
                     <!-- Reel Video -->
                     @if($product->reel)
                         <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
@@ -199,76 +263,12 @@
                             @endforelse
                         </div>
                     </div>
-
-                    <!-- Product Specifications -->
-                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                            Specifications
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-sm text-gray-500 mb-1">Size</p>
-                                <p class="font-semibold text-gray-900">{{ $product->size }}</p>
-                            </div>
-                            @if($product->rooms->count() > 0)
-                                <div>
-                                    <p class="text-sm text-gray-500 mb-1">Rooms</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        @foreach($product->rooms as $room)
-                                            <span class="px-3 py-1 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 rounded-full text-sm font-medium">
-                                                {{ $room->name }}
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                            @if($product->metals->count() > 0)
-                                <div>
-                                    <p class="text-sm text-gray-500 mb-1">Metals</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        @foreach($product->metals as $metal)
-                                            <span class="px-3 py-1 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 rounded-full text-sm font-medium">
-                                                {{ $metal->name }}
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                            @if($product->measure)
-                                @if($product->measure->dimension)
-                                    <div>
-                                        <p class="text-sm text-gray-500 mb-1">Dimensions</p>
-                                        <p class="font-semibold text-gray-900">
-                                            {{ $product->measure->dimension->length }} × {{ $product->measure->dimension->width }} × {{ $product->measure->dimension->height }} {{ $product->measure->dimension->unit }}
-                                        </p>
-                                    </div>
-                                @endif
-                                @if($product->measure->weight)
-                                    <div>
-                                        <p class="text-sm text-gray-500 mb-1">Weight</p>
-                                        <p class="font-semibold text-gray-900">
-                                            {{ $product->measure->weight->weight_value }} {{ $product->measure->weight->weight_unit }}
-                                        </p>
-                                    </div>
-                                @endif
-                                @if($product->measure->size)
-                                    <div>
-                                        <p class="text-sm text-gray-500 mb-1">Measure Size</p>
-                                        <p class="font-semibold text-gray-900">{{ $product->measure->size }}</p>
-                                    </div>
-                                @endif
-                            @endif
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Right Column: Product Info & Producer Profile -->
                 <div class="space-y-6">
                     <!-- Product Purchase Card -->
-                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100 sticky top-24">
+                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100 sticky top-24 z-20">
                         <div class="mb-6">
                             <div class="flex items-center justify-between mb-4">
                                 <span class="text-sm text-gray-500">Price</span>
@@ -341,13 +341,21 @@
                     <!-- Producer Profile -->
                     @if($product->user)
                         <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
-                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
+                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-900">Producer</h3>
                                 </div>
-                                <h3 class="text-xl font-bold text-gray-900">Producer</h3>
+                                <a href="{{ route('producer.show', $product->user->id) }}" class="text-sm font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 transition-colors">
+                                    View Profile
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
                             </div>
 
                             <div class="flex items-center gap-4 mb-4">

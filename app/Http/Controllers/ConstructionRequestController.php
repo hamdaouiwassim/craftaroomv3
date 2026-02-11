@@ -208,4 +208,28 @@ class ConstructionRequestController extends Controller
 
         return redirect()->back()->with('success', 'Offer accepted successfully! The constructor will be notified.');
     }
+
+    /**
+     * Display all offers made by the current constructor.
+     */
+    public function myOffers()
+    {
+        // Only constructors can access this
+        if (auth()->user()->role !== 3) {
+            abort(403, 'Unauthorized');
+        }
+
+        $offers = ConstructionOffer::with([
+            'constructionRequest',
+            'constructionRequest.concept',
+            'constructionRequest.concept.photos',
+            'constructionRequest.concept.category',
+            'constructionRequest.customer'
+        ])
+            ->where('constructor_id', auth()->id())
+            ->latest()
+            ->paginate(15);
+
+        return view('constructor.offers.index', compact('offers'));
+    }
 }

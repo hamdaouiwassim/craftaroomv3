@@ -295,5 +295,44 @@ class LandingController extends Controller
             'relatedConcepts' => $relatedConcepts,
         ]);
     }
+
+    /**
+     * Display producer profile.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function showProducer($id)
+    {
+        $producer = \App\Models\User::with(['address', 'avatar'])
+            ->findOrFail($id);
+
+        // Get all products from this producer
+        $products = Product::where('status', 'active')
+            ->where('user_id', $producer->id)
+            ->with(['photos', 'category', 'reviews'])
+            ->latest()
+            ->paginate(12);
+
+        // Calculate producer stats
+        $totalProducts = Product::where('user_id', $producer->id)
+            ->where('status', 'active')
+            ->count();
+
+        $totalReviews = \App\Models\Review::whereHas('product', function($q) use ($producer) {
+            $q->where('user_id', $producer->id);
+        })->count();
+
+        $averageRating = \App\Models\Review::whereHas('product', function($q) use ($producer) {
+            $q->where('user_id', $producer->id);
+        })->avg('rating');
+
+        return view('producer-profile', [
+            'producer' => $producer,
+            'products' => $products,
+            'totalProducts' => $totalProducts,
+            'totalReviews' => $totalReviews,
+            'averageRating' => $averageRating,
+        ]);
+    }
 }
 

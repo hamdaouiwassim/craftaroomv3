@@ -21,6 +21,7 @@ Route::get('/products', [LandingController::class, 'products'])->name('products.
 Route::get('/products/{id}', [LandingController::class, 'show'])->name('products.show');
 Route::get('/concepts', [LandingController::class, 'concepts'])->name('concepts.index');
 Route::get('/concepts/{id}', [LandingController::class, 'showConcept'])->name('concepts.show');
+Route::get('/producer/{id}', [LandingController::class, 'showProducer'])->name('producer.show');
 
 // Construction Requests (authenticated users)
 Route::middleware('auth')->group(function () {

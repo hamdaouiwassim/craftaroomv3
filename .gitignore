@@ -18,6 +18,7 @@
 /storage/*.key
 /storage/pail
 /vendor
+3dengine/
 Homestead.json
 Homestead.yaml
 Thumbs.db
