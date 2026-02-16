@@ -35,8 +35,8 @@ Route::get('/rooms/withProducts', [RoomController::class, 'withProducts'])->name
 Route::get("/products",[ProductController::class,'index'])->name('api.products.index');
 
 // 3D Viewer API
-Route::get('/3d-viewer/product/{product}', [\App\Http\Controllers\Api\ThreeDViewerController::class, 'getProductConfig']);
-Route::get('/3d-viewer/concept/{concept}', [\App\Http\Controllers\Api\ThreeDViewerController::class, 'getConceptConfig']);
+Route::get('/3d-viewer/product/{product}', [\App\Http\Controllers\API\ThreeDViewerController::class, 'getProductConfig']);
+Route::get('/3d-viewer/concept/{concept}', [\App\Http\Controllers\API\ThreeDViewerController::class, 'getConceptConfig']);
 
 Route::any('{path}', function() {
     return response()->json([

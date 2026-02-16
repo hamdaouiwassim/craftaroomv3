@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
@@ -15,72 +15,37 @@ class ThreeDViewerController extends Controller
      */
     public function getProductConfig(Product $product)
     {
-        // Get the 3D model
-        $model3D = $product->threedmodels;
-        
-        if (!$model3D) {
-            return response()->json([
-                'error' => 'No 3D model available for this product'
-            ], 404);
-        }
-
-        // All models are extracted from ZIP files
-        // Remove .zip extension from URL to get the extracted directory path
-        $storagePath = str_replace('/storage/', '', $model3D->url);
-        $extractedPath = storage_path('app/public/' . preg_replace('/\.zip$/i', '', $storagePath));
-        $extractedUrl = preg_replace('/\.zip$/i', '', $model3D->url);
-        
-        // Find the OBJ file inside the extracted directory
-        $objFilePath = null;
-        $objFileName = null;
-        
-        if (is_dir($extractedPath)) {
-            // Recursively search for .obj file in the extracted directory
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($extractedPath, \RecursiveDirectoryIterator::SKIP_DOTS),
-                \RecursiveIteratorIterator::SELF_FIRST
-            );
+        try {
+            $model3D = $product->threedmodels;
             
-            foreach ($iterator as $file) {
-                if ($file->isFile() && strtolower($file->getExtension()) === 'obj') {
-                    $relativePath = str_replace($extractedPath . '/', '', $file->getPathname());
-                    $objFilePath = $extractedUrl . '/' . $relativePath;
-                    $objFileName = $file->getFilename();
-                    break;
-                }
+            if (!$model3D) {
+                return response()->json(['error' => 'No 3D model available for this product'], 404);
             }
-        }
-        
-        if (!$objFilePath) {
+
+            $mainModel = $this->resolveMainModel($model3D);
+            
+            if (!$mainModel) {
+                return response()->json(['error' => 'No OBJ file found in the model directory'], 404);
+            }
+
             return response()->json([
-                'error' => 'No OBJ file found in the extracted model directory'
-            ], 404);
+                'mainModel' => $mainModel,
+                'components' => $this->getMaterials($product),
+                'floors' => $this->getAvailableFloors(),
+                'metadata' => [
+                    'productId' => $product->id,
+                    'productName' => $product->name,
+                    'category' => $product->category?->name,
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('3D Viewer API error (product)', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        $config = [
-            'mainModel' => [
-                'type' => 'extracted',
-                'path' => $objFilePath,
-                'name' => $objFileName,
-                'directory' => $extractedUrl,
-                'size' => 1.0,
-            ],
-            
-            // Materials attached to this product
-            'components' => $this->getMaterials($product),
-            
-            // Include available floors
-            'floors' => $this->getAvailableFloors(),
-            
-            // Product metadata
-            'metadata' => [
-                'productId' => $product->id,
-                'productName' => $product->name,
-                'category' => $product->category?->name,
-            ]
-        ];
-
-        return response()->json($config);
     }
 
     /**
@@ -88,67 +53,76 @@ class ThreeDViewerController extends Controller
      */
     public function getConceptConfig(Concept $concept)
     {
-        $model3D = $concept->threedmodels;
-        
-        if (!$model3D) {
-            return response()->json([
-                'error' => 'No 3D model available for this concept'
-            ], 404);
-        }
+        try {
+            $model3D = $concept->threedmodels;
+            
+            if (!$model3D) {
+                return response()->json(['error' => 'No 3D model available for this concept'], 404);
+            }
 
-        // All models are extracted from ZIP files
-        // Remove .zip extension from URL to get the extracted directory path
+            $mainModel = $this->resolveMainModel($model3D);
+            
+            if (!$mainModel) {
+                return response()->json(['error' => 'No OBJ file found in the model directory'], 404);
+            }
+
+            return response()->json([
+                'mainModel' => $mainModel,
+                'components' => $this->getMaterials($concept),
+                'floors' => $this->getAvailableFloors(),
+                'metadata' => [
+                    'conceptId' => $concept->id,
+                    'conceptName' => $concept->name,
+                    'category' => $concept->category?->name,
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('3D Viewer API error (concept)', [
+                'concept_id' => $concept->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Resolve main model path from a 3D model record
+     */
+    private function resolveMainModel($model3D)
+    {
         $storagePath = str_replace('/storage/', '', $model3D->url);
         $extractedPath = storage_path('app/public/' . preg_replace('/\.zip$/i', '', $storagePath));
         $extractedUrl = preg_replace('/\.zip$/i', '', $model3D->url);
-        
-        // Find the OBJ file inside the extracted directory
-        $objFilePath = null;
-        $objFileName = null;
-        
-        if (is_dir($extractedPath)) {
-            // Recursively search for .obj file in the extracted directory
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($extractedPath, \RecursiveDirectoryIterator::SKIP_DOTS),
-                \RecursiveIteratorIterator::SELF_FIRST
-            );
-            
-            foreach ($iterator as $file) {
-                if ($file->isFile() && strtolower($file->getExtension()) === 'obj') {
-                    $relativePath = str_replace($extractedPath . '/', '', $file->getPathname());
-                    $objFilePath = $extractedUrl . '/' . $relativePath;
-                    $objFileName = $file->getFilename();
-                    break;
-                }
-            }
-        }
-        
-        if (!$objFilePath) {
-            return response()->json([
-                'error' => 'No OBJ file found in the extracted model directory'
-            ], 404);
+
+        \Log::info('Resolving main model', [
+            'url' => $model3D->url,
+            'extractedPath' => $extractedPath,
+            'exists' => file_exists($extractedPath),
+            'is_dir' => is_dir($extractedPath),
+        ]);
+
+        if (!is_dir($extractedPath)) {
+            \Log::warning('Model directory not found: ' . $extractedPath);
+            return null;
         }
 
-        $config = [
-            'mainModel' => [
-                'type' => 'extracted',
-                'path' => $objFilePath,
-                'name' => $objFileName,
-                'directory' => $extractedUrl,
-                'size' => 1.0,
-            ],
-            
-            'components' => $this->getMaterials($concept),
-            'floors' => $this->getAvailableFloors(),
-            
-            'metadata' => [
-                'conceptId' => $concept->id,
-                'conceptName' => $concept->name,
-                'category' => $concept->category?->name,
-            ]
+        $objFile = $this->findObjFileInDirectory($extractedPath);
+        
+        if (!$objFile) {
+            \Log::warning('No OBJ file found in: ' . $extractedPath);
+            return null;
+        }
+
+        $relativePath = str_replace($extractedPath . '/', '', $objFile);
+
+        return [
+            'type' => 'extracted',
+            'path' => $extractedUrl . '/' . $relativePath,
+            'name' => basename($objFile),
+            'directory' => $extractedUrl,
+            'size' => 1.0,
         ];
-
-        return response()->json($config);
     }
 
     /**
@@ -158,40 +132,32 @@ class ThreeDViewerController extends Controller
      */
     private function getMaterials($model)
     {
-        $materials = [];
-        
-        \Log::info('🎨 Loading components (metals) for: ' . class_basename($model) . ' #' . $model->id);
-        
-        foreach ($model->metals()->with('metalOptions')->get() as $metal) {
-            // Skip metals with no options
-            if ($metal->metalOptions->isEmpty()) {
-                continue;
+        try {
+            $materials = [];
+            
+            foreach ($model->metals()->with('metalOptions')->get() as $metal) {
+                if ($metal->metalOptions->isEmpty()) {
+                    continue;
+                }
+                
+                $metalKey = strtolower(str_replace(' ', '_', $metal->name));
+                
+                $materials[$metalKey] = $metal->metalOptions->map(function ($option) use ($metal) {
+                    return [
+                        'url' => $option->image_url ?: 'https://via.placeholder.com/200?text=' . urlencode($option->name),
+                        'name' => $option->name,
+                        '_categoryName' => $metal->name,
+                        '_categoryIcon' => $metal->image_url ?: null,
+                        '_categoryRef' => $metal->ref,
+                    ];
+                })->toArray();
             }
-            
-            $metalKey = strtolower(str_replace(' ', '_', $metal->name));
-            
-            \Log::info("Processing metal category: {$metal->name} ({$metalKey})", [
-                'options_count' => $metal->metalOptions->count(),
-                'icon' => $metal->image_url
-            ]);
-            
-            $materials[$metalKey] = $metal->metalOptions->map(function ($option) use ($metal) {
-                return [
-                    'url' => $option->image_url ?: 'https://via.placeholder.com/200?text=' . urlencode($option->name),
-                    'name' => $option->name,
-                    '_categoryName' => $metal->name,
-                    '_categoryIcon' => $metal->image_url ?: null,
-                    '_categoryRef' => $metal->ref,
-                ];
-            })->toArray();
+
+            return $materials;
+        } catch (\Throwable $e) {
+            \Log::error('Error loading materials: ' . $e->getMessage());
+            return [];
         }
-
-        \Log::info('✅ Components loaded successfully', [
-            'categories_count' => count($materials),
-            'total_textures' => collect($materials)->flatten(1)->count()
-        ]);
-
-        return $materials;
     }
 
     /**
@@ -200,68 +166,49 @@ class ThreeDViewerController extends Controller
      */
     private function getAvailableFloors()
     {
-        $floors = [];
-        
-        \Log::info('🏢 Loading floors from database...');
-        
-        Floor::with('floorModels')->get()->each(function ($floor) use (&$floors) {
-            // Use floor name as key: "floor-wood", "floor-carpet", etc.
-            $floorCategory = 'floor-' . strtolower(str_replace(' ', '-', $floor->name));
+        try {
+            $floors = [];
             
-            \Log::info("Processing floor category: {$floor->name} ({$floorCategory})", [
-                'models_count' => $floor->floorModels->count(),
-                'icon' => $floor->icon
-            ]);
-            
-            // Map floor models to original format
-            $floors[$floorCategory] = $floor->floorModels->map(function ($model) use ($floor) {
-                $modelPath = $model->path;
-                $storagePath = str_replace('/storage/', '', $modelPath);
-                $fullPath = storage_path('app/public/' . $storagePath);
+            Floor::with('floorModels')->get()->each(function ($floor) use (&$floors) {
+                $floorCategory = 'floor-' . strtolower(str_replace(' ', '-', $floor->name));
                 
-                $fileName = '';
-                $folderPath = '';
-                
-                if (is_dir($fullPath)) {
-                    // For extracted models, find the OBJ file and derive folder from its actual location
-                    $objFile = $this->findObjFileInDirectory($fullPath);
-                    if ($objFile) {
-                        $fileName = basename($objFile);
-                        // Get the directory containing the OBJ file, relative to storage
-                        $objDir = dirname($objFile);
-                        $relativeDirFromStorage = str_replace(storage_path('app/public/'), '', $objDir);
-                        $folderPath = '/storage/' . $relativeDirFromStorage . '/';
+                $floors[$floorCategory] = $floor->floorModels->map(function ($model) use ($floor) {
+                    $modelPath = $model->path;
+                    $storagePath = str_replace('/storage/', '', $modelPath);
+                    $fullPath = storage_path('app/public/' . $storagePath);
+                    
+                    $fileName = '';
+                    $folderPath = '';
+                    
+                    if (is_dir($fullPath)) {
+                        $objFile = $this->findObjFileInDirectory($fullPath);
+                        if ($objFile) {
+                            $fileName = basename($objFile);
+                            $objDir = dirname($objFile);
+                            $relativeDirFromStorage = str_replace(storage_path('app/public/'), '', $objDir);
+                            $folderPath = '/storage/' . $relativeDirFromStorage . '/';
+                        }
+                    } else {
+                        $fileName = basename($modelPath);
+                        $folderPath = '/storage/' . dirname($storagePath) . '/';
                     }
-                } else {
-                    // For single file models
-                    $fileName = basename($modelPath);
-                    $folderPath = '/storage/' . dirname($storagePath) . '/';
-                }
-                
-                \Log::info("Floor model path resolved", [
-                    'original_path' => $modelPath,
-                    'folderPath' => $folderPath,
-                    'fileName' => $fileName,
-                ]);
-                
-                return [
-                    'url' => $model->image ? asset('storage/' . $model->image) : null,
-                    'folderPath' => $folderPath,
-                    'fileName' => $fileName,
-                    'baseSize' => is_numeric($model->size) ? (float)$model->size : 2.0,
-                    '_categoryName' => $floor->name,
-                    '_categoryIcon' => $floor->icon ? asset('storage/' . $floor->icon) : null,
-                ];
-            })->toArray();
-        });
+                    
+                    return [
+                        'url' => $model->image ? asset('storage/' . $model->image) : null,
+                        'folderPath' => $folderPath,
+                        'fileName' => $fileName,
+                        'baseSize' => is_numeric($model->size) ? (float)$model->size : 2.0,
+                        '_categoryName' => $floor->name,
+                        '_categoryIcon' => $floor->icon ? asset('storage/' . $floor->icon) : null,
+                    ];
+                })->toArray();
+            });
 
-        \Log::info('✅ Floors loaded successfully', [
-            'categories_count' => count($floors),
-            'total_models' => collect($floors)->flatten(1)->count(),
-            'categories' => array_keys($floors)
-        ]);
-
-        return $floors;
+            return $floors;
+        } catch (\Throwable $e) {
+            \Log::error('Error loading floors: ' . $e->getMessage());
+            return [];
+        }
     }
     
     /**
