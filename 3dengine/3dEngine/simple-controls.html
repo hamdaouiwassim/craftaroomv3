@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Store/Load</title>
+  <style>
+    .simple-controls {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .simple-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .simple-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .store-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .load-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+
+    /* Hidden file input */
+    #load-file-input {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Simple Controls -->
+  <div class="simple-controls">
+    <button class="simple-btn store-btn" id="store-btn">
+      💾 Store
+    </button>
+    <button class="simple-btn load-btn" id="load-btn">
+      📂 Load
+    </button>
+  </div>
+
+  <!-- Hidden file input for loading -->
+  <input type="file" id="load-file-input" accept=".json">
+</body>
+</html>

@@ -13,6 +13,7 @@ use App\Models\Metal;
 use App\Models\MetalOption;
 use App\Models\Media;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ConceptController extends Controller
 {
@@ -347,6 +348,13 @@ class ConceptController extends Controller
         if (!$this->canAccessConcept($concept)) {
             abort(403, 'Unauthorized. You can only delete your own concepts.');
         }
+        
+        // Delete 3D model files if exists
+        $existingModel = $concept->threedmodels;
+        if ($existingModel) {
+            $this->deleteModelFiles($existingModel);
+        }
+        
         $concept->delete();
         return redirect()->route('designer.concepts.index')->with('success', 'Concept deleted successfully.');
     }
@@ -415,17 +423,50 @@ class ConceptController extends Controller
         ]);
         $existing = $concept->threedmodels;
         if ($existing) {
-            if (file_exists(public_path($existing->url))) {
-                unlink(public_path($existing->url));
-            }
+            $this->deleteModelFiles($existing);
             $existing->delete();
         }
+        
         $file = $request->file('folderModel');
-        $fileName = uniqid('concept3d_') . '.' . $file->getClientOriginalExtension();
-        $file->storeAs('uploads/models', $fileName, 'public');
+        $extension = $file->getClientOriginalExtension();
+        
+        if ($extension === 'zip') {
+            // Extract ZIP file
+            $extractPath = 'uploads/models/' . uniqid('concept3d_');
+            $zipPath = $file->storeAs('uploads/temp', uniqid() . '.zip', 'public');
+            $fullZipPath = storage_path('app/public/' . $zipPath);
+            $fullExtractPath = storage_path('app/public/' . $extractPath);
+
+            // Create extraction directory
+            if (!file_exists($fullExtractPath)) {
+                mkdir($fullExtractPath, 0755, true);
+            }
+
+            // Extract ZIP
+            $zip = new \ZipArchive;
+            if ($zip->open($fullZipPath) === true) {
+                $zip->extractTo($fullExtractPath);
+                $zip->close();
+                
+                // Delete the temporary ZIP file
+                Storage::disk('public')->delete($zipPath);
+                
+                $modelPath = $extractPath;
+                $modelUrl = '/storage/' . $extractPath;
+            } else {
+                return redirect()->back()->with('error', 'Failed to extract ZIP file.');
+            }
+        } else {
+            // Store GLB/GLTF files directly
+            $fileName = uniqid('concept3d_') . '.' . $extension;
+            $modelPath = 'uploads/models/' . $fileName;
+            $file->storeAs('uploads/models', $fileName, 'public');
+            $modelUrl = '/storage/uploads/models/' . $fileName;
+        }
+        
         Media::create([
-            'name' => $fileName,
-            'url' => '/storage/uploads/models/' . $fileName,
+            'name' => basename($modelPath),
+            'url' => $modelUrl,
             'attachment_id' => $concept->id,
             'type' => 'concept_threedmodel',
         ]);
@@ -472,9 +513,7 @@ class ConceptController extends Controller
         }
         $existing = $concept->threedmodels;
         if ($existing) {
-            if (file_exists(public_path($existing->url))) {
-                unlink(public_path($existing->url));
-            }
+            $this->deleteModelFiles($existing);
             $existing->delete();
         }
         return redirect()->route('designer.concepts.show', $concept)->with('success', 'Modèle 3D supprimé.');
@@ -582,5 +621,29 @@ class ConceptController extends Controller
             'success' => true,
             'message' => 'Spécifications mises à jour avec succès.'
         ]);
+    }
+
+    /**
+     * Delete model files (handles both directories and single files)
+     */
+    private function deleteModelFiles($media)
+    {
+        if (!$media) {
+            return;
+        }
+
+        $filePath = public_path($media->url);
+        
+        // Check if it's a directory (extracted ZIP)
+        if (is_dir($filePath)) {
+            // Delete directory recursively
+            $relativePath = str_replace('/storage/', '', $media->url);
+            Storage::disk('public')->deleteDirectory($relativePath);
+        } else {
+            // Delete single file
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+        }
     }
 }

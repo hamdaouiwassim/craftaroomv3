@@ -580,6 +580,9 @@
 
         <!-- Footer -->
         <x-footer />
+        
+        <!-- Scripts Stack -->
+        @stack('scripts')
     </body>
 </html>
 

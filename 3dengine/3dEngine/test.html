@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script type="module">
+    // Import API
+    import { setMainModel, setComponentsConfig, setFloorsConfig } from './api.js';
+    
+    // Configure your viewer
+    setMainModel({
+      folderPath: 'objects/chairrr/',
+      fileName: 'chairrr.obj',
+      desiredSize: 1.5
+    });
+    
+    setComponentsConfig({
+      wood: [
+        { url: 'component/assets/wood/wood1.jpg', name: 'Oak' },
+        { url: 'component/assets/wood/wood2.jpg', name: 'Walnut' }
+      ],
+      metal: [
+        { url: 'component/assets/wood/metal1.jpg', name: 'Steel' }
+      ]
+    });
+    
+    setFloorsConfig({
+      "floor-simple": [
+        { 
+          url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSe6a0XOO_kvDu3EXEFGZmOS0vq2Adw9wFarA&s", 
+          folderPath: "objects/carpet3/", 
+          fileName: "carpet3.obj", 
+          baseSize: 5.0 
+        }
+      ]
+    });
+  </script>
+  
+  <!-- Load main viewer after configuration -->
+  <script type="module" src="./main.js"></script>
+</head>
+<body>
+  <!-- Your viewer HTML -->
+</body>
+</html>

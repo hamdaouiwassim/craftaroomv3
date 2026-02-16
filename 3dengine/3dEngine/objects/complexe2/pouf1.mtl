@@ -1,0 +1,16 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl M_82514_master_a_top
+Ka 0.000000 0.000000 0.000000
+Kd 0.729412 0.705882 0.647059
+Ks 0.330000 0.330000 0.330000
+map_Kd pouf1/pouf1_1.jpg
+
+newmtl M_82514_front
+Ka 0.000000 0.000000 0.000000
+Kd 0.619608 0.584314 0.501961
+Ks 0.330000 0.330000 0.330000
+map_Kd pouf1/pouf1_2.jpg
+

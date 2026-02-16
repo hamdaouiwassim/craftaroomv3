@@ -80,6 +80,14 @@
                 <span>Rooms</span>
             </a>
 
+            <a href="{{ route('admin.floors.index') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all duration-300 {{ request()->routeIs('admin.floors.*') ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg' : 'text-gray-700 hover:bg-teal-50' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+                <span>Floors</span>
+            </a>
+
             <a href="{{ route('admin.products.index') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all duration-300 {{ request()->routeIs('admin.products.*') ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg' : 'text-gray-700 hover:bg-teal-50' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

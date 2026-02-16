@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D OBJ Viewer</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="sidebar.css" />
+  <link rel="stylesheet" href="floor/floor-list.css" />
+  <link rel="stylesheet" href="component/components-list.css" />
+</head>
+
+<body>
+  <div id="loading">Loading model...</div>
+
+
+  <!-- 🔧 AUTO-DETECT: URL params (Laravel iframe) or config.js (standalone) -->
+  <script>
+    // Check URL parameters FIRST (for Laravel integration via iframe)
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlType = urlParams.get('type');
+      const urlId = urlParams.get('id');
+      
+      if (urlType && urlId) {
+        // Laravel mode: override any config.js settings
+        window.VIEWER_CONFIG = {
+          useAPI: true,
+          apiBaseUrl: window.location.origin,
+          modelType: urlType,
+          modelId: parseInt(urlId)
+        };
+        console.log('🌐 Laravel integration detected via URL params:', window.VIEWER_CONFIG);
+      }
+    })();
+  </script>
+  
+  <!-- Load config.js only if VIEWER_CONFIG wasn't already set by URL params -->
+  <script>
+    if (!window.VIEWER_CONFIG) {
+      document.write('<script src="config.js"><\/script>');
+    }
+  </script>
+  
+  <script type="module">
+    import { setMainModel, setComponentsConfig, setFloorsConfig } from './api.js';
+    
+    // Read configuration (set by URL params or config.js)
+    const useAPI = window.VIEWER_CONFIG?.useAPI || false;
+    const apiBaseUrl = window.VIEWER_CONFIG?.apiBaseUrl || window.location.origin;
+    const modelType = window.VIEWER_CONFIG?.modelType || 'product';
+    const modelId = window.VIEWER_CONFIG?.modelId || null;
+    
+    if (useAPI && modelId) {
+      // ========== LOAD FROM LARAVEL API ==========
+      console.log('🌐 Loading configuration from API...');
+      console.log(`   API URL: ${apiBaseUrl}/api/3d-viewer/${modelType}/${modelId}`);
+      
+      fetch(`${apiBaseUrl}/api/3d-viewer/${modelType}/${modelId}`)
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to load configuration from API');
+          return response.json();
+        })
+        .then(config => {
+          console.log('✅ Configuration loaded from API:', config);
+          
+          // Set Main Model(s)
+          if (config.mainModel) {
+            // Handle both single object and array
+            const models = Array.isArray(config.mainModel) ? config.mainModel : [config.mainModel];
+            
+            const modelConfigs = models.map(model => {
+              const modelPath = model.path;
+              const directory = modelPath.substring(0, modelPath.lastIndexOf('/'));
+              const fileName = model.name;
+              
+              return {
+                folderPath: directory + '/',
+                fileName: fileName,
+                desiredSize: model.size || 1.0
+              };
+            });
+            
+            // Pass as array or single object based on original format
+            setMainModel(modelConfigs.length === 1 ? modelConfigs[0] : modelConfigs);
+            
+            // Log model switching info if multiple models
+            if (modelConfigs.length > 1) {
+              console.log(`   💡 ${modelConfigs.length} models available. Use switchModel(index) to change models.`);
+            }
+          }
+          
+          // Set Components
+          if (config.components && Object.keys(config.components).length > 0) {
+            const componentsData = {};
+            const categoriesData = {};
+            
+            for (const [categoryKey, textureList] of Object.entries(config.components)) {
+              if (Array.isArray(textureList) && textureList.length > 0) {
+                const firstItem = textureList[0];
+                if (firstItem._categoryName || firstItem._categoryIcon) {
+                  categoriesData[categoryKey] = {
+                    name: firstItem._categoryName || categoryKey,
+                    icon: firstItem._categoryIcon || null
+                  };
+                }
+                
+                componentsData[categoryKey] = textureList.map(texture => ({
+                  url: texture.url,
+                  name: texture.name
+                }));
+              }
+            }
+            
+            if (Object.keys(componentsData).length > 0) {
+              setComponentsConfig(componentsData, categoriesData);
+            }
+          }
+          
+          // Set Floors
+          if (config.floors && Object.keys(config.floors).length > 0) {
+            const floorsData = {};
+            const categoriesData = {};
+            
+            for (const [categoryKey, floorList] of Object.entries(config.floors)) {
+              if (Array.isArray(floorList) && floorList.length > 0) {
+                const firstItem = floorList[0];
+                if (firstItem._categoryName || firstItem._categoryIcon) {
+                  categoriesData[categoryKey] = {
+                    name: firstItem._categoryName || categoryKey,
+                    icon: firstItem._categoryIcon || null
+                  };
+                }
+                
+                floorsData[categoryKey] = floorList.map(floor => ({
+                  url: floor.url,
+                  folderPath: floor.folderPath,
+                  fileName: floor.fileName || '',
+                  baseSize: floor.baseSize || 2.0
+                }));
+              }
+            }
+            
+            if (Object.keys(floorsData).length > 0) {
+              setFloorsConfig(floorsData, categoriesData);
+            }
+          }
+          
+          console.log('✅ Dynamic configuration loaded from API!');
+        })
+        .catch(error => {
+          console.error('❌ Error loading from API:', error);
+          document.getElementById('loading').textContent = 'Error: ' + error.message;
+        });
+        
+    } else {
+      // ========== USE LOCAL CONFIGURATION ==========
+      console.log('📁 Using local configuration from config.js');
+      
+      const localConfig = window.VIEWER_CONFIG || {};
+      
+      if (localConfig.mainModel) {
+        setMainModel(localConfig.mainModel);
+      }
+      
+      if (localConfig.components) {
+        setComponentsConfig(localConfig.components);
+      }
+      
+      if (localConfig.floors) {
+        setFloorsConfig(localConfig.floors);
+      }
+      
+      console.log('✅ Local configuration loaded!');
+    }
+  </script>
+  <!-- Store/Load Controls -->
+  <div id="simple-controls"></div>
+
+  <script type="module">
+    // Load HTML
+    fetch('simple-controls.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('simple-controls').innerHTML = html;
+
+        // Now import and setup the controls
+        import('./utils/simple-store.js').then(({ SimpleCustomizationStore }) => {
+
+          // STORE button
+          document.getElementById('store-btn').addEventListener('click', () => {
+            console.log('Checking for model...', {
+              mainModelParent: window.mainModelParent,
+              mainModelGroup: window.mainModelGroup,
+              scene: window.scene
+            });
+
+            if (!window.mainModelParent || !window.mainModelGroup || !window.scene) {
+              alert('No model loaded! Please wait for the model to load completely.');
+              return;
+            }
+            // Capture current state
+            const state = SimpleCustomizationStore.captureState(
+              window.mainModelParent,
+              window.mainModelGroup,
+              window.floorModelGroup,
+              window.scene
+            );
+
+            // Download as JSON file
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            SimpleCustomizationStore.saveToFile(state, `customization_${timestamp}.json`);
+
+            alert('Customization saved! ✅');
+          });
+
+          // LOAD button
+          document.getElementById('load-btn').addEventListener('click', () => {
+            document.getElementById('load-file-input').click();
+          });
+
+          // File input change
+          document.getElementById('load-file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+              // Load state from file
+              const state = await SimpleCustomizationStore.loadFromFile(file);
+
+              // Restore customization
+              const success = await SimpleCustomizationStore.restore(state, {
+                loadFloorModel: window.loadFloorModel,
+                mainModelGroup: window.mainModelGroup,
+                mainModelParent: window.mainModelParent,
+                scene: window.scene
+              });
+
+              if (!success) {
+                alert('Failed to load customization ❌');
+              }
+            } catch (error) {
+              console.error('Load error:', error);
+              alert('Error loading file: ' + error.message);
+            }
+
+            // Reset file input
+            e.target.value = '';
+          });
+        });
+      });
+  </script>
+  <button id="toggle-tools-btn" aria-label="Toggle Tools">
+    <i class="fas fa-paint-brush"></i>
+  </button>
+
+  <div id="sidebar-container"></div>
+
+  <div id="bg-color-picker-container">
+    <button id="color-picker-toggle" aria-label="Toggle Color Picker">
+      <img id="color-picker-icon" src="assets/icon_bg_color_palette.png" alt="Color Palette">
+    </button>
+    <div id="bg-color-picker" class="hidden">
+      <button class="color-btn" data-color="#ffffff" title="White"></button>
+      <button class="color-btn" data-color="#eeeeee" title="Light Gray"></button>
+      <button class="color-btn" data-color="#d0e7ff" title="Light Blue"></button>
+      <button class="color-btn" data-color="#f5f0e6" title="Light Cream"></button>
+      <button class="color-btn" data-color="#e6f2e6" title="Light Green"></button>
+      <button class="color-btn" data-color="#f7f3ea" title="Light Beige"></button>
+      <button class="color-btn" data-color="#f0e6f7" title="Light Purple"></button>
+      <button class="color-btn" data-color="#f9f9f9" title="Almost White"></button>
+    </div>
+  </div>
+
+  <button id="global-reset-btn" style="display: none;">
+    <i class="fas fa-rotate-left"></i> Reset
+  </button>
+
+  <div id="floor-scale-container" style="display: none;">
+    <button id="floor-scale-btn">x3</button>
+    <div id="floor-scale-label">scale</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/OBJLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/MTLLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+
+  <script type="module" src="./main.js"></script>
+  <script type="module" src="floor/floorlist.js"></script>
+  <script type="module" src="component/componentlist.js"></script>
+
+
+  <script>
+    /** 1. GLOBAL STATE & UI HELPERS **/
+    window.currentScale = 1;
+    window.maxScale = 3;
+    window.lastSelectedFloor = { folderPath: null, fileName: null, baseSize: 1 };
+
+    window.showFloorScale = () => {
+      const el = document.getElementById('floor-scale-container');
+      const colorPicker = document.getElementById('bg-color-picker-container');
+      if (el) el.style.display = 'flex';
+      // Shift color picker up when scale button shows
+      if (colorPicker) colorPicker.classList.add('shifted-up');
+    };
+
+    window.hideFloorScale = () => {
+      const el = document.getElementById('floor-scale-container');
+      const colorPicker = document.getElementById('bg-color-picker-container');
+      if (el) el.style.display = 'none';
+      // Move color picker back down when scale button hides
+      if (colorPicker) colorPicker.classList.remove('shifted-up');
+    };
+
+    window.selectSidebarItem = (toolId) => {
+      document.querySelectorAll('#tools-sidebar .tool-item').forEach(i => i.classList.remove('selected'));
+      const item = document.getElementById(toolId);
+      if (item) item.classList.add('selected');
+    };
+
+    window.hideAllLists = () => {
+      const fl = document.getElementById('floor-list');
+      const cl = document.getElementById('components-list');
+      if (fl) fl.style.display = 'none';
+      if (cl) cl.style.display = 'none';
+      window.hideFloorScale();
+    };
+
+    window.showGlobalReset = () => {
+      document.getElementById('global-reset-btn').style.display = 'flex';
+    };
+
+    /** 2. ASYNC HTML LOADING & INIT **/
+    async function initApp() {
+      try {
+        // Load Sidebar
+        const sidebarRes = await fetch('sidebar.html');
+        document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
+
+        // Load Floor List
+        const floorRes = await fetch('floor/floor-list.html');
+        const floorDiv = document.createElement('div');
+        floorDiv.innerHTML = await floorRes.text();
+        document.body.appendChild(floorDiv);
+
+        // Load Components List
+        const compRes = await fetch('component/components-list.html');
+        const compDiv = document.createElement('div');
+        compDiv.innerHTML = await compRes.text();
+        document.body.appendChild(compDiv);
+
+        setupSidebarListeners();
+
+        // Initialize external logic
+        if (typeof window.initFloorList === 'function') window.initFloorList();
+        if (typeof window.initComponentList === 'function') window.initComponentList();
+
+      } catch (err) {
+        console.error("Initialization error:", err);
+      }
+    }
+
+    function setupSidebarListeners() {
+      const sidebarItems = document.querySelectorAll('#tools-sidebar .tool-item');
+      const toggleBtn = document.getElementById('toggle-tools-btn');
+      const sidebar = document.getElementById('tools-sidebar');
+
+      sidebarItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.hideAllLists();
+          sidebarItems.forEach(i => i.classList.remove('selected'));
+          item.classList.add('selected');
+
+          if (item.id === 'floor-tool') {
+            document.getElementById('floor-list').style.display = 'flex';
+          } else if (item.id === 'components-tool') {
+            document.getElementById('components-list').style.display = 'flex';
+          }
+        });
+      });
+
+      toggleBtn.addEventListener('click', () => {
+        const isActive = sidebar.classList.toggle('active');
+        toggleBtn.querySelector('i').classList.toggle('fa-paint-brush', !isActive);
+        toggleBtn.querySelector('i').classList.toggle('fa-xmark', isActive);
+        if (!isActive) {
+          window.hideAllLists();
+          sidebarItems.forEach(i => i.classList.remove('selected'));
+        }
+      });
+    }
+
+    // Global Reset Listener
+    document.getElementById('global-reset-btn').addEventListener('click', async () => {
+      const { resetEverything } = await import('./main.js');
+      resetEverything();
+    });
+
+    initApp();
+  </script>
+  <div id="custom-alert-overlay" class="alert-overlay hidden">
+    <div id="custom-alert-box" class="alert-box">
+      <div class="alert-icon">
+        <i class="fas fa-info-circle"></i>
+      </div>
+      <div id="custom-alert-message" class="alert-message">
+        Alert message here
+      </div>
+      <button id="custom-alert-ok-btn" class="alert-ok-btn">
+        OK
+      </button>
+    </div>
+  </div>
+</body>
+
+</html>

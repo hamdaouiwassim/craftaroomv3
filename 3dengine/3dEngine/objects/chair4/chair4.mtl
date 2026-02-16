@@ -1,0 +1,16 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl _13
+Ka 0.000000 0.000000 0.000000
+Kd 0.298039 0.290196 0.298039
+Ks 0.330000 0.330000 0.330000
+map_Kd chair4.jpg
+
+newmtl Material__pied
+Ka 0.000000 0.000000 0.000000
+Kd 0.858824 0.756863 0.584314
+Ks 0.330000 0.330000 0.330000
+map_Kd Material__pied.jpg
+

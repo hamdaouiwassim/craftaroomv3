@@ -1,0 +1,16 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl b113_BS
+Ka 0.000000 0.000000 0.000000
+Kd 0.670588 0.552941 0.454902
+Ks 0.330000 0.330000 0.330000
+map_Kd chairrr/b113_BS.jpg
+
+newmtl M_12_s21
+Ka 0.000000 0.000000 0.000000
+Kd 0.709804 0.709804 0.709804
+Ks 0.330000 0.330000 0.330000
+map_Kd chairrr/M_12_s21.jpg
+

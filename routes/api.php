@@ -33,6 +33,11 @@ Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/withProducts', [RoomController::class, 'withProducts'])->name('rooms.withProducts');
 // API products (avoid conflict with web products.index)
 Route::get("/products",[ProductController::class,'index'])->name('api.products.index');
+
+// 3D Viewer API
+Route::get('/3d-viewer/product/{product}', [\App\Http\Controllers\Api\ThreeDViewerController::class, 'getProductConfig']);
+Route::get('/3d-viewer/concept/{concept}', [\App\Http\Controllers\Api\ThreeDViewerController::class, 'getConceptConfig']);
+
 Route::any('{path}', function() {
     return response()->json([
         'message' => 'Route not found'

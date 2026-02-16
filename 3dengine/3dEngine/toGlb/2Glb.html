@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OBJ to GLB Converter</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
+</head>
+<body>
+  <script>
+    // CONFIGURATION - Change this to your model folder path
+    var MODEL_FOLDER = 'models/carpet2';
+
+    // Function to fetch file from server
+    function fetchFile(path) {
+      return fetch(path).then(function(response) {
+        if (!response.ok) throw new Error('Failed to load: ' + path);
+        return response;
+      });
+    }
+
+    // Function to find and load all files
+    function loadModelFiles() {
+      console.log('Loading model from:', MODEL_FOLDER);
+      
+      var modelName = MODEL_FOLDER.split('/').pop();
+      var objFile = modelName + '.obj';
+      var mtlFile = modelName + '.mtl';
+      var texturesFolder = modelName;
+      
+      var objData = null;
+      var mtlData = null;
+      var textureMap = {};
+
+      console.log('Expected files:', objFile, mtlFile, 'Textures in:', texturesFolder);
+
+      return fetchFile(MODEL_FOLDER + '/' + objFile)
+        .then(function(response) {
+          console.log('Found OBJ:', objFile);
+          return response.text();
+        })
+        .then(function(objContent) {
+          objData = objContent;
+          
+          return fetchFile(MODEL_FOLDER + '/' + mtlFile)
+            .then(function(response) {
+              console.log('Found MTL:', mtlFile);
+              return response.text();
+            })
+            .catch(function() {
+              console.warn('No MTL file found');
+              return null;
+            });
+        })
+        .then(function(mtlContent) {
+          mtlData = mtlContent;
+          
+          if (!mtlData) {
+            return { objData: objData, mtlData: null, textureMap: {} };
+          }
+
+          // Parse MTL to find texture references
+          var textureNames = [];
+          var lines = mtlData.split('\n');
+          lines.forEach(function(line) {
+            if (line.startsWith('map_Kd ') || line.startsWith('map_Ka ') || 
+                line.startsWith('map_Ks ') || line.startsWith('map_Bump ') ||
+                line.startsWith('map_bump ') || line.startsWith('bump ')) {
+              var parts = line.trim().split(/\s+/);
+              if (parts.length > 1) {
+                var texPath = parts[parts.length - 1];
+                var texName = texPath.split('/').pop().split('\\').pop();
+                if (textureNames.indexOf(texName) === -1) {
+                  textureNames.push(texName);
+                }
+              }
+            }
+          });
+
+          console.log('Found textures in MTL:', textureNames);
+
+          // Try to load textures from subfolder (using folder name)
+          var texturePromises = textureNames.map(function(texName) {
+            return fetchFile(MODEL_FOLDER + '/' + texturesFolder + '/' + texName)
+              .then(function(response) { return response.blob(); })
+              .then(function(blob) {
+                textureMap[texName] = URL.createObjectURL(blob);
+                console.log('Loaded texture:', texName);
+              })
+              .catch(function(err) {
+                console.warn('Failed to load texture:', texName, err);
+              });
+          });
+
+          return Promise.all(texturePromises).then(function() {
+            return { objData: objData, mtlData: mtlData, textureMap: textureMap };
+          });
+        });
+    }
+
+    // Convert to GLB
+    function convertToGLB(data) {
+      console.log('Converting to GLB...');
+
+      var manager = new THREE.LoadingManager();
+      
+      manager.setURLModifier(function(url) {
+        var fileName = url.split('/').pop().split('\\').pop();
+        if (data.textureMap[fileName]) {
+          console.log('Redirecting texture:', fileName);
+          return data.textureMap[fileName];
+        }
+        return url;
+      });
+
+      var materials = null;
+      if (data.mtlData) {
+        console.log('Loading materials...');
+        var mtlLoader = new THREE.MTLLoader(manager);
+        materials = mtlLoader.parse(data.mtlData, '');
+        materials.preload();
+      }
+
+      console.log('Parsing OBJ...');
+      var objLoader = new THREE.OBJLoader(manager);
+      if (materials) {
+        objLoader.setMaterials(materials);
+      }
+      var object = objLoader.parse(data.objData);
+
+      console.log('Exporting to GLB...');
+      
+      // Wait for textures to fully load before exporting
+      setTimeout(function() {
+        var exporter = new THREE.GLTFExporter();
+        
+        exporter.parse(
+          object,
+          function(result) {
+            var blob;
+            if (result instanceof ArrayBuffer) {
+              blob = new Blob([result], { type: 'model/gltf-binary' });
+            } else {
+              var output = JSON.stringify(result);
+              blob = new Blob([output], { type: 'application/json' });
+            }
+            
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'model.glb';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            Object.keys(data.textureMap).forEach(function(key) {
+              URL.revokeObjectURL(data.textureMap[key]);
+            });
+            
+            console.log('✓ Conversion successful! GLB downloaded.');
+          },
+          function(error) {
+            console.error('Export failed:', error);
+          },
+          { binary: true }
+        );
+      }, 1000);
+    }
+
+    // Auto-run on page load
+    window.addEventListener('load', function() {
+      loadModelFiles()
+        .then(convertToGLB)
+        .catch(function(error) {
+          console.error('Error:', error.message);
+        });
+    });
+  </script>
+</body>
+</html>

@@ -825,21 +825,54 @@ class ProductController extends Controller
                 // Delete old model if exists
                 $existingModel = $product->threedmodels;
                 if ($existingModel) {
-                    $filePath = public_path($existingModel->url);
-                    if (file_exists($filePath)) {
-                        unlink($filePath);
-                    }
+                    $this->deleteModelFiles($existingModel);
                     $existingModel->delete();
                 }
 
-                // Upload new model
-                $filePath = $request->file('folderModel');
-                $fileName = uniqid('product3d_') . "." . $filePath->getClientOriginalExtension();
-                $filePath->storeAs('uploads/models', $fileName, 'public');
+                // Upload and extract new model
+                $file = $request->file('folderModel');
+                $extension = $file->getClientOriginalExtension();
+                
+                if ($extension === 'zip') {
+                    // Extract ZIP file
+                    $extractPath = 'uploads/models/' . uniqid('product3d_');
+                    $zipPath = $file->storeAs('uploads/temp', uniqid() . '.zip', 'public');
+                    $fullZipPath = storage_path('app/public/' . $zipPath);
+                    $fullExtractPath = storage_path('app/public/' . $extractPath);
+
+                    // Create extraction directory
+                    if (!file_exists($fullExtractPath)) {
+                        mkdir($fullExtractPath, 0755, true);
+                    }
+
+                    // Extract ZIP
+                    $zip = new \ZipArchive;
+                    if ($zip->open($fullZipPath) === true) {
+                        $zip->extractTo($fullExtractPath);
+                        $zip->close();
+                        
+                        // Delete the temporary ZIP file
+                        Storage::disk('public')->delete($zipPath);
+                        
+                        $modelPath = $extractPath;
+                        $modelUrl = "/storage/" . $extractPath;
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Failed to extract ZIP file'
+                        ], 500);
+                    }
+                } else {
+                    // Store GLB/GLTF files directly
+                    $fileName = uniqid('product3d_') . "." . $extension;
+                    $modelPath = 'uploads/models/' . $fileName;
+                    $file->storeAs('uploads/models', $fileName, 'public');
+                    $modelUrl = "/storage/uploads/models/" . $fileName;
+                }
                 
                 $media = Media::create([
-                    'name' => $fileName,
-                    'url' => "/storage/uploads/models/" . $fileName,
+                    'name' => basename($modelPath),
+                    'url' => $modelUrl,
                     'attachment_id' => $product->id,
                     'type' => 'threedmodel'
                 ]);
@@ -929,6 +962,12 @@ class ProductController extends Controller
         }
 
         try{
+                // Delete 3D model files if exists
+                $existingModel = $product->threedmodels;
+                if ($existingModel) {
+                    $this->deleteModelFiles($existingModel);
+                }
+                
                 $product->delete();
                 return redirect()->back()->with('success','Product'.$product->name." deleted successfully ...");
         }catch( \Exception $e  ){
@@ -948,6 +987,30 @@ class ProductController extends Controller
             return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
         } else {
             return round($size);
+        }
+    }
+
+    /**
+     * Delete model files (handles both directories and single files)
+     */
+    private function deleteModelFiles($media)
+    {
+        if (!$media) {
+            return;
+        }
+
+        $filePath = public_path($media->url);
+        
+        // Check if it's a directory (extracted ZIP)
+        if (is_dir($filePath)) {
+            // Delete directory recursively
+            $relativePath = str_replace('/storage/', '', $media->url);
+            Storage::disk('public')->deleteDirectory($relativePath);
+        } else {
+            // Delete single file
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
         }
     }
 }

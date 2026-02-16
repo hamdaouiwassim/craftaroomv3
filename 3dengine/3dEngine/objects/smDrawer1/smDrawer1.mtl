@@ -1,0 +1,16 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl _
+Ka 0.000000 0.000000 0.000000
+Kd 0.388235 0.349020 0.305882
+Ks 0.330000 0.330000 0.330000
+map_Kd smDrawer1/_.jpg
+
+newmtl Metal_Silver
+Ka 0.000000 0.000000 0.000000
+Kd 0.917647 0.913725 0.933333
+Ks 0.330000 0.330000 0.330000
+map_Kd smDrawer1/Metal_Silver.jpg
+

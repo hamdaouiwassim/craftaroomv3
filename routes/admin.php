@@ -62,6 +62,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     
     // Team Member Management
     Route::resource('team-members', \App\Http\Controllers\Admin\TeamMemberController::class);
+    
+    // Floor Management
+    Route::resource('floors', \App\Http\Controllers\Admin\FloorController::class);
+    Route::post('floors/{floor}/models', [\App\Http\Controllers\Admin\FloorController::class, 'storeModel'])->name('floors.models.store');
+    Route::delete('floors/{floor}/models/{model}', [\App\Http\Controllers\Admin\FloorController::class, 'destroyModel'])->name('floors.models.destroy');
 });
 
 // Product Management - Available for Admin, Designer, and Constructor (not Client)

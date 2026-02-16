@@ -1,0 +1,31 @@
+<div id="components-list" style="display:none;" class="components-list-container">
+  <!-- Image preview area -->
+  <div id="component-image-list"></div>
+
+  <!-- Tint/Color sliders panel -->
+  <div id="tint-sliders-panel" class="sliders-panel hidden">
+    <div class="slider-group">
+      <i class="fas fa-palette" style="background: linear-gradient(45deg, #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+      <input type="range" id="tint-color-slider" min="0" max="100" value="50" class="linear-slider">
+    </div>
+    <div class="slider-group">
+      <i class="fas fa-droplet"></i>
+      <input type="range" id="tint-opacity-slider" min="0" max="100" value="100" class="linear-slider">
+    </div>
+  </div>
+
+  <!-- Items container with control buttons -->
+  <div class="components-items-container">
+    <!-- Tint toggle button -->
+    <button id="toggle-tint-btn" class="tint-small-btn" title="Adjust Color & Opacity">
+      <i class="fas fa-wand-magic-sparkles"></i>
+    </button>
+
+    <!-- Reset textures button -->
+    <button id="reset-textures-btn" class="reset-small-btn" title="Reset to Original" style="display: none;">
+      <i class="fas fa-undo"></i>
+    </button>
+
+    <!-- Category buttons will be dynamically inserted here by JavaScript -->
+  </div>
+</div>

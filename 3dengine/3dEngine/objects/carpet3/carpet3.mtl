@@ -1,0 +1,10 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl souk_rug_round_o
+Ka 0.000000 0.000000 0.000000
+Kd 0.839216 0.815686 0.772549
+Ks 0.330000 0.330000 0.330000
+map_Kd carpet3/souk_rug_round_o.jpg
+
