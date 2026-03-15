@@ -189,6 +189,9 @@ export function conceptFormData() {
             this.photosError = '';
             this.modelError = '';
             if (!this.validateMedia()) {
+                if (typeof window.hideAppLoader === 'function') {
+                    window.hideAppLoader();
+                }
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Créer le concept';
@@ -196,6 +199,10 @@ export function conceptFormData() {
                 return;
             }
             this.errorMessage = '';
+
+            if (typeof window.showAppLoader === 'function') {
+                window.showAppLoader('Création du concept et upload des fichiers en cours...');
+            }
 
             const routePrefix = form.dataset.routePrefix || 'designer';
             const conceptPath = form.dataset.conceptPath || 'concepts';
@@ -295,6 +302,9 @@ export function conceptFormData() {
                 } else {
                     this.errorMessage = 'Concept créé mais erreurs upload : ' + uploadErrors.join(' ') + '. Vous pouvez continuer vers la personnalisation.';
                     this.uploadErrorRedirectUrl = redirectUrl;
+                    if (typeof window.hideAppLoader === 'function') {
+                        window.hideAppLoader();
+                    }
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = 'Créer le concept';
@@ -303,6 +313,9 @@ export function conceptFormData() {
             } catch (err) {
                 console.error(err);
                 this.errorMessage = 'Erreur : ' + err.message;
+                if (typeof window.hideAppLoader === 'function') {
+                    window.hideAppLoader();
+                }
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Créer le concept';

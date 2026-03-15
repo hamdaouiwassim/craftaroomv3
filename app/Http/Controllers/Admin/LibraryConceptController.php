@@ -8,6 +8,7 @@ use App\Models\Concept;
 use App\Models\ConceptDimension;
 use App\Models\ConceptMeasure;
 use App\Models\ConceptMetalOption;
+use App\Models\ConceptCustomMetalOption;
 use App\Models\ConceptWeight;
 use App\Models\Room;
 use App\Models\Metal;
@@ -25,10 +26,7 @@ class LibraryConceptController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         if ($request->filled('status')) {
@@ -36,6 +34,15 @@ class LibraryConceptController extends Controller
         }
 
         $concepts = $query->latest()->paginate(15)->withQueryString();
+
+        // Return JSON for AJAX requests (real-time search)
+        if ($request->ajax() || $request->has('_ajax')) {
+            return response()->json([
+                'results' => $concepts->items(),
+                'count' => $concepts->count(),
+                'total' => $concepts->total()
+            ]);
+        }
 
         return view('admin.library-concepts.index', compact('concepts'));
     }
@@ -54,6 +61,7 @@ class LibraryConceptController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'category_id' => 'required|exists:categories,id',
+            'style_type' => 'nullable|in:standard,artisant',
             'rooms' => 'required|array',
             'rooms.*' => 'exists:rooms,id',
             'metals' => 'required|array',
@@ -71,6 +79,7 @@ class LibraryConceptController extends Controller
             'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
             'weight_value' => 'nullable|numeric',
             'weight_unit' => 'nullable|in:KG,LB',
+            'is_resizable' => 'nullable|boolean',
         ]);
 
         $hasMeasure = $request->filled('measure_size')
@@ -88,10 +97,12 @@ class LibraryConceptController extends Controller
             'name' => $request->name,
             'size' => $request->get('size', 'N/A'),
             'category_id' => $request->category_id,
+            'style_type' => $request->input('style_type', 'standard'),
             'description' => $request->description,
             'user_id' => auth()->id(),
             'status' => 'inactive', // same as designer: active only after customize is saved
             'source' => 'library',
+            'is_resizable' => $request->boolean('is_resizable'),
         ]);
 
         $concept->rooms()->sync($request->rooms);
@@ -167,11 +178,13 @@ class LibraryConceptController extends Controller
     public function customize(Concept $library_concept)
     {
         $this->ensureLibraryConcept($library_concept);
-        $library_concept->load(['metals.metalOptions', 'conceptMetalOptions.metalOption']);
+        $library_concept->load(['metals.metalOptions', 'conceptMetalOptions.metalOption', 'conceptCustomMetalOptions']);
         $selectedOptionsByMetal = $library_concept->conceptMetalOptions->groupBy('metal_id')->map(fn ($rows) => $rows->pluck('metal_option_id'));
+        $customOptionsByMetal = $library_concept->conceptCustomMetalOptions->groupBy('metal_id');
         return view('admin.library-concepts.customize', [
             'concept' => $library_concept,
             'selectedOptionsByMetal' => $selectedOptionsByMetal,
+            'customOptionsByMetal' => $customOptionsByMetal,
         ]);
     }
 
@@ -188,6 +201,12 @@ class LibraryConceptController extends Controller
             'options' => 'nullable|array',
             'options.*' => 'nullable|array',
             'options.*.*' => 'exists:metal_options,id',
+            'custom_options' => 'nullable|array',
+            'custom_options.*' => 'nullable|array',
+            'custom_options.*.*.id' => 'nullable|integer',
+            'custom_options.*.*.name' => 'nullable|string|max:120',
+            'custom_options.*.*.ref' => 'nullable|string|max:120',
+            'custom_options.*.*.image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         ConceptMetalOption::where('concept_id', $library_concept->id)->delete();
@@ -210,6 +229,51 @@ class LibraryConceptController extends Controller
                     'metal_option_id' => $metalOptionId,
                 ]);
             }
+        }
+
+        $existingCustomById = $library_concept->conceptCustomMetalOptions()->get()->keyBy('id');
+        $customEntries = [];
+        $customOptions = $request->input('custom_options', []);
+
+        foreach ($customOptions as $metalId => $rows) {
+            $metalId = (int) $metalId;
+            if (!in_array($metalId, $metalIds, true) || !is_array($rows)) {
+                continue;
+            }
+
+            foreach ($rows as $index => $row) {
+                $row = is_array($row) ? $row : [];
+                $existingId = isset($row['id']) ? (int) $row['id'] : null;
+                $name = trim((string) ($row['name'] ?? ''));
+                $ref = trim((string) ($row['ref'] ?? ''));
+
+                if ($name === '') {
+                    continue;
+                }
+
+                $uploadedImage = $request->file("custom_options.$metalId.$index.image");
+                $imageUrl = null;
+
+                if ($uploadedImage) {
+                    $storedPath = $uploadedImage->store('uploads/concept-custom-materials', 'public');
+                    $imageUrl = '/storage/' . $storedPath;
+                } elseif ($existingId && $existingCustomById->has($existingId)) {
+                    $imageUrl = $existingCustomById[$existingId]->image_url;
+                }
+
+                $customEntries[] = [
+                    'concept_id' => $library_concept->id,
+                    'metal_id' => $metalId,
+                    'name' => $name,
+                    'ref' => $ref ?: null,
+                    'image_url' => $imageUrl,
+                ];
+            }
+        }
+
+        $library_concept->conceptCustomMetalOptions()->delete();
+        if (!empty($customEntries)) {
+            ConceptCustomMetalOption::insert($customEntries);
         }
 
         $library_concept->update(['status' => 'active']);
@@ -405,6 +469,7 @@ class LibraryConceptController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'category_id' => 'required|exists:categories,id',
+            'style_type' => 'nullable|in:standard,artisant',
             'rooms' => 'required|array',
             'rooms.*' => 'exists:rooms,id',
             'metals' => 'required|array',
@@ -418,14 +483,17 @@ class LibraryConceptController extends Controller
             'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
             'weight_value' => 'nullable|numeric',
             'weight_unit' => 'nullable|in:KG,LB',
+            'is_resizable' => 'nullable|boolean',
         ]);
 
         $library_concept->update([
             'name' => $request->name,
             'size' => $request->get('size', 'N/A'),
             'category_id' => $request->category_id,
+            'style_type' => $request->has('style_type') ? 'artisant' : 'standard',
             'description' => $request->description,
             'status' => $request->status,
+            'is_resizable' => $request->boolean('is_resizable'),
         ]);
 
         $library_concept->rooms()->sync($request->rooms);
@@ -509,10 +577,12 @@ class LibraryConceptController extends Controller
         $validated = $request->validate([
             'name' => 'required|max:255',
             'category_id' => 'required|exists:categories,id',
+            'style_type' => 'nullable|in:standard,artisant',
             'status' => 'required|in:active,inactive',
             'description' => 'required|string',
         ]);
 
+        $validated['style_type'] = $request->has('style_type') ? 'artisant' : 'standard';
         $library_concept->update($validated);
 
         return response()->json([

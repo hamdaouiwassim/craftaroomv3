@@ -48,6 +48,13 @@
                                 @endif
                                 <div class="flex-1">
                                     <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $product->name }}</h1>
+                                    @if($product->style_type === 'artisant')
+                                        <div class="mb-3">
+                                            <span class="inline-flex items-center px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold">
+                                                Artisant
+                                            </span>
+                                        </div>
+                                    @endif
                                     @if($product->category)
                                         <span class="inline-block px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-sm font-semibold mb-3">
                                             {{ $product->category->name }}

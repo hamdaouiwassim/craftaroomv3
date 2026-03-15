@@ -20,28 +20,25 @@
             @if($concept->threedmodels)
                 <div class="mb-6">
                     <h4 class="font-semibold text-gray-900 mb-3">Modèle actuel</h4>
-                    <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-4 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                            <div>
-                                <p class="font-semibold text-gray-900">{{ $concept->threedmodels->name }}</p>
-                                <a href="{{ $concept->threedmodels->url }}" download class="text-sm text-indigo-600 hover:underline">Télécharger</a>
-                            </div>
+                    <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-4 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ $concept->threedmodels->name }}</p>
                         </div>
-                        <form action="{{ route('admin.library-concepts.delete-model', $concept) }}" method="POST">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" 
+                    </div>
+                    <form action="{{ route('admin.library-concepts.delete-model', $concept) }}" method="POST" class="ml-auto">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
                                     onclick="return confirm('Supprimer ce modèle 3D ?')"
                                     class="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </form>
                 </div>
             @endif
 

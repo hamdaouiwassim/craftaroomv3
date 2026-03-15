@@ -40,6 +40,10 @@ Route::prefix('constructor')->name('constructor.')->middleware(['auth', 'isConst
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.delete');
+
+    // Product personalization (same flow as concept customization)
+    Route::get('/products/{product}/personalize', [ProductController::class, 'personalize'])->name('products.personalize');
+    Route::post('/products/{product}/personalize', [ProductController::class, 'savePersonalize'])->name('products.save-personalize');
     
     // File upload routes for products
     Route::post('/products/{product}/photos', [ProductController::class, 'uploadPhotos'])

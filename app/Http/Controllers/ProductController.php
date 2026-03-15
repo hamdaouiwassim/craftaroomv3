@@ -7,13 +7,17 @@ use App\Models\Currency;
 use App\Models\Room;
 use App\Models\Media;
 use App\Models\Metal;
+use App\Models\MetalOption;
 use App\Models\Weight;
 use App\Models\Measure;
 use App\Models\Product;
+use App\Models\ProductMetalOption;
+use App\Models\ProductCustomMetalOption;
 use App\Models\Category;
 use App\Models\Dimension;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -90,10 +94,7 @@ class ProductController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         // Filter by status
@@ -105,6 +106,16 @@ class ProductController extends Controller
         }
 
         $products = $query->with(['photos', 'category', 'user'])->latest()->paginate(15);
+        
+        // Return JSON for AJAX requests (real-time search)
+        if ($request->ajax() || $request->has('_ajax')) {
+            return response()->json([
+                'results' => $products->items(),
+                'count' => $products->count(),
+                'total' => $products->total()
+            ]);
+        }
+        
         $viewPrefix = $this->getViewPrefix();
         $routePrefix = $this->getRoutePrefix();
         return view("{$viewPrefix}.products.index", [
@@ -125,7 +136,7 @@ class ProductController extends Controller
 
         $concepts = Concept::where('source', $source)
             ->where('status', 'active')
-            ->with(['category', 'photos', 'rooms', 'metals'])
+            ->with(['category', 'photos', 'rooms', 'metals', 'user'])
             ->latest()
             ->paginate(12);
 
@@ -160,7 +171,7 @@ class ProductController extends Controller
         return view("{$viewPrefix}.products.create", [
             'categories' => $categories,
             'rooms' => Room::all(),
-            'metals' => Metal::all(),
+            'metals' => Metal::with('metalOptions')->get(),
             'currencies' => Currency::orderBy('name', 'asc')->get(),
             'routePrefix' => $routePrefix,
             'concept' => $concept,
@@ -183,33 +194,31 @@ class ProductController extends Controller
                 'name' => 'required|max:255',
                 'price' => 'required|numeric',
                 'category_id' => 'required|exists:categories,id',
+                'style_type' => 'nullable|in:standard,artisant',
                 'rooms' => 'required|array',
                 'rooms.*' => 'exists:rooms,id',
                 'description' => 'required|string',
                 'folderModel' => 'nullable|file|mimes:zip|max:51200',
                 'photos' => 'nullable|array',
-                'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+                'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
                 'metals' => 'required|array',
                 'metals.*' => 'exists:metals,id',
                 'currency' => 'required|string',
                 'status' => 'nullable|in:active,inactive',
                 'reel' => 'nullable|file|mimes:mp4,mov,ogg,qt|max:102400',
                 'concept_id' => 'nullable|exists:concepts,id',
+                'is_resizable' => 'nullable|boolean',
                 'concept_photos' => 'nullable|array',
                 'concept_photos.*' => 'nullable|string',
                 'concept_3d_model' => 'nullable|string',
                 'concept_reel' => 'nullable|string',
             ]);
             
-            // Validate that products have either uploaded 3D model OR concept 3D model
-            if (!$request->hasFile('folderModel') && !$request->filled('concept_3d_model')) {
-                if ($request->expectsJson() || $request->wantsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Le modèle 3D est obligatoire. Veuillez télécharger un fichier ZIP ou utiliser le modèle 3D du concept.',
-                        'errors' => ['folderModel' => ['Le modèle 3D est obligatoire.']]
-                    ], 422);
-                }
+            // Validate that products have either uploaded 3D model OR concept 3D model.
+            // Important: the JS flow creates the product via JSON first, then uploads the ZIP in a second request
+            // (/{prefix}/products/{id}/model). In that case, folderModel is expected to be missing here.
+            $isJsonFlow = $request->expectsJson() || $request->wantsJson();
+            if (!$isJsonFlow && !$request->hasFile('folderModel') && !$request->filled('concept_3d_model')) {
                 return redirect()->back()->withErrors(['folderModel' => 'Le modèle 3D est obligatoire.'])->withInput();
             }
 
@@ -280,6 +289,8 @@ class ProductController extends Controller
             } else {
                 unset($inputs['concept_id']);
             }
+
+            $inputs['is_resizable'] = $request->boolean('is_resizable');
             
             // Set default size if not provided (since we removed it from the form)
             if (!isset($inputs['size']) || empty($inputs['size'])) {
@@ -294,6 +305,9 @@ class ProductController extends Controller
         foreach($request->metals as $metal){
             $product->metals()->attach($metal);
             }
+            if (empty($measure->size)) {
+                $measure->size = 'MEDIUM';
+            }
             $measure->product_id = $product->id;
             $measure->save();
 
@@ -307,7 +321,12 @@ class ProductController extends Controller
 
             // Constructor creating from concept: if no new files will be uploaded (handled by JS), copy concept media to product so dropzone-empty = use concept media
             if ($conceptId && in_array($this->getRoutePrefix(), ['constructor', 'admin'])) {
-                $concept = Concept::with(['photos', 'threedmodels'])->find($conceptId);
+                $concept = Concept::with([
+                    'photos',
+                    'threedmodels',
+                    'conceptMetalOptions',
+                    'conceptCustomMetalOptions',
+                ])->find($conceptId);
                 if ($concept) {
                     // Only copy concept photos that weren't deleted (i.e., present in concept_photos input)
                     if ($request->has('concept_photos')) {
@@ -339,6 +358,36 @@ class ProductController extends Controller
                     if (!empty($concept->reel) && $request->has('concept_reel') && !$request->hasFile('reel')) {
                         $product->update(['reel' => $concept->reel]);
                     }
+
+                    if ($concept->conceptMetalOptions->isNotEmpty()) {
+                        ProductMetalOption::insert(
+                            $concept->conceptMetalOptions
+                                ->map(fn ($option) => [
+                                    'product_id' => $product->id,
+                                    'metal_id' => $option->metal_id,
+                                    'metal_option_id' => $option->metal_option_id,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ])
+                                ->all()
+                        );
+                    }
+
+                    if ($concept->conceptCustomMetalOptions->isNotEmpty()) {
+                        ProductCustomMetalOption::insert(
+                            $concept->conceptCustomMetalOptions
+                                ->map(fn ($customOption) => [
+                                    'product_id' => $product->id,
+                                    'metal_id' => $customOption->metal_id,
+                                    'name' => $customOption->name,
+                                    'ref' => $customOption->ref,
+                                    'image_url' => $customOption->image_url,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ])
+                                ->all()
+                        );
+                    }
                 }
             }
 
@@ -347,13 +396,14 @@ class ProductController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Product created successfully. You can now upload files.',
-                    'product_id' => $product->id
+                    'product_id' => $product->id,
+                    'redirect_url' => route("{$this->getRoutePrefix()}.products.personalize", $product)
                 ]);
             }
             
-            // Traditional form submission - redirect
+            // Traditional form submission - redirect to personalization (same concept flow)
             $routePrefix = $this->getRoutePrefix();
-            return redirect()->route("{$routePrefix}.products.index")->with('success','Product added successfully ...');
+            return redirect()->route("{$routePrefix}.products.personalize", $product);
 
 
         //return redirect()->back()->with('success','Added successfully ...');
@@ -411,6 +461,136 @@ class ProductController extends Controller
     }
 
     /**
+     * Show customization page for product submaterials (same flow as concepts).
+     */
+    public function personalize(Product $product)
+    {
+        if (!$this->canAccessProduct($product)) {
+            abort(403, 'Unauthorized action. You can only personalize your own products.');
+        }
+
+        $product->load(['metals.metalOptions', 'productMetalOptions.metalOption', 'productCustomMetalOptions']);
+
+        $selectedOptionsByMetal = $product->productMetalOptions
+            ->groupBy('metal_id')
+            ->map(fn ($rows) => $rows->pluck('metal_option_id'));
+
+        $customOptionsByMetal = $product->productCustomMetalOptions->groupBy('metal_id');
+
+        $viewPrefix = $this->getViewPrefix();
+        $routePrefix = $this->getRoutePrefix();
+
+        return view("{$viewPrefix}.products.personalize", [
+            'product' => $product,
+            'selectedOptionsByMetal' => $selectedOptionsByMetal,
+            'customOptionsByMetal' => $customOptionsByMetal,
+            'routePrefix' => $routePrefix,
+        ]);
+    }
+
+    /**
+     * Save product submaterials customization (same logic as concept saveCustomize).
+     */
+    public function savePersonalize(Request $request, Product $product)
+    {
+        if (!$this->canAccessProduct($product)) {
+            abort(403, 'Unauthorized action. You can only personalize your own products.');
+        }
+
+        $product->load('metals');
+        $metalIds = $product->metals->pluck('id')->toArray();
+
+        $request->validate([
+            'options' => 'nullable|array',
+            'options.*' => 'nullable|array',
+            'options.*.*' => 'exists:metal_options,id',
+            'custom_options' => 'nullable|array',
+            'custom_options.*' => 'nullable|array',
+            'custom_options.*.*.id' => 'nullable|integer',
+            'custom_options.*.*.name' => 'nullable|string|max:120',
+            'custom_options.*.*.ref' => 'nullable|string|max:120',
+            'custom_options.*.*.image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        ProductMetalOption::where('product_id', $product->id)->delete();
+
+        $options = $request->input('options', []);
+        foreach ($options as $metalId => $optionIds) {
+            $metalId = (int) $metalId;
+            if (!in_array($metalId, $metalIds, true)) {
+                continue;
+            }
+
+            $optionIds = is_array($optionIds) ? array_unique(array_map('intval', $optionIds)) : [];
+            foreach ($optionIds as $metalOptionId) {
+                $option = MetalOption::where('id', $metalOptionId)->where('metal_id', $metalId)->first();
+                if (!$option) {
+                    continue;
+                }
+
+                ProductMetalOption::create([
+                    'product_id' => $product->id,
+                    'metal_id' => $metalId,
+                    'metal_option_id' => $metalOptionId,
+                ]);
+            }
+        }
+
+        $existingCustomById = $product->productCustomMetalOptions()->get()->keyBy('id');
+        $customEntries = [];
+        $customOptions = $request->input('custom_options', []);
+
+        foreach ($customOptions as $metalId => $rows) {
+            $metalId = (int) $metalId;
+            if (!in_array($metalId, $metalIds, true) || !is_array($rows)) {
+                continue;
+            }
+
+            foreach ($rows as $index => $row) {
+                $row = is_array($row) ? $row : [];
+                $existingId = isset($row['id']) ? (int) $row['id'] : null;
+                $name = trim((string) ($row['name'] ?? ''));
+                $ref = trim((string) ($row['ref'] ?? ''));
+
+                if ($name === '') {
+                    continue;
+                }
+
+                $uploadedImage = $request->file("custom_options.$metalId.$index.image");
+                $imageUrl = null;
+
+                if ($uploadedImage) {
+                    $storedPath = $uploadedImage->store('uploads/product-custom-materials', 'public');
+                    $imageUrl = '/storage/' . $storedPath;
+                } elseif ($existingId && $existingCustomById->has($existingId)) {
+                    $imageUrl = $existingCustomById[$existingId]->image_url;
+                }
+
+                $customEntries[] = [
+                    'product_id' => $product->id,
+                    'metal_id' => $metalId,
+                    'name' => $name,
+                    'ref' => $ref ?: null,
+                    'image_url' => $imageUrl,
+                ];
+            }
+        }
+
+        $product->productCustomMetalOptions()->delete();
+        if (!empty($customEntries)) {
+            ProductCustomMetalOption::insert($customEntries);
+        }
+
+        if ($product->status !== 'active') {
+            $product->update(['status' => 'active']);
+        }
+
+        $routePrefix = $this->getRoutePrefix();
+        return redirect()->route("{$routePrefix}.products.show", $product)
+            ->with('success', 'Personnalisation enregistrée. Le produit est maintenant actif.');
+    }
+
+    /**
      * Show the form for editing the specified resource.
      *
      * @param  \App\Models\Product  $product
@@ -464,6 +644,7 @@ class ProductController extends Controller
                 'price' => 'required|numeric',
                 'size' => 'required|string',
                 'category_id' => 'required|exists:categories,id',
+                'style_type' => 'nullable|in:standard,artisant',
                 'rooms' => 'required|array',
                 'rooms.*' => 'exists:rooms,id',
                 'description' => 'required|string',
@@ -483,6 +664,7 @@ class ProductController extends Controller
                 'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
                 'weight_value' => 'nullable|numeric',
                 'weight_unit' => 'nullable|in:KG,LB',
+                'is_resizable' => 'nullable|boolean',
             ]);
 
             // Validate that product will have at least one photo after update
@@ -509,9 +691,11 @@ class ProductController extends Controller
             $product->price = $validated['price'];
             $product->size = $validated['size'];
             $product->category_id = $validated['category_id'];
+            $product->style_type = $request->has('style_type') ? 'artisant' : 'standard';
             $product->description = $validated['description'];
             $product->currency = $validated['currency'];
             $product->status = $validated['status'];
+            $product->is_resizable = $request->boolean('is_resizable');
             $product->save();
 
             // Update rooms
@@ -573,13 +757,13 @@ class ProductController extends Controller
             if ($request->expectsJson() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Product updated successfully.'
+                    'message' => 'Product updated successfully.',
+                    'redirect_url' => route("{$this->getRoutePrefix()}.products.personalize", $product)
                 ]);
             }
 
             $routePrefix = $this->getRoutePrefix();
-            return redirect()->route("{$routePrefix}.products.index")
-                ->with('success', 'Produit mis à jour avec succès.');
+            return redirect()->route("{$routePrefix}.products.personalize", $product);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->expectsJson() || $request->wantsJson()) {
                 return response()->json([
@@ -620,25 +804,50 @@ class ProductController extends Controller
         }
 
         try {
-            $validated = $request->validate([
-                'photos' => 'required|array',
-                'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            // Accept both payload formats used by browsers/clients: photos and photos[]
+            $files = $request->file('photos');
+            if (!$files) {
+                $files = $request->file('photos[]');
+            }
+
+            if (!$files) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => ['photos' => ['Le champ photos est requis']]
+                ], 422);
+            }
+
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+
+            $validator = Validator::make([
+                'photos' => $files,
+            ], [
+                'photos' => 'required|array|min:1',
+                'photos.*' => 'file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
             ]);
 
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
             $uploadedPhotos = [];
-            if ($request->hasFile('photos')) {
-                $files = $request->file('photos');
-                foreach ($files as $file) {
-                    $fileName = uniqid('productPhoto_') . "." . $file->getClientOriginalExtension();
-                    $file->storeAs('uploads/photos', $fileName, 'public');
-                    $media = Media::create([
-                        'name' => $fileName,
-                        'url' => "/storage/uploads/photos/" . $fileName,
-                        'attachment_id' => $product->id,
-                        'type' => 'product'
-                    ]);
-                    $uploadedPhotos[] = $media;
-                }
+            foreach ($files as $file) {
+                $fileName = uniqid('productPhoto_') . "." . $file->getClientOriginalExtension();
+                $file->storeAs('uploads/photos', $fileName, 'public');
+                $media = Media::create([
+                    'name' => $fileName,
+                    'url' => "/storage/uploads/photos/" . $fileName,
+                    'attachment_id' => $product->id,
+                    'type' => 'product'
+                ]);
+                $uploadedPhotos[] = $media;
             }
 
             return response()->json([

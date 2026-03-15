@@ -41,26 +41,39 @@
                 </div>
             @endif
 
+            @php
+                $isProductRequest = $request->request_type === 'product' && $request->product;
+                $subject = $isProductRequest ? $request->product : $request->concept;
+                $subjectName = $subject?->name ?? ($isProductRequest ? 'Produit inconnu' : 'Concept inconnu');
+                $subjectCategory = $subject?->category;
+                $subjectRooms = $subject?->rooms ?? collect();
+                $subjectMetals = $subject?->metals ?? collect();
+                $viewerModelType = $isProductRequest ? 'product' : 'concept';
+                $viewerModelId = $subject?->id;
+                $dimensions = $request->normalized_requested_dimensions;
+                $customizationSummary = $request->customization_summary;
+            @endphp
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Main Content -->
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Concept Information -->
+                    <!-- Request Subject Information -->
                     <div class="bg-white rounded-xl border-2 border-orange-100 overflow-hidden shadow-lg">
                         <div class="p-6 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100">
                             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                                 <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                Concept demandé
+                                {{ $isProductRequest ? 'Produit demandé' : 'Concept demandé' }}
                             </h3>
                         </div>
                         <div class="p-6">
                             <div class="flex gap-6">
-                                <!-- Concept Image -->
+                                <!-- Subject Image -->
                                 <div class="w-48 h-48 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-orange-100 to-amber-100">
-                                    @if($request->concept && $request->concept->photos->count() > 0)
-                                        <img src="{{ $request->concept->photos->first()->url }}" 
-                                             alt="{{ $request->concept->name }}" 
+                                    @if($subject && $subject->photos->count() > 0)
+                                        <img src="{{ $subject->photos->first()->url }}" 
+                                             alt="{{ $subjectName }}" 
                                              class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center">
@@ -71,36 +84,39 @@
                                     @endif
                                 </div>
 
-                                <!-- Concept Details -->
+                                <!-- Subject Details -->
                                 <div class="flex-1">
-                                    <h4 class="text-2xl font-bold text-gray-900 mb-3">{{ $request->concept->name }}</h4>
+                                    <p class="text-xs uppercase tracking-wide font-semibold text-orange-500 mb-1">
+                                        {{ $isProductRequest ? 'Product Request' : 'Concept Request' }}
+                                    </p>
+                                    <h4 class="text-2xl font-bold text-gray-900 mb-3">{{ $subjectName }}</h4>
                                     
                                     <div class="space-y-2 mb-4">
-                                        @if($request->concept->category)
+                                        @if($subjectCategory)
                                             <div class="flex items-center gap-2">
                                                 <span class="text-sm text-gray-600">Catégorie:</span>
                                                 <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold">
-                                                    {{ $request->concept->category->name }}
+                                                    {{ $subjectCategory->name }}
                                                 </span>
                                             </div>
                                         @endif
 
-                                        @if($request->concept->rooms->count() > 0)
+                                        @if($subjectRooms->count() > 0)
                                             <div class="flex items-start gap-2">
                                                 <span class="text-sm text-gray-600">Pièces:</span>
                                                 <div class="flex flex-wrap gap-1">
-                                                    @foreach($request->concept->rooms as $room)
+                                                    @foreach($subjectRooms as $room)
                                                         <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{{ $room->name }}</span>
                                                     @endforeach
                                                 </div>
                                             </div>
                                         @endif
 
-                                        @if($request->concept->metals->count() > 0)
+                                        @if($subjectMetals->count() > 0)
                                             <div class="flex items-start gap-2">
                                                 <span class="text-sm text-gray-600">Métaux:</span>
                                                 <div class="flex flex-wrap gap-1">
-                                                    @foreach($request->concept->metals as $metal)
+                                                    @foreach($subjectMetals as $metal)
                                                         <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">{{ $metal->name }}</span>
                                                     @endforeach
                                                 </div>
@@ -108,26 +124,98 @@
                                         @endif
                                     </div>
 
-                                    @if($request->concept->description)
+                                    @if($subject && $subject->description)
                                         <div class="p-3 bg-gray-50 rounded-lg">
-                                            <p class="text-sm text-gray-700">{{ $request->concept->description }}</p>
+                                            <p class="text-sm text-gray-700">{{ $subject->description }}</p>
                                         </div>
                                     @endif
 
                                     <div class="mt-4">
-                                        <a href="{{ route('concepts.show', $request->concept->id) }}" 
-                                           target="_blank"
-                                           class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-amber-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                            </svg>
-                                            Voir le concept complet
-                                        </a>
+                                        @if($isProductRequest && $request->product)
+                                            <a href="{{ route('products.show', $request->product->id) }}" 
+                                               target="_blank"
+                                               class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-amber-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                                Voir le produit standard
+                                            </a>
+                                        @elseif(!$isProductRequest && $request->concept)
+                                            <a href="{{ route('concepts.show', $request->concept->id) }}" 
+                                               target="_blank"
+                                               class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-amber-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                                Voir le concept standard
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    @if($viewerModelId)
+                        <div class="bg-white rounded-xl border-2 border-orange-100 overflow-hidden shadow-lg js-request-viewer"
+                             @if($request->viewer_state_json) data-viewer-state='@json($request->viewer_state_json)' @endif>
+                            <div class="p-6 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100 flex items-center justify-between gap-3">
+                                <h3 class="text-xl font-bold text-gray-900">3D Customization Preview</h3>
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <x-3d-viewer-original
+                                    :model-type="$viewerModelType"
+                                    :model-id="$viewerModelId"
+                                    height="520px"
+                                />
+
+                                @if($dimensions)
+                                    <div class="p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-900">
+                                        <p class="font-semibold mb-1">Requested dimensions</p>
+                                        <p>
+                                            {{ $dimensions['length'] ?? '-' }} × {{ $dimensions['width'] ?? '-' }} × {{ $dimensions['height'] ?? '-' }}
+                                            {{ $dimensions['unit'] ?? '' }}
+                                        </p>
+                                    </div>
+                                @endif
+
+                                @if(count($customizationSummary) > 0)
+                                    <div class="p-4 bg-purple-50 border border-purple-100 rounded-lg text-sm text-purple-900">
+                                        <p class="font-semibold mb-2">Saved customization details</p>
+                                        <div class="space-y-2">
+                                            @foreach($customizationSummary as $material)
+                                                <div class="rounded-lg border border-purple-100 bg-white/70 p-3">
+                                                    <p class="font-semibold text-purple-950 mb-2">{{ $material['name'] }}</p>
+                                                    <div class="flex flex-wrap gap-4 items-start">
+                                                        @if($material['texture_url'])
+                                                            <div>
+                                                                <p class="text-xs font-semibold text-purple-700 mb-1">Texture</p>
+                                                                <a href="{{ $material['texture_url'] }}" target="_blank" rel="noopener noreferrer" class="block group">
+                                                                    <img src="{{ $material['texture_url'] }}" alt="{{ $material['texture'] ?? $material['name'] }}" class="w-20 h-20 rounded-lg border border-purple-200 object-cover group-hover:scale-105 transition-transform duration-200 shadow-sm">
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                        @if($material['color'])
+                                                            <div>
+                                                                <p class="text-xs font-semibold text-purple-700 mb-1">Color</p>
+                                                                <div class="flex items-center gap-2">
+                                                                    <span class="w-6 h-6 rounded-full border border-gray-300 inline-block" style="background-color: {{ $material['color'] }};"></span>
+                                                                    <div>
+                                                                        <p class="font-medium text-purple-950">{{ $material['color_name'] ?? 'Custom color' }}</p>
+                                                                        <p class="text-xs text-purple-700">{{ $material['color'] }}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Customer Messages -->
                     @if($request->message || $request->customer_notes)
@@ -206,9 +294,9 @@
                                 @endif
 
                                 <div class="pt-3 border-t border-gray-200">
-                                    <p class="text-xs text-gray-500 mb-1">Demande créée le:</p>
-                                    <p class="text-sm font-medium text-gray-900">{{ $request->created_at->format('d/m/Y à H:i') }}</p>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $request->created_at->diffForHumans() }}</p>
+                                    <p class="text-xs text-gray-500 mb-1">Demande envoyée le:</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ ($request->submitted_at ?? $request->created_at)->format('d/m/Y à H:i') }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ ($request->submitted_at ?? $request->created_at)->diffForHumans() }}</p>
                                 </div>
                             </div>
                         </div>
@@ -304,4 +392,49 @@
             </div>
         </div>
     </div>
+
+    <script>
+        async function tryRestoreCustomization(payload, maxAttempts = 30) {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const viewerIframe = document.querySelector('.js-request-viewer iframe');
+                const iframeWindow = viewerIframe?.contentWindow;
+
+                if (iframeWindow && typeof iframeWindow.restoreCustomizationState === 'function') {
+                    return iframeWindow.restoreCustomizationState(payload);
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            return false;
+        }
+
+        async function loadRequestCustomization(viewerStateJson, showError = true) {
+            try {
+                const payload = typeof viewerStateJson === 'string' ? JSON.parse(viewerStateJson) : viewerStateJson;
+                const success = await tryRestoreCustomization(payload);
+
+                if (!success && showError) {
+                    alert('Failed to restore saved customization.');
+                }
+
+                return success;
+            } catch (error) {
+                console.error('Restore customization error:', error);
+                if (showError) {
+                    alert(error.message || 'Failed to restore customization.');
+                }
+                return false;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            const container = document.querySelector('.js-request-viewer[data-viewer-state]');
+            const rawState = container?.dataset?.viewerState;
+
+            if (rawState) {
+                loadRequestCustomization(rawState, false);
+            }
+        });
+    </script>
 </x-constructor-layout>

@@ -51,10 +51,7 @@ class LandingController extends Controller
         // Search functionality (trim to avoid spaces-only queries)
         $search = trim($request->input('search', ''));
         if ($search !== '') {
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         // Filter by category (supports main category -> subcategories)
@@ -76,6 +73,12 @@ class LandingController extends Controller
         }
         if ($maxPriceFilter !== null && $maxPriceFilter !== '') {
             $query->where('price', '<=', $maxPriceFilter);
+        }
+
+        // Filter by style type
+        $styleType = $request->input('style_type');
+        if ($styleType === 'artisant') {
+            $query->where('style_type', 'artisant');
         }
 
         // Filter by rooms
@@ -137,6 +140,8 @@ class LandingController extends Controller
                 'user', 
                 'user.address',
                 'user.avatar',
+                'concept',
+                'concept.user',
                 'rooms', 
                 'metals', 
                 'measure.dimension', 
@@ -199,10 +204,7 @@ class LandingController extends Controller
         // Search functionality
         $search = trim($request->input('search', ''));
         if ($search !== '') {
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         // Filter by source (designer or library)
@@ -285,7 +287,7 @@ class LandingController extends Controller
         $relatedConcepts = Concept::where('status', 'active')
             ->where('source', $concept->source)
             ->where('id', '!=', $concept->id)
-            ->with(['photos', 'category'])
+            ->with(['photos', 'category', 'user'])
             ->latest()
             ->take(6)
             ->get();
@@ -293,6 +295,36 @@ class LandingController extends Controller
         return view('concept-details', [
             'concept' => $concept,
             'relatedConcepts' => $relatedConcepts,
+        ]);
+    }
+
+    /**
+     * Display designer profile.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function showDesigner($id)
+    {
+        $designer = \App\Models\User::with(['address', 'avatar'])
+            ->where('role', 1)
+            ->findOrFail($id);
+
+        $concepts = Concept::where('status', 'active')
+            ->where('source', 'designer')
+            ->where('user_id', $designer->id)
+            ->with(['photos', 'category', 'rooms', 'metals'])
+            ->latest()
+            ->paginate(12);
+
+        $totalConcepts = Concept::where('status', 'active')
+            ->where('source', 'designer')
+            ->where('user_id', $designer->id)
+            ->count();
+
+        return view('designer-profile', [
+            'designer' => $designer,
+            'concepts' => $concepts,
+            'totalConcepts' => $totalConcepts,
         ]);
     }
 

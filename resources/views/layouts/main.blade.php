@@ -23,9 +23,9 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center h-16">
                     <div class="flex items-center">
-                        <a href="/" class="flex items-center space-x-2">
-                            <x-application-logo class="h-10 w-10 fill-current text-gray-800" />
-                            <span class="text-xl font-bold text-gray-900">Craftaroom</span>
+                        <a href="/" class="flex items-center gap-3">
+                            <img src="{{ asset('images/branding/logo-dark.png') }}" alt="CraftARoom" width="75" height="78" class="object-contain" style="width: 75px; height: 78px;">
+                            <span class="text-2xl font-bold text-gray-900">CraftARoom</span>
                         </a>
                     </div>
                     <div class="hidden md:flex items-center space-x-8">

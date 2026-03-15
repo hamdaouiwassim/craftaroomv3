@@ -150,6 +150,8 @@
           }
           
           console.log('✅ Dynamic configuration loaded from API!');
+          window.__viewerConfigReady = true;
+          window.dispatchEvent(new Event('viewer-config-ready'));
         })
         .catch(error => {
           console.error('❌ Error loading from API:', error);

@@ -92,11 +92,6 @@
                                                         </svg>
                                                     </div>
                                                 @endif
-                                                @if($product->status === 'active')
-                                                    <span class="absolute top-3 right-3 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg">
-                                                        ✓ Active
-                                                    </span>
-                                                @endif
                                                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                             </div>
                                             
@@ -131,12 +126,6 @@
                                                             </svg>
                                                             View
                                                         </a>
-                                                        <button onclick="addToCart({{ $product->id }})" class="group/btn flex items-center gap-2 bg-gradient-to-r from-sky-blue to-blue-accent text-white px-4 py-2.5 rounded-xl hover:from-sky-blue/90 hover:to-blue-accent/90 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-sm font-semibold">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                            </svg>
-                                                            Add
-                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -463,37 +452,6 @@
     </style>
 
     <script>
-        async function addToCart(productId) {
-            try {
-                const response = await fetch(`/cart/add/${productId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ quantity: 1 })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Update cart count
-                    const cartCountElements = document.querySelectorAll('#cart-count, #cart-count-mobile');
-                    cartCountElements.forEach(el => {
-                        if (el) el.textContent = data.cartCount;
-                    });
-
-                    // Show success message
-                    showNotification('Product added to cart!', 'success');
-                } else {
-                    showNotification(data.message || 'Failed to add product', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('An error occurred', 'error');
-            }
-        }
-
         function showNotification(message, type) {
             const notification = document.createElement('div');
             notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ${

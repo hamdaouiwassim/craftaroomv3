@@ -36,7 +36,7 @@
                     @endif
 
                     <!-- Search Bar -->
-                    <div class="mb-6">
+                    <div class="mb-6" x-data="realtimeSearch({ endpoint: '{{ route('designer.products.index') }}' })">
                         <form method="GET" action="{{ route('designer.products.index') }}" class="flex gap-4">
                             <div class="flex-1 relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -47,8 +47,21 @@
                                 <input type="text" 
                                        name="search" 
                                        value="{{ request('search') }}"
-                                       placeholder="Rechercher un produit..." 
-                                       class="block w-full pl-12 pr-4 py-3 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                       x-model="searchQuery"
+                                       @input="onSearchInput()"
+                                       placeholder="Rechercher un produit en temps réel..." 
+                                       class="block w-full pl-12 pr-12 py-3 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                <div x-show="isLoading" class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                                    <svg class="animate-spin h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                </div>
+                                <button x-show="searchQuery" @click="clearSearch()" type="button" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
                             <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                                 Rechercher
@@ -59,6 +72,9 @@
                                 </a>
                             @endif
                         </form>
+                        <div x-show="searchQuery && !isLoading" class="mt-2 text-sm text-gray-600" x-cloak>
+                            <span x-text="results.length || {{ $products->count() }}"></span> résultat(s) trouvé(s)
+                        </div>
                     </div>
 
                     <!-- Products Table -->
@@ -96,13 +112,13 @@
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($products as $product)
-                                            <tr class="hover:bg-purple-50/50 transition-colors">
+                                            <tr class="hover:bg-purple-50/50 transition-colors" data-search-name="{{ strtolower($product->name) }}">
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {{ $loop->iteration }}
                                                 </td>
                                                 <td class="px-6 py-4">
                                                     <div class="flex items-center gap-3">
-                                                        <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        <a href="{{ route('products.show', $product->id) }}" class="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center overflow-hidden flex-shrink-0 hover:ring-2 hover:ring-purple-300 transition" title="Voir le produit">
                                                             @if($product->photos->count() > 0)
                                                                 <img src="{{ $product->photos->first()->url }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
                                                             @else
@@ -110,7 +126,7 @@
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                                 </svg>
                                                             @endif
-                                                        </div>
+                                                        </a>
                                                         <div class="min-w-0">
                                                             <div class="text-sm font-bold text-gray-900 truncate">{{ $product->name }}</div>
                                                             @if($product->description)
@@ -147,7 +163,7 @@
                                                                     @if($product->user->role === 3)
                                                                         Constructor
                                                                     @elseif($product->user->is_admin())
-                                                                        Admin
+                                                                        CraftARoom
                                                                     @endif
                                                                 </div>
                                                             </div>

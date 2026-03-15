@@ -35,17 +35,32 @@
                         </div>
                     @endif
 
+                    @if(session('error'))
+                        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     @if($requests->count() > 0)
                         <div class="grid gap-6">
                             @foreach($requests as $request)
+                                @php
+                                    $isProductRequest = $request->request_type === 'product' && $request->product;
+                                    $subject = $isProductRequest ? $request->product : $request->concept;
+                                    $subjectPhotos = $subject?->photos;
+                                    $subjectName = $subject?->name ?? ($isProductRequest ? 'Unknown Product' : 'Unknown Concept');
+                                    $subjectCategory = $subject?->category;
+                                    $dimensions = $request->normalized_requested_dimensions;
+                                    $customizationSummary = $request->customization_summary;
+                                @endphp
                                 <div class="bg-white rounded-xl border-2 border-green-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
                                     <div class="p-6">
                                         <div class="flex items-start gap-6">
-                                            <!-- Concept Image -->
+                                            <!-- Request Subject Image -->
                                             <div class="w-32 h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-green-100 to-emerald-100">
-                                                @if($request->concept && $request->concept->photos->count() > 0)
-                                                    <img src="{{ $request->concept->photos->first()->url }}" 
-                                                         alt="{{ $request->concept->name }}" 
+                                                @if($subject && $subjectPhotos && $subjectPhotos->count() > 0)
+                                                    <img src="{{ $subjectPhotos->first()->url }}" 
+                                                         alt="{{ $subjectName }}" 
                                                          class="w-full h-full object-cover">
                                                 @else
                                                     <div class="w-full h-full flex items-center justify-center">
@@ -60,15 +75,18 @@
                                             <div class="flex-1">
                                                 <div class="flex items-start justify-between mb-3">
                                                     <div>
+                                                        <p class="text-xs uppercase tracking-wide font-semibold text-emerald-600 mb-1">
+                                                            {{ $isProductRequest ? 'Product Request' : 'Concept Request' }}
+                                                        </p>
                                                         <h3 class="text-xl font-bold text-gray-900 mb-1">
-                                                            {{ $request->concept->name ?? 'Unknown Concept' }}
+                                                            {{ $subjectName }}
                                                         </h3>
                                                         <div class="flex items-center gap-3 text-sm text-gray-600">
                                                             <span class="flex items-center gap-1">
                                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                                 </svg>
-                                                                Demandé {{ $request->created_at->diffForHumans() }}
+                                                                Demandé {{ ($request->submitted_at ?? $request->created_at)->diffForHumans() }}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -94,10 +112,17 @@
                                                                 </svg>
                                                                 Refusée
                                                             </span>
+                                                        @elseif($request->status === 'canceled')
+                                                            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-semibold flex items-center gap-1">
+                                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-10.293a1 1 0 00-1.414-1.414L10 8.586 7.707 6.293a1 1 0 00-1.414 1.414L8.586 10l-2.293 2.293a1 1 0 101.414 1.414L10 11.414l2.293 2.293a1 1 0 001.414-1.414L11.414 10l2.293-2.293z" clip-rule="evenodd" />
+                                                                </svg>
+                                                                Annulée
+                                                            </span>
                                                         @else
                                                             <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold flex items-center gap-1">
                                                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 010 3.976 3.066 3.066 0 00.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                                                 </svg>
                                                                 Terminée
                                                             </span>
@@ -105,47 +130,58 @@
                                                     </div>
                                                 </div>
 
-                                                @if($request->message)
-                                                    <div class="mb-3 p-3 bg-green-50/50 rounded-lg border border-green-100">
-                                                        <p class="text-sm font-semibold text-green-800 mb-1">Votre message:</p>
-                                                        <p class="text-sm text-gray-700">{{ $request->message }}</p>
-                                                    </div>
-                                                @endif
-
-                                                @if($request->customer_notes)
-                                                    <div class="mb-3 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                                                        <p class="text-sm font-semibold text-blue-800 mb-1">Notes additionnelles:</p>
-                                                        <p class="text-sm text-gray-700">{{ $request->customer_notes }}</p>
+                                                @if($dimensions)
+                                                    <div class="mb-3 p-3 bg-indigo-50/60 rounded-lg border border-indigo-100">
+                                                        <p class="text-sm font-semibold text-indigo-800 mb-1">Requested dimensions:</p>
+                                                        <p class="text-sm text-indigo-900">
+                                                            {{ $dimensions['length'] ?? '-' }} × {{ $dimensions['width'] ?? '-' }} × {{ $dimensions['height'] ?? '-' }} {{ $dimensions['unit'] ?? '' }}
+                                                        </p>
                                                     </div>
                                                 @endif
 
                                                 <div class="flex items-center gap-3">
-                                                    @if($request->concept->category)
+                                                    @if($subjectCategory)
                                                         <span class="inline-flex items-center px-2 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded text-xs font-medium">
-                                                            {{ $request->concept->category->name }}
+                                                            {{ $subjectCategory->name }}
                                                         </span>
                                                     @endif
                                                     
-                                                    @if($request->concept->source === 'designer')
-                                                        <span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
-                                                            Designer Concept
-                                                        </span>
+                                                    @if(!$isProductRequest)
+                                                        @if($request->concept && $request->concept->source === 'designer')
+                                                            <span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                                                                Designer Concept
+                                                            </span>
+                                                        @else
+                                                            <span class="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">
+                                                                Library Concept
+                                                            </span>
+                                                        @endif
                                                     @else
-                                                        <span class="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">
-                                                            Library Concept
+                                                        <span class="inline-flex items-center px-2 py-1 bg-cyan-100 text-cyan-700 rounded text-xs font-medium">
+                                                            Direct to Producer
                                                         </span>
                                                     @endif
                                                 </div>
 
                                                 <div class="mt-4 flex items-center gap-3">
-                                                    <a href="{{ route('concepts.show', $request->concept->id) }}" 
-                                                       class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
+                                                    <a href="{{ route('customer.construction-requests.show', $request->id) }}"
+                                                       class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                         </svg>
-                                                        Voir le concept
+                                                        View details
                                                     </a>
+
+                                                    @if($request->canBeEditedByCustomer())
+                                                        <a href="{{ route('customer.construction-requests.edit', $request->id) }}"
+                                                           class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                            Modifier
+                                                        </a>
+                                                    @endif
 
                                                     <a href="{{ route('customer.construction-requests.offers', $request->id) }}" 
                                                        class="inline-flex items-center gap-2 px-4 py-2 {{ $request->offers->count() > 0 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gray-400' }} text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-300 shadow-md text-sm relative">
@@ -157,6 +193,19 @@
                                                             <span class="px-2 py-0.5 bg-white text-blue-600 rounded-full text-xs font-bold">{{ $request->offers->count() }}</span>
                                                         @endif
                                                     </a>
+
+                                                    @if($request->canBeCanceledByCustomer())
+                                                        <form action="{{ route('customer.construction-requests.cancel', $request->id) }}" method="POST" onsubmit="return confirm('Annuler cette demande ? Vous pourrez ensuite en créer une nouvelle.')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-lg font-semibold hover:from-red-600 hover:to-rose-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                                Annuler
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>

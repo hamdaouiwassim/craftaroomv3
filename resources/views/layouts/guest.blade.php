@@ -24,15 +24,11 @@
                 <div class="flex justify-between items-center h-20">
                     <!-- Logo -->
                     <div class="flex items-center">
-                        <a href="/" class="flex items-center space-x-3 group">
-                            <div class="p-2 bg-gradient-to-br from-sky-blue to-blue-accent rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-110">
-                                <x-application-logo class="h-8 w-8 fill-current text-white" />
-                            </div>
-                            <span class="text-2xl font-bold bg-gradient-to-r from-sky-blue to-blue-accent bg-clip-text text-transparent">
-                                Craftaroom
-                            </span>
-                </a>
-            </div>
+                        <a href="/" class="flex items-center gap-3 group">
+                            <img src="{{ asset('images/branding/logo-dark.png') }}" alt="CraftARoom" width="75" height="78" class="object-contain transition-all duration-300 group-hover:scale-[1.03]" style="width: 75px; height: 78px;">
+                            <span class="text-2xl font-bold text-gray-900 transition-all duration-300 group-hover:scale-[1.01]">CraftARoom</span>
+                        </a>
+                    </div>
 
                     <!-- Desktop Navigation -->
                     <div class="hidden md:flex items-center space-x-1">

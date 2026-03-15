@@ -13,7 +13,7 @@
     } elseif ($isConstructor) {
         $layout = 'constructor-layout';
     } else {
-        $layout = 'client-layout';
+        $layout = 'customer-layout';
     }
 @endphp
 

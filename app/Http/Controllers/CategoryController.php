@@ -30,6 +30,15 @@ class CategoryController extends Controller
 
             $categories = $query->with(['icon', 'sub_categories'])->latest()->paginate(15);
             
+            // Return JSON for AJAX requests (real-time search)
+            if ($request->ajax() || $request->has('_ajax')) {
+                return response()->json([
+                    'results' => $categories->items(),
+                    'count' => $categories->count(),
+                    'total' => $categories->total()
+                ]);
+            }
+            
             return view("admin.categories.index", [
                 'categories' => $categories
             ]);

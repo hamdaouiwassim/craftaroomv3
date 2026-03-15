@@ -114,11 +114,15 @@
                                     class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
                                     <option value="">Sélectionner une catégorie</option>
                                 @foreach ($categories as $category)
-                                    <optgroup label="{{ $category->name }}">
-                                        @foreach ($category->sub_categories as $cat)
-                                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                        @endforeach
-                                    </optgroup>
+                                    @if($category->sub_categories && $category->sub_categories->isNotEmpty())
+                                        <optgroup label="{{ $category->name }}">
+                                            @foreach ($category->sub_categories as $cat)
+                                                <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @else
+                                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                                 @error('category_id')
@@ -216,7 +220,7 @@
                                         class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white">
                                         <option value="">Sélectionner une devise</option>
                                         @foreach ($currencies as $currency)
-                                            <option value="{{ $currency->symbol }}">{{ $currency->name }} ({{ $currency->symbol }})</option>
+                                            <option value="{{ $currency->symbol }}" {{ old('currency') == $currency->symbol ? 'selected' : '' }}>{{ $currency->name }} ({{ $currency->symbol }})</option>
                                         @endforeach
                                     </select>
                                     @error('currency')

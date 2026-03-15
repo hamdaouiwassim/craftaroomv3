@@ -14,12 +14,12 @@ window.VIEWER_CONFIG = {
    * Set to true to load data from Laravel API
    * Set to false to use local configuration below
    */
-  useAPI: false,
+  useAPI: true,
   
   /**
    * Laravel API base URL (only used if useAPI = true)
    */
-  apiBaseUrl: 'http://localhost:8000',
+  apiBaseUrl: 'http://127.0.0.1:8000',
   
   /**
    * Model type: 'product' or 'concept' (only used if useAPI = true)

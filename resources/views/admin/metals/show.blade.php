@@ -58,7 +58,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('admin.metals.options.store', $metal) }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <form method="POST" action="{{ route('admin.metals.options.store', $metal) }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" enctype="multipart/form-data">
                     @csrf
                     <div>
                         <x-input-label for="ref" value="Reference" />
@@ -71,9 +71,14 @@
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
                     <div class="md:col-span-2">
-                        <x-input-label for="image_url" value="Image URL" />
-                        <x-text-input id="image_url" name="image_url" type="url" class="mt-1 block w-full" value="{{ old('image_url') }}" placeholder="https://example.com/variant.jpg" />
-                        <x-input-error :messages="$errors->get('image_url')" class="mt-2" />
+                        <x-input-label for="image" value="Image" />
+                        <input id="image" 
+                               name="image" 
+                               type="file" 
+                               accept="image/*"
+                               class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:border-blue-500" />
+                        <p class="mt-1 text-sm text-gray-500">Supported formats: JPEG, PNG, GIF, SVG (Max: 2MB)</p>
+                        <x-input-error :messages="$errors->get('image')" class="mt-2" />
                     </div>
                     <div class="md:col-span-4 flex justify-end">
                         <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-accent text-white font-semibold shadow-lg hover:shadow-xl transition-all">

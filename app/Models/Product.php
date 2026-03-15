@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Product extends Model
 {
@@ -17,13 +18,19 @@ class Product extends Model
         'price',
         'size',
         'category_id',
+        'style_type',
         'description',
         'currency',
         'reel',
         'user_id',
         'status',
-        'concept_id'
+        'concept_id',
+        'is_resizable'
 ];
+
+    protected $casts = [
+        'is_resizable' => 'boolean',
+    ];
 
 /**
  * Get the user that owns the Product
@@ -118,6 +125,21 @@ public function concept(): BelongsTo
         return $this->hasMany(Review::class);
     }
 
+    public function reelLikes(): MorphMany
+    {
+        return $this->morphMany(ReelLike::class, 'reelable');
+    }
+
+    public function reelComments(): MorphMany
+    {
+        return $this->morphMany(ReelComment::class, 'reelable');
+    }
+
+    public function reelShares(): MorphMany
+    {
+        return $this->morphMany(ReelShare::class, 'reelable');
+    }
+
     /**
      * Get the currency associated with the Product
      *
@@ -126,5 +148,21 @@ public function concept(): BelongsTo
     public function currency(): HasOne
     {
         return $this->hasOne(Currency::class);
+    }
+
+    /**
+     * Selected submaterials for this product (same flow as concept customization).
+     */
+    public function productMetalOptions(): HasMany
+    {
+        return $this->hasMany(ProductMetalOption::class);
+    }
+
+    /**
+     * Custom submaterials created for this product.
+     */
+    public function productCustomMetalOptions(): HasMany
+    {
+        return $this->hasMany(ProductCustomMetalOption::class);
     }
 }

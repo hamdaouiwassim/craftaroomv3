@@ -25,10 +25,7 @@ class ConstructorController extends Controller
         // Search functionality
         $search = trim($request->input('search', ''));
         if ($search !== '') {
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         // Filter by category
@@ -104,10 +101,7 @@ class ConstructorController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         // Filter by status
@@ -119,6 +113,14 @@ class ConstructorController extends Controller
         }
 
         $products = $query->with(['photos', 'category', 'user'])->latest()->paginate(15);
+
+        if ($request->ajax() || $request->has('_ajax')) {
+            return response()->json([
+                'results' => $products->items(),
+                'count' => $products->count(),
+                'total' => $products->total(),
+            ]);
+        }
         
         return view('constructor.products.index', ["products" => $products]);
     }

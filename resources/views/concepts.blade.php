@@ -142,7 +142,7 @@
                 <!-- Concepts Content -->
                 <div class="flex-1">
                     <!-- Search Bar -->
-                    <div class="mb-10">
+                    <div class="mb-10" x-data="realtimeSearch({ rowSelector: '.concept-search-item' })">
                         <form method="GET" action="{{ route('concepts.index') }}" class="max-w-2xl">
                             <!-- Preserve existing filters -->
                             @if(request('source'))
@@ -171,8 +171,15 @@
                                 <input type="text" 
                                        name="search" 
                                        value="{{ request('search') }}"
+                                       x-model="searchQuery"
+                                       @input="onSearchInput()"
                                        placeholder="Search concepts..." 
-                                       class="block w-full pl-12 pr-4 py-4 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                       class="block w-full pl-12 pr-12 py-4 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                <button x-show="searchQuery" @click="clearSearch()" type="button" class="absolute inset-y-0 right-24 pr-2 flex items-center text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                                 <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                                     Search
                                 </button>
@@ -191,9 +198,9 @@
                     @if($concepts->count() > 0)
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             @foreach($concepts as $concept)
-                                <div class="group bg-white rounded-2xl border-2 border-purple-100 overflow-hidden shadow-md hover:shadow-2xl hover:border-purple-300 transition-all duration-300 transform hover:-translate-y-2">
+                                <div class="concept-search-item group bg-white rounded-2xl border-2 border-purple-100 overflow-hidden shadow-md hover:shadow-2xl hover:border-purple-300 transition-all duration-300 transform hover:-translate-y-2" data-search-name="{{ strtolower($concept->name) }}">
                                     <a href="{{ route('concepts.show', $concept->id) }}" class="block">
-                                        <div class="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center overflow-hidden">
+                                        <div class="aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center overflow-hidden relative">
                                             @if($concept->photos->count() > 0)
                                                 <img src="{{ $concept->photos->first()->url }}" 
                                                      alt="{{ $concept->name }}" 
@@ -202,6 +209,16 @@
                                                 <svg class="w-20 h-20 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
+                                            @endif
+                                            @if($concept->style_type === 'artisant')
+                                                <div class="absolute top-0 right-0 z-10 pointer-events-none">
+                                                    <div class="relative w-28 h-28 overflow-visible">
+                                                        <div class="absolute top-4 -right-8 rotate-45 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-[10px] font-extrabold uppercase tracking-[0.18em] shadow-lg px-8 py-1.5 text-center">
+                                                            Artisant
+                                                        </div>
+                                                        <div class="absolute top-[61px] right-[3px] w-0 h-0 border-l-[9px] border-l-rose-700 border-t-[9px] border-t-transparent"></div>
+                                                    </div>
+                                                </div>
                                             @endif
                                         </div>
                                         <div class="p-5">

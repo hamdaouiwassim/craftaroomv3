@@ -7,6 +7,7 @@ use App\Models\ConceptMeasure;
 use App\Models\ConceptDimension;
 use App\Models\ConceptWeight;
 use App\Models\ConceptMetalOption;
+use App\Models\ConceptCustomMetalOption;
 use App\Models\Category;
 use App\Models\Room;
 use App\Models\Metal;
@@ -14,6 +15,7 @@ use App\Models\MetalOption;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class ConceptController extends Controller
 {
@@ -29,10 +31,7 @@ class ConceptController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         if ($request->filled('status')) {
@@ -40,6 +39,14 @@ class ConceptController extends Controller
         }
 
         $concepts = $query->latest()->paginate(15)->withQueryString();
+
+        if ($request->ajax() || $request->has('_ajax')) {
+            return response()->json([
+                'results' => $concepts->items(),
+                'count' => $concepts->count(),
+                'total' => $concepts->total(),
+            ]);
+        }
 
         return view('designer.concepts.index', compact('concepts'));
     }
@@ -59,6 +66,7 @@ class ConceptController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'category_id' => 'required|exists:categories,id',
+            'style_type' => 'nullable|in:standard,artisant',
             'rooms' => 'required|array',
             'rooms.*' => 'exists:rooms,id',
             'metals' => 'required|array',
@@ -78,6 +86,7 @@ class ConceptController extends Controller
             'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
             'weight_value' => 'nullable|numeric',
             'weight_unit' => 'nullable|in:KG,LB',
+            'is_resizable' => 'nullable|boolean',
         ]);
 
         $hasMeasure = $request->filled('measure_size')
@@ -99,10 +108,12 @@ class ConceptController extends Controller
             'name' => $request->name,
             'size' => $request->get('size', 'N/A'),
             'category_id' => $request->category_id,
+            'style_type' => $request->input('style_type', 'standard'),
             'description' => $request->description,
             'user_id' => auth()->id(),
             'status' => 'inactive', // active only after customization is saved
             'source' => 'designer',
+            'is_resizable' => $request->boolean('is_resizable'),
         ]);
 
         $concept->rooms()->sync($request->rooms);
@@ -179,10 +190,11 @@ class ConceptController extends Controller
         if (!$this->canAccessConcept($concept)) {
             abort(403, 'Unauthorized. You can only customize your own concepts.');
         }
-        $concept->load(['metals.metalOptions', 'conceptMetalOptions.metalOption']);
+        $concept->load(['metals.metalOptions', 'conceptMetalOptions.metalOption', 'conceptCustomMetalOptions']);
         // Group selected option IDs by metal_id for multiple choices per metal
         $selectedOptionsByMetal = $concept->conceptMetalOptions->groupBy('metal_id')->map(fn ($rows) => $rows->pluck('metal_option_id'));
-        return view('designer.concepts.customize', compact('concept', 'selectedOptionsByMetal'));
+        $customOptionsByMetal = $concept->conceptCustomMetalOptions->groupBy('metal_id');
+        return view('designer.concepts.customize', compact('concept', 'selectedOptionsByMetal', 'customOptionsByMetal'));
     }
 
     /**
@@ -201,6 +213,12 @@ class ConceptController extends Controller
             'options' => 'nullable|array',
             'options.*' => 'nullable|array',
             'options.*.*' => 'exists:metal_options,id',
+            'custom_options' => 'nullable|array',
+            'custom_options.*' => 'nullable|array',
+            'custom_options.*.*.id' => 'nullable|integer',
+            'custom_options.*.*.name' => 'nullable|string|max:120',
+            'custom_options.*.*.ref' => 'nullable|string|max:120',
+            'custom_options.*.*.image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         ConceptMetalOption::where('concept_id', $concept->id)->delete();
@@ -223,6 +241,51 @@ class ConceptController extends Controller
                     'metal_option_id' => $metalOptionId,
                 ]);
             }
+        }
+
+        $existingCustomById = $concept->conceptCustomMetalOptions()->get()->keyBy('id');
+        $customEntries = [];
+        $customOptions = $request->input('custom_options', []);
+
+        foreach ($customOptions as $metalId => $rows) {
+            $metalId = (int) $metalId;
+            if (!in_array($metalId, $metalIds, true) || !is_array($rows)) {
+                continue;
+            }
+
+            foreach ($rows as $index => $row) {
+                $row = is_array($row) ? $row : [];
+                $existingId = isset($row['id']) ? (int) $row['id'] : null;
+                $name = trim((string) ($row['name'] ?? ''));
+                $ref = trim((string) ($row['ref'] ?? ''));
+
+                if ($name === '') {
+                    continue;
+                }
+
+                $uploadedImage = $request->file("custom_options.$metalId.$index.image");
+                $imageUrl = null;
+
+                if ($uploadedImage) {
+                    $storedPath = $uploadedImage->store('uploads/concept-custom-materials', 'public');
+                    $imageUrl = '/storage/' . $storedPath;
+                } elseif ($existingId && $existingCustomById->has($existingId)) {
+                    $imageUrl = $existingCustomById[$existingId]->image_url;
+                }
+
+                $customEntries[] = [
+                    'concept_id' => $concept->id,
+                    'metal_id' => $metalId,
+                    'name' => $name,
+                    'ref' => $ref ?: null,
+                    'image_url' => $imageUrl,
+                ];
+            }
+        }
+
+        $concept->conceptCustomMetalOptions()->delete();
+        if (!empty($customEntries)) {
+            ConceptCustomMetalOption::insert($customEntries);
         }
 
         $concept->update(['status' => 'active']);
@@ -249,6 +312,64 @@ class ConceptController extends Controller
         return view('designer.concepts.show', compact('concept', 'categories', 'rooms', 'metals'));
     }
 
+    /**
+     * Get concept details for AJAX requests (used in concept selector modal)
+     */
+    public function details(Concept $concept)
+    {
+        // Allow access for admins or the concept owner
+        if (auth()->user()->role !== 0 && !$this->canAccessConcept($concept)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $concept->load([
+            'photos', 'rooms', 'metals', 'category', 'user',
+            'measure.dimension', 'measure.weight',
+        ]);
+
+        $model3d = $concept->threedmodels()->first();
+
+        return response()->json([
+            'id' => $concept->id,
+            'name' => $concept->name,
+            'description' => $concept->description,
+            'category' => $concept->category ? [
+                'id' => $concept->category->id,
+                'name' => $concept->category->name,
+            ] : null,
+            'owner' => $concept->source === 'designer' && $concept->user ? [
+                'name' => $concept->user->name,
+                'photo_url' => $concept->user->photoUrl,
+                'profile_url' => route('designer.show', $concept->user->id),
+                'type' => 'designer',
+            ] : [
+                'name' => 'CraftARoom',
+                'photo_url' => null,
+                'profile_url' => null,
+                'type' => 'library',
+            ],
+            'photos' => $concept->photos->map(fn($p) => ['id' => $p->id, 'url' => $p->url]),
+            'rooms' => $concept->rooms->map(fn($r) => ['id' => $r->id, 'name' => $r->name]),
+            'metals' => $concept->metals->map(fn($m) => ['id' => $m->id, 'name' => $m->name]),
+            'has_model' => $model3d !== null,
+            'model_url' => $model3d ? $model3d->url : null,
+            'has_reel' => !empty($concept->reel),
+            'measure' => $concept->measure ? [
+                'size' => $concept->measure->size,
+                'dimension' => $concept->measure->dimension ? [
+                    'length' => $concept->measure->dimension->length,
+                    'height' => $concept->measure->dimension->height,
+                    'width' => $concept->measure->dimension->width,
+                    'unit' => $concept->measure->dimension->unit,
+                ] : null,
+                'weight' => $concept->measure->weight ? [
+                    'value' => $concept->measure->weight->weight_value,
+                    'unit' => $concept->measure->weight->weight_unit,
+                ] : null,
+            ] : null,
+        ]);
+    }
+
     public function edit(Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
@@ -272,6 +393,7 @@ class ConceptController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'category_id' => 'required|exists:categories,id',
+            'style_type' => 'nullable|in:standard,artisant',
             'rooms' => 'required|array',
             'rooms.*' => 'exists:rooms,id',
             'metals' => 'required|array',
@@ -286,14 +408,17 @@ class ConceptController extends Controller
             'measure_size' => 'nullable|in:SMALL,MEDIUM,LARGE',
             'weight_value' => 'nullable|numeric',
             'weight_unit' => 'nullable|in:KG,LB',
+            'is_resizable' => 'nullable|boolean',
         ]);
 
         $concept->update([
             'name' => $request->name,
             'size' => $request->get('size', 'N/A'),
             'category_id' => $request->category_id,
+            'style_type' => $request->has('style_type') ? 'artisant' : 'standard',
             'description' => $request->description,
             'status' => $request->status,
+            'is_resizable' => $request->boolean('is_resizable'),
         ]);
 
         $concept->rooms()->sync($request->rooms);
@@ -362,31 +487,74 @@ class ConceptController extends Controller
     public function uploadPhotos(Request $request, Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            }
             return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
-        $request->validate([
-            'photos' => 'required|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
-        ]);
-        $uploaded = [];
-        foreach ($request->file('photos') ?? [] as $file) {
-            $fileName = uniqid('conceptPhoto_') . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('uploads/photos', $fileName, 'public');
-            $media = Media::create([
-                'name' => $fileName,
-                'url' => '/storage/uploads/photos/' . $fileName,
-                'attachment_id' => $concept->id,
-                'type' => 'concept',
+
+        try {
+            // Accept both payload formats used by browsers/clients: photos and photos[]
+            $files = $request->file('photos');
+            if (!$files) {
+                $files = $request->file('photos[]');
+            }
+
+            if (!$files) {
+                $message = 'Validation failed';
+                $errors = ['photos' => ['Le champ photos est requis']];
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message, 'errors' => $errors], 422);
+                }
+                return redirect()->back()->withErrors($errors);
+            }
+
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+
+            $validator = Validator::make([
+                'photos' => $files,
+            ], [
+                'photos' => 'required|array|min:1',
+                'photos.*' => 'file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
             ]);
-            $uploaded[] = $media;
+
+            if ($validator->fails()) {
+                $message = 'Validation failed';
+                $errors = $validator->errors();
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message, 'errors' => $errors], 422);
+                }
+                return redirect()->back()->withErrors($errors);
+            }
+
+            $uploaded = [];
+            foreach ($files as $file) {
+                $fileName = uniqid('conceptPhoto_') . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('uploads/photos', $fileName, 'public');
+                $media = Media::create([
+                    'name' => $fileName,
+                    'url' => '/storage/uploads/photos/' . $fileName,
+                    'attachment_id' => $concept->id,
+                    'type' => 'concept',
+                ]);
+                $uploaded[] = $media;
+            }
+            
+            // Check if request is AJAX
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Photos uploaded.', 'photos' => $uploaded]);
+            }
+            
+            return redirect()->route('designer.concepts.show', $concept)->with('success', 'Photos ajoutées avec succès.');
+        } catch (\Exception $e) {
+            $message = 'Error uploading photos: ' . $e->getMessage();
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
+            return redirect()->back()->with('error', $message);
         }
-        
-        // Check if request is AJAX
-        if ($request->expectsJson() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Photos uploaded.', 'photos' => $uploaded]);
-        }
-        
-        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Photos ajoutées avec succès.');
     }
 
     public function uploadReel(Request $request, Concept $concept)
@@ -416,67 +584,84 @@ class ConceptController extends Controller
     public function uploadModel(Request $request, Concept $concept)
     {
         if (!$this->canAccessConcept($concept)) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            }
             return redirect()->route('designer.concepts.show', $concept)->with('error', 'Unauthorized.');
         }
-        $request->validate([
-            'folderModel' => 'required|file|mimes:zip|max:51200',
-        ]);
-        $existing = $concept->threedmodels;
-        if ($existing) {
-            $this->deleteModelFiles($existing);
-            $existing->delete();
-        }
-        
-        $file = $request->file('folderModel');
-        $extension = $file->getClientOriginalExtension();
-        
-        if ($extension === 'zip') {
-            // Extract ZIP file
-            $extractPath = 'uploads/models/' . uniqid('concept3d_');
-            $zipPath = $file->storeAs('uploads/temp', uniqid() . '.zip', 'public');
-            $fullZipPath = storage_path('app/public/' . $zipPath);
-            $fullExtractPath = storage_path('app/public/' . $extractPath);
 
-            // Create extraction directory
-            if (!file_exists($fullExtractPath)) {
-                mkdir($fullExtractPath, 0755, true);
+        try {
+            $request->validate([
+                'folderModel' => 'required|file|mimes:zip|max:51200',
+            ]);
+
+            $existing = $concept->threedmodels;
+            if ($existing) {
+                $this->deleteModelFiles($existing);
+                $existing->delete();
             }
+            
+            $file = $request->file('folderModel');
+            $extension = $file->getClientOriginalExtension();
+            
+            if ($extension === 'zip') {
+                // Extract ZIP file
+                $extractPath = 'uploads/models/' . uniqid('concept3d_');
+                $zipPath = $file->storeAs('uploads/temp', uniqid() . '.zip', 'public');
+                $fullZipPath = storage_path('app/public/' . $zipPath);
+                $fullExtractPath = storage_path('app/public/' . $extractPath);
 
-            // Extract ZIP
-            $zip = new \ZipArchive;
-            if ($zip->open($fullZipPath) === true) {
-                $zip->extractTo($fullExtractPath);
-                $zip->close();
-                
-                // Delete the temporary ZIP file
-                Storage::disk('public')->delete($zipPath);
-                
-                $modelPath = $extractPath;
-                $modelUrl = '/storage/' . $extractPath;
+                // Create extraction directory
+                if (!file_exists($fullExtractPath)) {
+                    mkdir($fullExtractPath, 0755, true);
+                }
+
+                // Extract ZIP
+                $zip = new \ZipArchive;
+                if ($zip->open($fullZipPath) === true) {
+                    $zip->extractTo($fullExtractPath);
+                    $zip->close();
+                    
+                    // Delete the temporary ZIP file
+                    Storage::disk('public')->delete($zipPath);
+                    
+                    $modelPath = $extractPath;
+                    $modelUrl = '/storage/' . $extractPath;
+                } else {
+                    $message = 'Failed to extract ZIP file.';
+                    if ($request->expectsJson() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $message], 500);
+                    }
+                    return redirect()->back()->with('error', $message);
+                }
             } else {
-                return redirect()->back()->with('error', 'Failed to extract ZIP file.');
+                // Store GLB/GLTF files directly
+                $fileName = uniqid('concept3d_') . '.' . $extension;
+                $modelPath = 'uploads/models/' . $fileName;
+                $file->storeAs('uploads/models', $fileName, 'public');
+                $modelUrl = '/storage/uploads/models/' . $fileName;
             }
-        } else {
-            // Store GLB/GLTF files directly
-            $fileName = uniqid('concept3d_') . '.' . $extension;
-            $modelPath = 'uploads/models/' . $fileName;
-            $file->storeAs('uploads/models', $fileName, 'public');
-            $modelUrl = '/storage/uploads/models/' . $fileName;
+            
+            Media::create([
+                'name' => basename($modelPath),
+                'url' => $modelUrl,
+                'attachment_id' => $concept->id,
+                'type' => 'concept_threedmodel',
+            ]);
+            
+            // Check if request is AJAX
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => '3D model uploaded.']);
+            }
+            
+            return redirect()->route('designer.concepts.show', $concept)->with('success', 'Modèle 3D ajouté avec succès.');
+        } catch (\Exception $e) {
+            $message = 'Error uploading 3D model: ' . $e->getMessage();
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
+            return redirect()->back()->with('error', $message);
         }
-        
-        Media::create([
-            'name' => basename($modelPath),
-            'url' => $modelUrl,
-            'attachment_id' => $concept->id,
-            'type' => 'concept_threedmodel',
-        ]);
-        
-        // Check if request is AJAX
-        if ($request->expectsJson() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => '3D model uploaded.']);
-        }
-        
-        return redirect()->route('designer.concepts.show', $concept)->with('success', 'Modèle 3D ajouté avec succès.');
     }
 
     public function deletePhoto(Concept $concept, Media $media)

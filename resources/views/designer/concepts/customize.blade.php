@@ -31,7 +31,7 @@
 
                 <p class="text-gray-600 mb-8">Choisissez une ou plusieurs options (sous-métaux) pour chaque matériau sélectionné sur ce concept.</p>
 
-                <form action="{{ route('designer.concepts.save-customize', $concept) }}" method="POST" class="space-y-8">
+                <form action="{{ route('designer.concepts.save-customize', $concept) }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                     @csrf
 
                     @forelse($concept->metals as $metal)
@@ -81,8 +81,46 @@
                                     @endforeach
                                 </div>
                             @else
-                                <p class="text-amber-600 text-sm">Aucune sous-option disponible pour ce matériau. Vous pouvez en ajouter depuis l’admin.</p>
+                                <p class="text-amber-600 text-sm">Aucune sous-option disponible pour ce matériau. Ajoutez vos sous-matériaux personnalisés ci-dessous.</p>
                             @endif
+
+                            @php
+                                $customRows = $customOptionsByMetal->get($metal->id, collect());
+                            @endphp
+                            <div class="mt-6 pt-5 border-t border-teal-100">
+                                <h4 class="font-semibold text-gray-900 mb-3">Sous-matériaux personnalisés</h4>
+                                <p class="text-sm text-gray-500 mb-4">Ajoutez vos propres sous-matériaux (nom + image) qui resteront liés à ce concept.</p>
+
+                                <div id="custom-options-{{ $metal->id }}" class="space-y-3">
+                                    @foreach($customRows as $index => $custom)
+                                        <div class="custom-row grid grid-cols-1 md:grid-cols-12 gap-3 p-3 rounded-xl border border-teal-100 bg-teal-50/30">
+                                            <input type="hidden" name="custom_options[{{ $metal->id }}][{{ $index }}][id]" value="{{ $custom->id }}">
+                                            <div class="md:col-span-4">
+                                                <input type="text" name="custom_options[{{ $metal->id }}][{{ $index }}][name]" value="{{ $custom->name }}" placeholder="Nom du sous-matériau" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                                            </div>
+                                            <div class="md:col-span-3">
+                                                <input type="text" name="custom_options[{{ $metal->id }}][{{ $index }}][ref]" value="{{ $custom->ref }}" placeholder="Référence (optionnel)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                                            </div>
+                                            <div class="md:col-span-3">
+                                                <input type="file" name="custom_options[{{ $metal->id }}][{{ $index }}][image]" accept="image/*" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white" />
+                                            </div>
+                                            <div class="md:col-span-1 flex items-center">
+                                                @if($custom->image_url)
+                                                    <img src="{{ $custom->image_url }}" alt="{{ $custom->name }}" class="w-10 h-10 rounded object-cover border border-gray-200" />
+                                                @endif
+                                            </div>
+                                            <div class="md:col-span-1 flex items-center justify-end">
+                                                <button type="button" class="remove-custom-row text-red-500 hover:text-red-700 text-sm">Supprimer</button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <button type="button" data-metal-id="{{ $metal->id }}" class="add-custom-row mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-100 text-teal-700 hover:bg-teal-200 text-sm font-semibold">
+                                    <span>+</span>
+                                    <span>Ajouter un sous-matériau</span>
+                                </button>
+                            </div>
                         </div>
                     @empty
                         <p class="text-gray-500">Aucun matériau associé à ce concept. Modifiez le concept pour en ajouter.</p>
@@ -102,4 +140,50 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const counters = {};
+
+            document.querySelectorAll('[id^="custom-options-"]').forEach((container) => {
+                const metalId = container.id.replace('custom-options-', '');
+                counters[metalId] = container.querySelectorAll('.custom-row').length;
+            });
+
+            document.querySelectorAll('.add-custom-row').forEach((btn) => {
+                btn.addEventListener('click', function () {
+                    const metalId = this.dataset.metalId;
+                    const index = counters[metalId] || 0;
+                    const container = document.getElementById(`custom-options-${metalId}`);
+
+                    const row = document.createElement('div');
+                    row.className = 'custom-row grid grid-cols-1 md:grid-cols-12 gap-3 p-3 rounded-xl border border-teal-100 bg-teal-50/30';
+                    row.innerHTML = `
+                        <div class="md:col-span-4">
+                            <input type="text" name="custom_options[${metalId}][${index}][name]" placeholder="Nom du sous-matériau" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                        </div>
+                        <div class="md:col-span-3">
+                            <input type="text" name="custom_options[${metalId}][${index}][ref]" placeholder="Référence (optionnel)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                        </div>
+                        <div class="md:col-span-4">
+                            <input type="file" name="custom_options[${metalId}][${index}][image]" accept="image/*" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white" />
+                        </div>
+                        <div class="md:col-span-1 flex items-center justify-end">
+                            <button type="button" class="remove-custom-row text-red-500 hover:text-red-700 text-sm">Supprimer</button>
+                        </div>
+                    `;
+
+                    container.appendChild(row);
+                    counters[metalId] = index + 1;
+                });
+            });
+
+            document.addEventListener('click', function (event) {
+                if (event.target.classList.contains('remove-custom-row')) {
+                    const row = event.target.closest('.custom-row');
+                    if (row) row.remove();
+                }
+            });
+        });
+    </script>
 </x-designer-layout>

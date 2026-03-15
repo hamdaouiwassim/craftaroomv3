@@ -36,7 +36,7 @@
                             <h2 class="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                                 Filters
                             </h2>
-                            @if(request()->anyFilled(['search', 'category', 'min_price', 'max_price', 'rooms', 'metals']))
+                            @if(request()->anyFilled(['search', 'category', 'min_price', 'max_price', 'rooms', 'metals', 'style_type']))
                                 <a href="{{ route('products.index') }}" class="text-sm text-red-500 hover:text-red-600 font-semibold">
                                     Clear All
                                 </a>
@@ -44,8 +44,35 @@
                         </div>
 
                         <form method="GET" action="{{ route('products.index') }}" id="filter-form" class="space-y-6">
+                            <div>
+                                <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Style
+                                </label>
+                                <div class="p-1 rounded-2xl bg-gradient-to-r from-purple-100 via-indigo-100 to-amber-100 border border-purple-200 shadow-sm">
+                                    <div class="grid grid-cols-2 gap-1">
+                                        <a href="{{ request()->fullUrlWithQuery(['style_type' => null, 'page' => null]) }}"
+                                           class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 {{ request('style_type') === 'artisant' ? 'text-gray-600 hover:text-gray-900' : 'bg-white text-purple-700 shadow-sm' }}">
+                                            All
+                                        </a>
+                                        <a href="{{ request()->fullUrlWithQuery(['style_type' => 'artisant', 'page' => null]) }}"
+                                           class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 {{ request('style_type') === 'artisant' ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white shadow-lg' : 'text-gray-600 hover:text-gray-900' }}">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81H7.03a1 1 0 00.951-.69l1.07-3.292z"/>
+                                            </svg>
+                                            Artisant
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Search -->
                             <input type="hidden" name="search" value="{{ request('search') }}">
+                            @if(request('style_type'))
+                                <input type="hidden" name="style_type" value="{{ request('style_type') }}">
+                            @endif
 
                             <!-- Category Filter -->
                             <div>
@@ -159,7 +186,7 @@
                 <!-- Products Content -->
                 <div class="flex-1">
                     <!-- Search Bar -->
-                    <div class="mb-10">
+                    <div class="mb-10" x-data="realtimeSearch({ rowSelector: '.product-search-item' })">
                         <form method="GET" action="{{ route('products.index') }}" class="max-w-2xl">
                             <!-- Preserve existing filters -->
                             @if(request('category'))
@@ -181,6 +208,9 @@
                                     <input type="hidden" name="metals[]" value="{{ $metal }}">
                                 @endforeach
                             @endif
+                            @if(request('style_type'))
+                                <input type="hidden" name="style_type" value="{{ request('style_type') }}">
+                            @endif
 
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -191,8 +221,15 @@
                                 <input type="text" 
                                        name="search" 
                                        value="{{ request('search') }}"
+                                       x-model="searchQuery"
+                                       @input="onSearchInput()"
                                        placeholder="Search products..." 
-                                       class="block w-full pl-12 pr-4 py-4 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                       class="block w-full pl-12 pr-12 py-4 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                <button x-show="searchQuery" @click="clearSearch()" type="button" class="absolute inset-y-0 right-24 pr-2 flex items-center text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                                 <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                                     Search
                                 </button>
@@ -201,9 +238,15 @@
                     </div>
 
                     <!-- Active Filters -->
-                    @if(request()->anyFilled(['category', 'min_price', 'max_price', 'rooms', 'metals']))
+                    @if(request()->anyFilled(['category', 'min_price', 'max_price', 'rooms', 'metals', 'style_type']))
                         <div class="mb-6 flex flex-wrap gap-2">
                             <span class="text-sm font-semibold text-gray-700">Active Filters:</span>
+                            @if(request('style_type') === 'artisant')
+                                <span class="px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 rounded-full text-sm font-medium flex items-center gap-2">
+                                    Style: Artisant
+                                    <a href="{{ request()->fullUrlWithQuery(['style_type' => null]) }}" class="hover:text-red-600">×</a>
+                                </span>
+                            @endif
                             @if(request('category'))
                                 @php
                                     $selectedCategory = \App\Models\Category::find(request('category'));
@@ -261,9 +304,9 @@
                 <!-- Products Grid -->
                 <div class="grid grid-cols-2 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6 mb-10">
                     @foreach($products as $product)
-                        <div class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-purple-100">
+                        <div class="product-search-item group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-purple-100" data-search-name="{{ strtolower($product->name) }}">
                             <!-- Product Image -->
-                            <div class="relative h-64 bg-gradient-to-br from-purple-100 via-indigo-100 to-teal-100 overflow-hidden">
+                            <a href="{{ route('products.show', $product->id) }}" class="block relative h-64 bg-gradient-to-br from-purple-100 via-indigo-100 to-teal-100 overflow-hidden" title="View product details">
                                 @if($product->photos->count() > 0)
                                     <img src="{{ $product->photos->first()->url }}" 
                                          alt="{{ $product->name }}"
@@ -275,13 +318,18 @@
                                         </svg>
                                     </div>
                                 @endif
-                                @if($product->status === 'active')
-                                    <span class="absolute top-3 right-3 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg">
-                                        ✓ Active
-                                    </span>
+                                @if($product->style_type === 'artisant')
+                                    <div class="absolute top-0 right-0 z-10 pointer-events-none">
+                                        <div class="relative w-28 h-28 overflow-visible">
+                                            <div class="absolute top-4 -right-8 rotate-45 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-[10px] font-extrabold uppercase tracking-[0.18em] shadow-lg px-8 py-1.5 text-center">
+                                                Artisant
+                                            </div>
+                                            <div class="absolute top-[61px] right-[3px] w-0 h-0 border-l-[9px] border-l-rose-700 border-t-[9px] border-t-transparent"></div>
+                                        </div>
+                                    </div>
                                 @endif
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            </div>
+                            </a>
                             
                             <!-- Product Info -->
                             <div class="p-5 bg-gradient-to-br from-white to-purple-50/30">
@@ -314,12 +362,6 @@
                                             </svg>
                                             View
                                         </a>
-                                        <button onclick="addToCart({{ $product->id }})" class="group/btn flex items-center gap-2 bg-gradient-to-r from-purple-500 via-indigo-500 to-teal-500 text-white px-4 py-2.5 rounded-xl hover:from-purple-600 hover:via-indigo-600 hover:to-teal-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-sm font-semibold">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                            </svg>
-                                            Add
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -371,43 +413,11 @@
     </style>
 
     <script>
-        async function addToCart(productId) {
-            try {
-                const response = await fetch(`/cart/add/${productId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ quantity: 1 })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Update cart count
-                    const cartCountElements = document.querySelectorAll('#cart-count, #cart-count-mobile');
-                    cartCountElements.forEach(el => {
-                        if (el) el.textContent = data.cartCount;
-                    });
-
-                    // Show success message
-                    showNotification('Product added to cart!', 'success');
-                } else {
-                    showNotification(data.message || 'Failed to add product', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('An error occurred', 'error');
-            }
-        }
-
-        function showNotification(message, type) {
-            // Create notification element
+        function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 ${
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-2xl text-white font-semibold transform transition-all duration-300 ${
                 type === 'success' 
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
                     : 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
             }`;
             notification.innerHTML = `

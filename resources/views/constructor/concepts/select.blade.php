@@ -43,13 +43,22 @@
                                 <input type="hidden" name="source" value="{{ $source }}">
                                 
                                 <!-- Search -->
-                                <div>
+                                <div x-data="realtimeSearch({ rowSelector: '.concept-search-item' })">
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Rechercher</label>
-                                    <input type="text" 
-                                           name="search" 
-                                           value="{{ request('search') }}"
-                                           placeholder="Nom ou description..."
-                                           class="w-full px-4 py-2 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    <div class="relative">
+                                        <input type="text" 
+                                               name="search" 
+                                               value="{{ request('search') }}"
+                                               x-model="searchQuery"
+                                               @input="onSearchInput()"
+                                               placeholder="Nom du concept..."
+                                               class="w-full px-4 py-2 pr-10 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                        <button x-show="searchQuery" @click="clearSearch()" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Category -->
@@ -140,8 +149,8 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             @foreach($concepts as $concept)
-                                <div class="bg-white rounded-xl border-2 border-orange-100 overflow-hidden shadow-sm hover:border-orange-300 hover:shadow-md transition-all">
-                                    <div class="aspect-video bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center overflow-hidden">
+                                <div class="concept-search-item bg-white rounded-xl border-2 border-orange-100 overflow-hidden shadow-sm hover:border-orange-300 hover:shadow-md transition-all" data-search-name="{{ strtolower($concept->name) }}">
+                                    <a href="{{ route('concepts.show', $concept->id) }}" class="block aspect-video bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center overflow-hidden" title="Voir les détails du concept">
                                         @if($concept->photos->count() > 0)
                                             <img src="{{ $concept->photos->first()->url }}" alt="{{ $concept->name }}" class="w-full h-full object-cover">
                                         @else
@@ -149,7 +158,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
                                         @endif
-                                    </div>
+                                    </a>
                                     <div class="p-4">
                                         <h3 class="font-bold text-gray-900 truncate">{{ $concept->name }}</h3>
                                         @if($concept->category)
@@ -290,15 +299,11 @@
                                                 @if($concept->threedmodels)
                                                     <div class="mb-6">
                                                         <h4 class="text-lg font-bold text-gray-900 mb-3">Modèle 3D</h4>
-                                                        <div class="p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl flex items-center gap-3">
-                                                            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                                            </svg>
-                                                            <div>
-                                                                <p class="font-semibold text-gray-900">{{ $concept->threedmodels->name }}</p>
-                                                                <a href="{{ $concept->threedmodels->url }}" download class="text-sm text-orange-600 hover:underline">Télécharger</a>
-                                                            </div>
-                                                        </div>
+                                                        <x-3d-viewer-original
+                                                            model-type="concept"
+                                                            :model-id="$concept->id"
+                                                            height="420px"
+                                                        />
                                                     </div>
                                                 @endif
 

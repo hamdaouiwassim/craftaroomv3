@@ -94,12 +94,13 @@
                                 <select name="category_id" id="category_id" required class="mt-1 block w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 bg-white">
                                     <option value="">Sélectionner une catégorie</option>
                                     @foreach($categories as $category)
-                                        <optgroup label="{{ $category->name }}">
-                                            @foreach($category->sub_categories ?? [] as $sub)
-                                                <option value="{{ $sub->id }}" {{ old('category_id') == $sub->id ? 'selected' : '' }}>{{ $sub->name }}</option>
-                                            @endforeach
-                                        </optgroup>
-                                        @if(!$category->sub_categories || $category->sub_categories->isEmpty())
+                                        @if($category->sub_categories && $category->sub_categories->isNotEmpty())
+                                            <optgroup label="{{ $category->name }}">
+                                                @foreach($category->sub_categories ?? [] as $sub)
+                                                    <option value="{{ $sub->id }}" {{ old('category_id') == $sub->id ? 'selected' : '' }}>{{ $sub->name }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @else
                                             <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                                         @endif
                                     @endforeach
@@ -226,6 +227,18 @@
                                             <option value="LB" {{ old('weight_unit') === 'LB' ? 'selected' : '' }}>LB</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                <div class="mt-6 pt-4 border-t border-amber-200">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="checkbox" name="is_resizable" id="is_resizable" value="1"
+                                            {{ old('is_resizable') ? 'checked' : '' }}
+                                            class="rounded border-gray-300 text-amber-500 shadow-sm focus:ring-amber-300">
+                                        <div class="flex-1">
+                                            <span class="block text-sm font-semibold text-gray-700 group-hover:text-amber-600 transition-colors">Concept redimensionnable</span>
+                                            <span class="block text-xs text-gray-500">Ce concept peut être redimensionné sur demande</span>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                         </div>

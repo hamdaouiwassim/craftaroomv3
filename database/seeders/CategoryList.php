@@ -4,30 +4,78 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class CategoryList extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
-        //
         $categories = [
-            ['name' => 'Pottery'],
-            ['name' => 'Knitting'],
-            ['name' => 'Pillow'],
-            ['name'=> 'Pouf'] ,
-            ['name'=> 'Chair'] ,
-            ['name'=> 'Drawer'] ,
-            ['name'=> 'Table'] ,
-            ['name'=> 'Sofa'] , ];
-            foreach($categories as $categorie){ 
-                Category::create($categorie);
-            }
-     
+            [
+                'name' => 'Pottery',
+                'description' => 'Pottery products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+            [
+                'name' => 'Knitting',
+                'description' => 'Knitting products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+            [
+                'name' => 'Pillow',
+                'description' => 'Pillow products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+            [
+                'name' => 'Pouf',
+                'description' => 'Pouf products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+            [
+                'name' => 'Chair',
+                'description' => 'Chair products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+            [
+                'name' => 'Drawer',
+                'description' => 'Drawer products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+            [
+                'name' => 'Table',
+                'description' => 'Table products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+            [
+                'name' => 'Sofa',
+                'description' => 'Sofa products',
+                'type' => 'main',
+                'status' => 'active',
+                'category_id' => null,
+            ],
+        ];
+
+        foreach ($categories as $category) {
+            Category::updateOrCreate(
+                [
+                    'name' => $category['name'],
+                    'type' => $category['type'],
+                ],
+                $category
+            );
+        }
     }
 }

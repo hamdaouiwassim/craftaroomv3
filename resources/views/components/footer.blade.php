@@ -3,7 +3,10 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <!-- About Section -->
             <div class="col-span-1 md:col-span-2">
-                <h3 class="text-xl font-bold mb-4">Craftaroom</h3>
+                <div class="flex items-center gap-3 mb-4">
+                    <img src="{{ asset('images/branding/logo-light.png') }}" alt="CraftARoom" class="w-10 h-10 object-contain">
+                    <h3 class="text-xl font-bold">Craftaroom</h3>
+                </div>
                 <p class="text-gray-400 mb-4">
                     Discover unique handcrafted products for your home. From jewelry to home decor, 
                     find the perfect pieces to express your style.

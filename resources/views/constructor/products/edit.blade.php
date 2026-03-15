@@ -136,6 +136,23 @@
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+
+                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm">
+                                    <label for="style_type" class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+                                        </svg>
+                                        Type de style *
+                                    </label>
+                                    <select name="style_type" id="style_type" required
+                                        class="mt-1 block w-full border-2 border-teal-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white">
+                                        <option value="standard" {{ old('style_type', $product->style_type ?? 'standard') === 'standard' ? 'selected' : '' }}>Standard</option>
+                                        <option value="artisant" {{ old('style_type', $product->style_type) === 'artisant' ? 'selected' : '' }}>Artisant</option>
+                                    </select>
+                                    @error('style_type')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm mt-6">
@@ -421,12 +438,6 @@
                                                 </svg>
                                                 <div>
                                                     <p class="font-semibold text-gray-900">{{ $product->threedmodels->name }}</p>
-                                                    <a href="{{ $product->threedmodels->url }}" download class="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-1">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                        </svg>
-                                                        Télécharger
-                                                    </a>
                                                 </div>
                                             </div>
                                         </div>

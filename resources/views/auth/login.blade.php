@@ -4,8 +4,8 @@
             <!-- Header -->
             <div class="text-center">
                 <div class="flex justify-center mb-6">
-                    <div class="p-4 bg-gradient-to-br from-sky-blue to-blue-accent rounded-2xl shadow-2xl transform hover:scale-110 transition-all duration-300">
-                        <x-application-logo class="h-16 w-16 fill-current text-white" />
+                    <div class="inline-flex bg-white/80 rounded-3xl shadow-2xl ring-1 ring-sky-blue/10 px-4 py-3 transform hover:scale-105 transition-all duration-300">
+                        <img src="{{ asset('images/branding/logo-dark-full.png') }}" alt="CraftARoom" width="180" height="96" class="object-contain" style="width: 180px; height: 96px;">
                     </div>
                 </div>
                 <h2 class="text-4xl font-bold bg-gradient-to-r from-sky-blue to-blue-accent bg-clip-text text-transparent mb-2">

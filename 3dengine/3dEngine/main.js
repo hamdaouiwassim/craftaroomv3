@@ -1,5 +1,5 @@
+import { getCurrentModel, getCurrentModelIndex, getTotalModels, setCurrentModelIndex } from './api.js';
 import { loadModel } from './utils/loader.js';
-import { getMainModel, setMainModel, getCurrentModel, getCurrentModelIndex, setCurrentModelIndex, getTotalModels } from './api.js';
 
 let scene, camera, renderer, controls;
 let textureLoader;
@@ -67,14 +67,8 @@ async function loadMainModel() {
   
   // Default configuration if none is set
   if (!config) {
-    console.warn('⚠️ No main model configured via API. Using default configuration.');
-    config = {
-      folderPath: 'objects/tableOffice2/',
-      fileName: 'tableOffice2.obj',
-      desiredSize: 1.0
-    };
-    // Set it so it's available for future reference
-    setMainModel(config);
+    console.warn('⚠️ No main model configured. Waiting for API configuration...');
+    return null;
   }
   
   const totalModels = getTotalModels();
@@ -182,15 +176,17 @@ window.getCurrentModelIndex = getCurrentModelIndex;
 // Export so it can be called externally if needed
 export { loadMainModel };
 
-// Auto-load the main model when scene is ready
-window.addEventListener('DOMContentLoaded', () => {
-  // Small delay to ensure scene is initialized
-  setTimeout(() => {
-    loadMainModel().catch(err => {
-      console.error('Failed to auto-load main model:', err);
-    });
-  }, 100);
+// Auto-load is disabled - model will be loaded after API config is set
+// The index.html script will trigger loading after setMainModel() is called
+window.addEventListener('viewer-config-ready', () => {
+  if (typeof window.loadMainModel === 'function') {
+    window.loadMainModel();
+  }
 });
+
+if (window.__viewerConfigReady && typeof window.loadMainModel === 'function') {
+  window.loadMainModel();
+}
 
 function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

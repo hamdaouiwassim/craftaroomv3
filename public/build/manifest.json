@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-xsRFQexn.css",
+    "file": "assets/app-CRgkQkcx.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -8,12 +8,21 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BtwkeX8i.js",
+    "file": "assets/app-Cdoq45jT.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
+    "imports": [
+      "resources/js/realtime-search.js"
+    ],
     "css": [
       "assets/app-C5WrlErF.css"
     ]
+  },
+  "resources/js/realtime-search.js": {
+    "file": "assets/realtime-search-CJEq-g1z.js",
+    "name": "realtime-search",
+    "src": "resources/js/realtime-search.js",
+    "isEntry": true
   }
 }

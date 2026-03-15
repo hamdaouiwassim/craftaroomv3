@@ -17,7 +17,7 @@
             <div class="bg-white/90 backdrop-blur border border-blue-100 shadow-xl sm:rounded-2xl p-8">
                 @include('admin.inc.messages')
 
-                <form method="POST" action="{{ route('admin.metals.update', $metal) }}" class="space-y-6">
+                <form method="POST" action="{{ route('admin.metals.update', $metal) }}" class="space-y-6" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -34,13 +34,18 @@
                     </div>
 
                     <div>
-                        <x-input-label for="image_url" value="Image URL" />
-                        <x-text-input id="image_url" name="image_url" type="url" class="mt-1 block w-full" value="{{ old('image_url', $metal->image_url) }}" placeholder="https://example.com/image.jpg" />
-                        <x-input-error :messages="$errors->get('image_url')" class="mt-2" />
+                        <x-input-label for="image" value="Image" />
+                        <input id="image" 
+                               name="image" 
+                               type="file" 
+                               accept="image/*"
+                               class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:border-blue-500" />
+                        <p class="mt-1 text-sm text-gray-500">Supported formats: JPEG, PNG, GIF, SVG (Max: 2MB). Leave empty to keep current image.</p>
+                        <x-input-error :messages="$errors->get('image')" class="mt-2" />
                         @if($metal->image_url)
                             <div class="mt-3 flex items-center gap-3">
                                 <img src="{{ $metal->image_url }}" alt="{{ $metal->name }}" class="h-12 w-12 rounded-lg object-cover border border-blue-100">
-                                <span class="text-sm text-gray-600">Current preview</span>
+                                <span class="text-sm text-gray-600">Current image</span>
                             </div>
                         @endif
                     </div>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ConstructionRequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,6 +51,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     
     // Concept Management (Designer concepts)
     Route::resource('concepts', \App\Http\Controllers\ConceptController::class);
+    Route::get('concepts/{concept}/details', [\App\Http\Controllers\ConceptController::class, 'details'])->name('concepts.details');
     Route::prefix('metals/{metal}')->name('metals.options.')->group(function () {
         Route::post('options', [\App\Http\Controllers\Admin\MetalOptionController::class, 'store'])->name('store');
         Route::get('options/{option}/edit', [\App\Http\Controllers\Admin\MetalOptionController::class, 'edit'])->name('edit');
@@ -67,11 +69,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::resource('floors', \App\Http\Controllers\Admin\FloorController::class);
     Route::post('floors/{floor}/models', [\App\Http\Controllers\Admin\FloorController::class, 'storeModel'])->name('floors.models.store');
     Route::delete('floors/{floor}/models/{model}', [\App\Http\Controllers\Admin\FloorController::class, 'destroyModel'])->name('floors.models.destroy');
+
+    // Demandes (admin-facing URLs)
+    Route::get('/construction-requests', [ConstructionRequestController::class, 'index'])->name('construction-requests.index');
+    Route::get('/construction-requests/{id}', [ConstructionRequestController::class, 'show'])->name('construction-requests.show');
+    Route::post('/construction-requests/{id}/status', [ConstructionRequestController::class, 'updateStatus'])->name('construction-requests.update-status');
+    Route::post('/construction-requests/{id}/offer', [ConstructionRequestController::class, 'submitOffer'])->name('construction-requests.submit-offer');
+    Route::get('/offers', [ConstructionRequestController::class, 'myOffers'])->name('offers.index');
 });
 
 // Product Management - Available for Admin, Designer, and Constructor (not Client)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'canManageProducts'])->group(function () {
     Route::resource('products', ProductController::class);
+
+    // Product personalization (same flow as concept customization)
+    Route::get('products/{product}/personalize', [ProductController::class, 'personalize'])->name('products.personalize');
+    Route::post('products/{product}/personalize', [ProductController::class, 'savePersonalize'])->name('products.save-personalize');
     
     // Separate file upload endpoints for products
     Route::post('products/{product}/photos', [ProductController::class, 'uploadPhotos'])

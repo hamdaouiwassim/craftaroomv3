@@ -13,13 +13,19 @@
                 </h2>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('admin.products.edit', $product) }}" class="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-bold hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <a href="{{ route($routePrefix . '.products.personalize', $product) }}" class="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-3 rounded-xl font-bold hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                    Textures
+                </a>
+                <a href="{{ route($routePrefix . '.products.edit', $product) }}" class="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-bold hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Modifier
                 </a>
-                <a href="{{ route('admin.products.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
+                <a href="{{ route($routePrefix . '.products.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
                     Retour
                 </a>
             </div>
@@ -48,6 +54,13 @@
                                 @endif
                                 <div class="flex-1">
                                     <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $product->name }}</h1>
+                                    @if($product->style_type === 'artisant')
+                                        <div class="mb-3">
+                                            <span class="inline-flex items-center px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold">
+                                                Artisant
+                                            </span>
+                                        </div>
+                                    @endif
                                     @if($product->category)
                                         <span class="inline-block px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-sm font-semibold mb-3">
                                             {{ $product->category->name }}
@@ -116,25 +129,24 @@
                     @endif
 
                     <!-- 3D Model Viewer -->
-                    <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-teal-100">
-                        <div class="p-6">
-                            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                </svg>
-                                Modèle 3D Viewer
-                            </h3>
-                            <div class="rounded-xl overflow-hidden bg-gray-100 border-2 border-indigo-200">
-                                <iframe 
-                                    src="http://craftaroomtest.atwebpages.com/index.html" 
-                                    class="w-full h-[600px] border-0"
-                                    allowfullscreen
-                                    loading="lazy"
-                                    title="3D Model Viewer">
-                                </iframe>
+                    @if($product->threedmodels)
+                        <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl sm:rounded-2xl border border-teal-100">
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                    Modèle 3D Viewer
+                                </h3>
+
+                                <x-3d-viewer-original 
+                                    model-type="product" 
+                                    :model-id="$product->id"
+                                    height="600px"
+                                />
                             </div>
                         </div>
-                    </div>
+                    @endif
 
                     <!-- Reel Video -->
                     @if($product->reel)

@@ -27,12 +27,13 @@
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie *</label>
                     <select name="category_id" required class="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                         @foreach($categories ?? [] as $category)
-                            <optgroup label="{{ $category->name }}">
-                                @foreach($category->sub_categories ?? [] as $sub)
-                                    <option value="{{ $sub->id }}" {{ $concept->category_id == $sub->id ? 'selected' : '' }}>{{ $sub->name }}</option>
-                                @endforeach
-                            </optgroup>
-                            @if(!$category->sub_categories || $category->sub_categories->isEmpty())
+                            @if($category->sub_categories && $category->sub_categories->isNotEmpty())
+                                <optgroup label="{{ $category->name }}">
+                                    @foreach($category->sub_categories ?? [] as $sub)
+                                        <option value="{{ $sub->id }}" {{ $concept->category_id == $sub->id ? 'selected' : '' }}>{{ $sub->name }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @else
                                 <option value="{{ $category->id }}" {{ $concept->category_id == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                             @endif
                         @endforeach
@@ -44,6 +45,14 @@
                     <select name="status" required class="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                         <option value="active" {{ $concept->status === 'active' ? 'selected' : '' }}>Actif</option>
                         <option value="inactive" {{ $concept->status === 'inactive' ? 'selected' : '' }}>Inactif</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Type de style *</label>
+                    <select name="style_type" required class="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <option value="standard" {{ ($concept->style_type ?? 'standard') === 'standard' ? 'selected' : '' }}>Standard</option>
+                        <option value="artisant" {{ $concept->style_type === 'artisant' ? 'selected' : '' }}>Artisant</option>
                     </select>
                 </div>
 

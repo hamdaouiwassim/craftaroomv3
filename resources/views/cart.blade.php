@@ -208,7 +208,10 @@
                     // Update cart count
                     const cartCountElements = document.querySelectorAll('#cart-count, #cart-count-mobile');
                     cartCountElements.forEach(el => {
-                        if (el) el.textContent = data.cartCount;
+                        if (!el) return;
+                        el.textContent = data.cartCount;
+                        el.classList.toggle('hidden', !(data.cartCount > 0));
+                        el.classList.toggle('flex', data.cartCount > 0);
                     });
                 } else {
                     showNotification(data.message || 'Failed to update cart', 'error');

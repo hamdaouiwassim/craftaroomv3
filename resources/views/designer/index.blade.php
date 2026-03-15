@@ -19,16 +19,16 @@
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-semibold text-gray-600 mb-1">Mes Produits</p>
-                            <p class="text-3xl font-bold text-blue-600">{{ auth()->user()->products->count() }}</p>
+                            <p class="text-sm font-semibold text-gray-600 mb-1">Mes Concepts</p>
+                            <p class="text-3xl font-bold text-blue-600">{{ $stats['total_concepts'] }}</p>
                         </div>
                         <div class="p-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl">
                             <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
                     </div>
@@ -37,8 +37,8 @@
                 <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-indigo-100 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-semibold text-gray-600 mb-1">Produits Actifs</p>
-                            <p class="text-3xl font-bold text-indigo-600">{{ auth()->user()->products->where('status', 'active')->count() }}</p>
+                            <p class="text-sm font-semibold text-gray-600 mb-1">Concepts Actifs</p>
+                            <p class="text-3xl font-bold text-indigo-600">{{ $stats['active_concepts'] }}</p>
                         </div>
                         <div class="p-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl">
                             <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,13 +51,26 @@
                 <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-purple-100 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-semibold text-gray-600 mb-1">Total Vues</p>
-                            <p class="text-3xl font-bold text-purple-600">0</p>
+                            <p class="text-sm font-semibold text-gray-600 mb-1">Concepts avec modèle 3D</p>
+                            <p class="text-3xl font-bold text-purple-600">{{ $stats['concepts_with_models'] }}</p>
                         </div>
                         <div class="p-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl">
                             <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553 a1 1 0 01.11 1.692l-7 7a1 1 0 01-1.32.083l-.094-.083-4-4a1 1 0 011.32-1.497l.094.083L12 16.585l6.553-6.553A1 1 0 0115 10z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-pink-100 p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-600 mb-1">Produits créés depuis mes concepts</p>
+                            <p class="text-3xl font-bold text-pink-600">{{ $stats['products_from_concepts'] }}</p>
+                        </div>
+                        <div class="p-4 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl">
+                            <svg class="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                             </svg>
                         </div>
                     </div>
@@ -73,37 +86,37 @@
                     Actions rapides
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="{{ route('admin.products.create') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <a href="{{ route('designer.concepts.create') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        <span class="font-semibold">Créer un produit</span>
+                        <span class="font-semibold">Créer un concept</span>
                     </a>
-                    <a href="{{ route('admin.products.index') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <a href="{{ route('designer.concepts.index') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                         </svg>
-                        <span class="font-semibold">Mes produits</span>
+                        <span class="font-semibold">Mes concepts</span>
                     </a>
-                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <a href="{{ route('designer.products.index') }}" class="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
-                        <span class="font-semibold">Mon profil</span>
+                        <span class="font-semibold">Produits de mes concepts</span>
                     </a>
                 </div>
             </div>
 
-            <!-- Recent Products -->
+            <!-- Recent Concepts -->
             <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Produits récents
+                        Concepts récents
                     </h2>
-                    <a href="{{ route('admin.products.index') }}" class="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+                    <a href="{{ route('designer.concepts.index') }}" class="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
                         Voir tout
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -111,13 +124,13 @@
                     </a>
                 </div>
 
-                @if(auth()->user()->products->count() > 0)
+                @if($recentConcepts->count() > 0)
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @foreach(auth()->user()->products->take(6) as $product)
+                        @foreach($recentConcepts as $concept)
                             <div class="bg-white rounded-xl p-4 border border-blue-100 hover:shadow-lg transition-shadow">
                                 <div class="w-full h-48 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 overflow-hidden mb-3">
-                                    @if($product->photos->count() > 0)
-                                        <img src="{{ $product->photos->first()->url }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                                    @if($concept->photos->count() > 0)
+                                        <img src="{{ $concept->photos->first()->url }}" alt="{{ $concept->name }}" class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center text-blue-400">
                                             <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,10 +139,10 @@
                                         </div>
                                     @endif
                                 </div>
-                                <h3 class="font-bold text-gray-900 mb-1 truncate">{{ $product->name }}</h3>
-                                <p class="text-sm text-gray-600 mb-2">{{ $product->currency }}{{ number_format($product->price, 2) }}</p>
-                                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full {{ $product->status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' }}">
-                                    {{ $product->status === 'active' ? 'Actif' : 'Inactif' }}
+                                <h3 class="font-bold text-gray-900 mb-1 truncate">{{ $concept->name }}</h3>
+                                <p class="text-sm text-gray-600 mb-2">{{ $concept->category->name ?? 'Sans catégorie' }}</p>
+                                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full {{ $concept->status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' }}">
+                                    {{ $concept->status === 'active' ? 'Actif' : 'Inactif' }}
                                 </span>
                             </div>
                         @endforeach
@@ -139,12 +152,12 @@
                         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
-                        <p class="text-gray-600 mb-4">Vous n'avez pas encore de produits</p>
-                        <a href="{{ route('admin.products.create') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+                        <p class="text-gray-600 mb-4">Vous n'avez pas encore de concepts</p>
+                        <a href="{{ route('designer.concepts.create') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
-                            Créer votre premier produit
+                            Créer votre premier concept
                         </a>
                     </div>
                 @endif

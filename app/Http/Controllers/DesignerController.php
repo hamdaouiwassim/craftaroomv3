@@ -15,7 +15,24 @@ class DesignerController extends Controller
      */
     public function dashboard()
     {
-        return view('designer.index');
+        $conceptsQuery = Concept::with(['photos', 'category'])
+            ->where('user_id', auth()->id())
+            ->where('source', 'designer');
+
+        $concepts = (clone $conceptsQuery)->latest()->get();
+
+        $stats = [
+            'total_concepts' => $concepts->count(),
+            'active_concepts' => $concepts->where('status', 'active')->count(),
+            'concepts_with_models' => $concepts->filter(fn ($concept) => $concept->threedmodels()->exists())->count(),
+            'products_from_concepts' => Product::whereIn('concept_id', $concepts->pluck('id'))
+                ->where('user_id', '!=', auth()->id())
+                ->count(),
+        ];
+
+        $recentConcepts = $concepts->take(6);
+
+        return view('designer.index', compact('stats', 'recentConcepts'));
     }
 
     /**
@@ -46,21 +63,18 @@ class DesignerController extends Controller
             ->pluck('id');
 
         // Get all products that were created from these concepts
-        // Only include products created by constructors (role = 3) or admins (role = 1)
+        // Only include products created by constructors (role = 3) or admins (role = 0)
         // Exclude products created by the designer themselves
         $query = Product::whereIn('concept_id', $conceptIds)
             ->where('user_id', '!=', auth()->id())
             ->whereHas('user', function($q) {
-                $q->whereIn('role', [1, 3]); // 1 = admin, 3 = constructor
+                $q->whereIn('role', [0, 3]); // 0 = admin, 3 = constructor
             });
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('description', 'like', '%' . $search . '%');
-            });
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         // Filter by status
@@ -71,6 +85,14 @@ class DesignerController extends Controller
         $products = $query->with(['photos', 'category', 'user', 'concept'])
             ->latest()
             ->paginate(15);
+
+        if ($request->ajax() || $request->has('_ajax')) {
+            return response()->json([
+                'results' => $products->items(),
+                'count' => $products->count(),
+                'total' => $products->total(),
+            ]);
+        }
 
         return view('designer.products.index', [
             'products' => $products,

@@ -27,7 +27,6 @@
                             </svg>
                             <div>
                                 <p class="font-semibold text-gray-900">{{ $concept->threedmodels->name }}</p>
-                                <a href="{{ $concept->threedmodels->url }}" download class="text-sm text-indigo-600 hover:underline">Télécharger</a>
                             </div>
                         </div>
                         <form action="{{ route('designer.concepts.delete-model', $concept) }}" method="POST">

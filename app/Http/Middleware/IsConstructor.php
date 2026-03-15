@@ -23,7 +23,7 @@ class IsConstructor
         }
         
         // Check if user is a Constructor (role 3)
-        if ($user->role === 3) {
+        if ((int) $user->role === 3) {
             return $next($request);
         }
         

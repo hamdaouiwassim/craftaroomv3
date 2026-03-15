@@ -14,14 +14,110 @@
                     <span>Back to Products</span>
                 </a>
             </div>
-            <h1 class="text-3xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-purple-100 to-indigo-100 bg-clip-text text-transparent">
-                {{ $product->name }}
-            </h1>
-            @if($product->category)
-                <p class="text-purple-200 text-lg">{{ $product->category->name }}</p>
-            @endif
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <h1 class="text-3xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-purple-100 to-indigo-100 bg-clip-text text-transparent">
+                        {{ $product->name }}
+                    </h1>
+                    @if($product->category)
+                        <p class="text-purple-200 text-lg">{{ $product->category->name }}</p>
+                    @endif
+                </div>
+                @if($product->style_type === 'artisant')
+                    <div class="md:pt-2 md:flex-shrink-0">
+                        <span class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-400/25 via-orange-400/25 to-rose-400/25 backdrop-blur-md border border-amber-200/50 rounded-full text-sm font-bold text-amber-50 shadow-lg shadow-orange-900/20">
+                            <svg class="w-4 h-4 text-amber-200" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81H7.03a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            Artisant
+                        </span>
+                    </div>
+                @endif
+            </div>
         </div>
     </section>
+
+    @auth
+        @if(auth()->user()->role === 2)
+            <div id="productRequestModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-modal="true" role="dialog">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="closeProductRequestModal()"></div>
+                    <div class="relative bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 border border-purple-200">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Save Design &amp; Order</h3>
+                            <button type="button" onclick="closeProductRequestModal()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+
+                        <form id="productRequestForm" action="{{ route('construction-requests.store-product', $product->id) }}" method="POST" class="space-y-6">
+                            @csrf
+                            <input type="hidden" id="product_viewer_state_json" name="viewer_state_json">
+                            <input type="hidden" id="product_submission_action" name="submission_action" value="send">
+                            @php($productFieldsDisabled = !$product->is_resizable)
+
+                            <div class="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
+                                <p class="font-semibold text-purple-900 mb-1">Product: {{ $product->name }}</p>
+                                <p class="text-sm text-purple-700">Your current 3D customization will be saved with this request and sent to the producer.</p>
+                            </div>
+
+                            @if($productFieldsDisabled)
+                                <div class="p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-800">
+                                    <p class="font-semibold">This product is not resizable.</p>
+                                    <p class="text-sm mt-1">Size and dimensions are fixed by the producer for this request.</p>
+                                </div>
+                            @endif
+
+                            <div>
+                                <label for="product_requested_size" class="block text-sm font-semibold text-gray-700 mb-2">Preferred Size</label>
+                                <select id="product_requested_size" name="requested_size" @if(!$productFieldsDisabled) required @endif @disabled($productFieldsDisabled) class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                    <option value="" disabled {{ in_array(($product->measure?->size ?? ''), ['SMALL', 'MEDIUM', 'LARGE'], true) ? '' : 'selected' }}>Select a size</option>
+                                    <option value="SMALL" {{ ($product->measure?->size ?? null) === 'SMALL' ? 'selected' : '' }}>Small</option>
+                                    <option value="MEDIUM" {{ ($product->measure?->size ?? null) === 'MEDIUM' ? 'selected' : '' }}>Medium</option>
+                                    <option value="LARGE" {{ ($product->measure?->size ?? null) === 'LARGE' ? 'selected' : '' }}>Large</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="requested_length" class="block text-sm font-semibold text-gray-700 mb-2">Length</label>
+                                    <input id="requested_length" name="requested_length" type="number" step="0.01" min="0" value="{{ $product->measure?->dimension?->length }}" @disabled($productFieldsDisabled) class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label for="requested_width" class="block text-sm font-semibold text-gray-700 mb-2">Width</label>
+                                    <input id="requested_width" name="requested_width" type="number" step="0.01" min="0" value="{{ $product->measure?->dimension?->width }}" @disabled($productFieldsDisabled) class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label for="requested_height" class="block text-sm font-semibold text-gray-700 mb-2">Height</label>
+                                    <input id="requested_height" name="requested_height" type="number" step="0.01" min="0" value="{{ $product->measure?->dimension?->height }}" @disabled($productFieldsDisabled) class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label for="requested_unit" class="block text-sm font-semibold text-gray-700 mb-2">Unit</label>
+                                    <input id="requested_unit" name="requested_unit" type="text" maxlength="20" value="{{ $product->measure?->dimension?->unit ?? 'cm' }}" @disabled($productFieldsDisabled) class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="product_request_message" class="block text-sm font-semibold text-gray-700 mb-2">Message (Optional)</label>
+                                <textarea id="product_request_message" name="message" rows="3" class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white resize-none" placeholder="Any budget, timeline, or production request details..."></textarea>
+                            </div>
+
+                            <div>
+                                <label for="product_request_notes" class="block text-sm font-semibold text-gray-700 mb-2">Additional Notes (Optional)</label>
+                                <textarea id="product_request_notes" name="customer_notes" rows="3" class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white resize-none" placeholder="Special finishing, material preferences, delivery notes..."></textarea>
+                            </div>
+
+                            <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
+                                <button type="button" onclick="closeProductRequestModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+                                <button type="submit" data-submission-action="draft" class="flex-1 px-6 py-3 bg-white text-purple-700 border-2 border-purple-200 rounded-xl font-bold hover:bg-purple-50 transition-all duration-300">Save Draft</button>
+                                <button id="productRequestSubmitBtn" type="submit" data-submission-action="send" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 via-indigo-500 to-teal-500 text-white rounded-xl font-bold hover:from-purple-600 hover:via-indigo-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-xl">Send Request</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endauth
 
     <!-- Product Details Content -->
     <section class="py-16 bg-gradient-to-b from-white via-purple-50/30 to-indigo-50/30">
@@ -52,7 +148,7 @@
 
                     <!-- 3D Model Viewer -->
                     @if($product->threedmodels)
-                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
+                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100 js-order-viewer">
                             <div class="flex items-center gap-3 mb-4">
                                 <div class="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg">
                                     <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,6 +164,17 @@
                                 :model-id="$product->id"
                                 height="600px"
                             />
+
+                            @auth
+                                @if(auth()->user()->role === 2)
+                                    <button
+                                        type="button"
+                                        onclick="openProductRequestModal()"
+                                        class="mt-4 w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                        Save Design &amp; Order
+                                    </button>
+                                @endif
+                            @endauth
                         </div>
                     @endif
 
@@ -301,12 +408,24 @@
                         </div>
 
                         <div class="flex gap-3 mb-4">
-                            <button onclick="addToCart({{ $product->id }})" class="flex-1 py-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-teal-500 text-white rounded-xl font-bold hover:from-purple-600 hover:via-indigo-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                Add to Cart
-                            </button>
+                            @auth
+                                @if(auth()->user()->role === 2)
+                                    <button type="button" onclick="openProductRequestModal()" class="flex-1 py-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-teal-500 text-white rounded-xl font-bold hover:from-purple-600 hover:via-indigo-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Save Design &amp; Order
+                                    </button>
+                                @else
+                                    <div class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-xl font-semibold text-center">
+                                        Save Design &amp; Order (Customers only)
+                                    </div>
+                                @endif
+                            @else
+                                <a href="{{ route('login') }}" class="flex-1 py-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-teal-500 text-white rounded-xl font-bold hover:from-purple-600 hover:via-indigo-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-center">
+                                    Save Design &amp; Order
+                                </a>
+                            @endauth
                             @auth
                                 <button id="favorite-btn" onclick="toggleFavorite({{ $product->id }})" class="px-4 py-4 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 {{ $isFavorite ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                                     <svg class="w-5 h-5" fill="{{ $isFavorite ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,6 +529,41 @@
                                 </div>
                             @endif
 
+                            @if($product->concept)
+                                <div class="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/70 p-4">
+                                    <div class="flex items-center justify-between gap-4">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-200 to-purple-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                @if($product->concept->source === 'designer' && $product->concept->user?->photoUrl)
+                                                    <img src="{{ $product->concept->user->photoUrl }}" alt="{{ $product->concept->user->name }}" class="w-full h-full object-cover">
+                                                @else
+                                                    <span class="text-base font-bold text-indigo-700">{{ $product->concept->source === 'designer' ? substr($product->concept->user->name ?? 'D', 0, 1) : 'C' }}</span>
+                                                @endif
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Concept Owner</p>
+                                                @if($product->concept->source === 'designer' && $product->concept->user)
+                                                    <a href="{{ route('designer.show', $product->concept->user->id) }}" class="block truncate text-sm font-semibold text-gray-800 hover:text-indigo-700 transition-colors">
+                                                        {{ $product->concept->user->name }}
+                                                    </a>
+                                                @else
+                                                    <p class="truncate text-sm font-semibold text-gray-800">CraftARoom</p>
+                                                @endif
+                                                <p class="text-xs text-gray-500 truncate">Based on concept: {{ $product->concept->name }}</p>
+                                            </div>
+                                        </div>
+                                        @if($product->concept->source === 'designer' && $product->concept->user)
+                                            <a href="{{ route('designer.show', $product->concept->user->id) }}" class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                                                View Profile
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="border-t border-gray-200 pt-4">
                                 <p class="text-sm text-gray-600 mb-2">Other Products by this Producer</p>
                                 @if($producerProducts->count() > 0)
@@ -473,32 +627,76 @@
             document.body.style.overflow = 'auto';
         }
 
-        async function addToCart(productId) {
-            try {
-                const response = await fetch(`/cart/add/${productId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ quantity: 1 })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    const cartCountElements = document.querySelectorAll('#cart-count, #cart-count-mobile');
-                    cartCountElements.forEach(el => {
-                        if (el) el.textContent = data.cartCount;
-                    });
-                    showNotification('Product added to cart!', 'success');
-                } else {
-                    showNotification(data.message || 'Failed to add product', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('An error occurred', 'error');
+        function openProductRequestModal() {
+            const modal = document.getElementById('productRequestModal');
+            if (!modal) {
+                return;
             }
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProductRequestModal() {
+            const modal = document.getElementById('productRequestModal');
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        async function captureProductViewerState() {
+            const viewerIframe = document.querySelector('.js-order-viewer iframe');
+            if (!viewerIframe || !viewerIframe.contentWindow) {
+                return null;
+            }
+
+            const iframeWindow = viewerIframe.contentWindow;
+            if (typeof iframeWindow.captureCustomizationState !== 'function') {
+                return null;
+            }
+
+            try {
+                const state = await iframeWindow.captureCustomizationState();
+                return state ? JSON.stringify(state) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        const productRequestForm = document.getElementById('productRequestForm');
+        if (productRequestForm) {
+            productRequestForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const submitBtn = document.getElementById('productRequestSubmitBtn');
+                const hiddenInput = document.getElementById('product_viewer_state_json');
+                const actionInput = document.getElementById('product_submission_action');
+                const trigger = event.submitter;
+                const submissionAction = trigger?.dataset?.submissionAction ?? 'send';
+
+                if (actionInput) {
+                    actionInput.value = submissionAction;
+                }
+
+                if (trigger) {
+                    trigger.disabled = true;
+                    trigger.textContent = submissionAction === 'draft' ? 'Saving...' : 'Sending...';
+                }
+
+                if (submitBtn && trigger !== submitBtn) {
+                    submitBtn.disabled = true;
+                }
+
+                if (typeof window.showAppLoader === 'function') {
+                    window.showAppLoader(submissionAction === 'draft' ? 'Enregistrement du brouillon en cours...' : 'Envoi de votre demande en cours...');
+                }
+
+                hiddenInput.value = await captureProductViewerState() ?? '';
+                productRequestForm.submit();
+            });
         }
 
         let selectedRating = 0;
@@ -623,6 +821,13 @@
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+                closeProductRequestModal();
+            }
+        });
     </script>
 
     <style>

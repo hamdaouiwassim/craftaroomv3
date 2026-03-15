@@ -87,15 +87,23 @@
                 <!-- Offers Grid -->
                 <div class="grid grid-cols-1 gap-6">
                     @foreach($offers as $offer)
+                        @php
+                            $offerRequest = $offer->constructionRequest;
+                            $isProductRequest = $offerRequest->request_type === 'product' && $offerRequest->product;
+                            $subject = $isProductRequest ? $offerRequest->product : $offerRequest->concept;
+                            $subjectName = $subject?->name ?? ($isProductRequest ? 'Product N/A' : 'Concept N/A');
+                            $subjectCategory = $subject?->category;
+                            $subjectPhotos = $subject?->photos;
+                        @endphp
                         <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-orange-100 hover:shadow-xl transition-all duration-300">
                             <div class="p-6">
                                 <div class="flex flex-col md:flex-row gap-6">
-                                    <!-- Concept Image -->
+                                    <!-- Subject Image -->
                                     <div class="w-full md:w-48 flex-shrink-0">
                                         <div class="relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-orange-100 via-amber-100 to-yellow-100">
-                                            @if($offer->constructionRequest->concept && $offer->constructionRequest->concept->photos->count() > 0)
-                                                <img src="{{ $offer->constructionRequest->concept->photos->first()->url }}" 
-                                                     alt="{{ $offer->constructionRequest->concept->name }}"
+                                            @if($subject && $subjectPhotos && $subjectPhotos->count() > 0)
+                                                <img src="{{ $subjectPhotos->first()->url }}" 
+                                                     alt="{{ $subjectName }}"
                                                      class="w-full h-full object-cover">
                                             @else
                                                 <div class="w-full h-full flex items-center justify-center">
@@ -128,12 +136,15 @@
                                     <div class="flex-1">
                                         <div class="flex items-start justify-between mb-4">
                                             <div>
+                                                <p class="text-xs uppercase tracking-wide font-semibold text-orange-500 mb-1">
+                                                    {{ $isProductRequest ? 'Product Request' : 'Concept Request' }}
+                                                </p>
                                                 <h3 class="text-xl font-bold text-gray-900 mb-1">
-                                                    {{ $offer->constructionRequest->concept->name ?? 'Concept N/A' }}
+                                                    {{ $subjectName }}
                                                 </h3>
-                                                @if($offer->constructionRequest->concept->category)
+                                                @if($subjectCategory)
                                                     <span class="inline-block px-3 py-1 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 rounded-full text-xs font-semibold">
-                                                        {{ $offer->constructionRequest->concept->category->name }}
+                                                        {{ $subjectCategory->name }}
                                                     </span>
                                                 @endif
                                             </div>

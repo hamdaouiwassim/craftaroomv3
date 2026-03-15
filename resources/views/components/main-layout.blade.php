@@ -14,7 +14,7 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/realtime-search.js'])
         <style>
             [x-cloak] { 
                 display: none !important; 
@@ -25,21 +25,17 @@
         <!-- Navigation -->
         <nav class="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-sky-blue/20">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-20">
+                <div class="flex justify-between items-center h-20 gap-6">
                     <!-- Logo -->
-                    <div class="flex items-center">
-                        <a href="/" class="flex items-center space-x-3 group">
-                            <div class="p-2 bg-gradient-to-br from-sky-blue to-blue-accent rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-110">
-                                <x-application-logo class="h-8 w-8 fill-current text-white" />
-                            </div>
-                            <span class="text-2xl font-bold bg-gradient-to-r from-sky-blue to-blue-accent bg-clip-text text-transparent">
-                                Craftaroom
-                            </span>
+                    <div class="flex items-center shrink-0">
+                        <a href="/" class="flex items-center gap-3 group">
+                            <img src="{{ asset('images/branding/logo-dark.png') }}" alt="CraftARoom" width="75" height="78" class="object-contain" style="width: 75px; height: 78px;">
+                            <span class="text-2xl font-bold text-gray-900">CraftARoom</span>
                         </a>
                     </div>
                     
                     <!-- Desktop Navigation -->
-                    <div class="hidden md:flex items-center space-x-1">
+                    <div class="hidden md:flex items-center justify-end gap-1 flex-1">
                         <a href="{{ route('landing') }}" class="group flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-gray-700 hover:text-sky-blue hover:bg-sky-blue/10 transition-all duration-300 relative {{ request()->routeIs('landing') ? 'text-sky-blue bg-sky-blue/10' : '' }}">
                             <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -74,7 +70,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             <span>Cart</span>
-                            <span id="cart-count" class="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{{ session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0 }}</span>
+                            <span id="cart-count" class="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 items-center justify-center {{ (session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0) > 0 ? 'flex' : 'hidden' }}">{{ session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0 }}</span>
                         </a>
                         
                         @auth
@@ -86,7 +82,7 @@
                                     </svg>
                                     <span>Dashboard</span>
                                 </a>
-                            @elseif(request()->routeIs('cart.*') || request()->routeIs('products.*') || request()->routeIs('concepts.*'))
+                            @elseif(request()->routeIs('cart.*') || request()->routeIs('products.*') || request()->routeIs('concepts.*') || request()->routeIs('reels.*') || request()->routeIs('designer.show') || request()->routeIs('producer.show'))
                                 <!-- Dashboard Link for Cart, Products, and Concepts Pages (no background) -->
                                 <a href="{{ route('dashboard') }}" class="group flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-gray-700 hover:text-sky-blue transition-all duration-300 transform hover:scale-105">
                                     <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,7 +124,7 @@
                                         <div class="text-sm font-bold text-gray-900">{{ auth()->user()->name }}</div>
                                         <div class="text-xs text-gray-500">
                                             @if(auth()->user()->is_admin())
-                                                Admin
+                                                CraftARoom
                                             @elseif(auth()->user()->role == 1)
                                                 Designer
                                             @elseif(auth()->user()->role == 2)
@@ -197,6 +193,14 @@
                                                     </svg>
                                                 </div>
                                                 <span class="font-semibold">Products</span>
+                                            </a>
+                                            <a href="{{ route('admin.construction-requests.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                                <div class="p-2 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                                    <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Demandes</span>
                                             </a>
                                             <a href="{{ route('admin.categories.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-accent/10 hover:to-sky-blue/10 transition-all duration-300">
                                                 <div class="p-2 bg-blue-accent/20 rounded-lg group-hover:bg-blue-accent transition-colors">
@@ -296,6 +300,14 @@
                                                     </svg>
                                                 </div>
                                                 <span class="font-semibold">Mes Commandes</span>
+                                            </a>
+                                            <a href="{{ route('customer.construction-requests.index') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-emerald-100/50 transition-all duration-300">
+                                                <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors">
+                                                    <svg class="w-5 h-5 text-green-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    </svg>
+                                                </div>
+                                                <span class="font-semibold">Demandes</span>
                                             </a>
                                             <a href="{{ route('customer.cart') }}" @click="closeDropdown()" class="group flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-emerald-100/50 transition-all duration-300">
                                                 <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors">
@@ -431,7 +443,7 @@
                             </svg>
                         </div>
                         <span>Cart</span>
-                        <span id="cart-count-mobile" class="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{{ session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0 }}</span>
+                        <span id="cart-count-mobile" class="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 items-center justify-center {{ (session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0) > 0 ? 'flex' : 'hidden' }}">{{ session('cart') ? array_sum(array_column(session('cart'), 'quantity')) : 0 }}</span>
                     </a>
                     
                     @auth
@@ -445,7 +457,7 @@
                                 </div>
                                 <span>Dashboard</span>
                             </a>
-                        @elseif(request()->routeIs('cart.*') || request()->routeIs('products.*') || request()->routeIs('concepts.*'))
+                        @elseif(request()->routeIs('cart.*') || request()->routeIs('products.*') || request()->routeIs('concepts.*') || request()->routeIs('reels.*') || request()->routeIs('designer.show') || request()->routeIs('producer.show'))
                             <!-- Mobile Dashboard Link for Cart, Products, and Concepts Pages (no background) -->
                             <a href="{{ route('dashboard') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-gray-700 hover:text-sky-blue transition-all duration-300">
                                 <div class="p-1.5 rounded-lg transition-colors">
@@ -456,7 +468,6 @@
                                 <span>Dashboard</span>
                             </a>
                         @else
-                            {{-- <!-- Mobile User Menu -->
                             <div class="space-y-2">
                                 <div class="px-4 py-3 bg-gradient-to-r from-sky-blue/10 via-blue-accent/10 to-sky-blue/10 rounded-xl mb-2">
                                     <div class="flex items-center gap-3">
@@ -481,15 +492,6 @@
                                     </svg>
                                 </div>
                                 <span>Dashboard</span>
-                            </a> --}}
-                            <!-- Mobile Dashboard Link for Cart and Products Pages (no background) -->
-                            <a href="{{ route('dashboard') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-gray-700 hover:text-sky-blue transition-all duration-300">
-                                <div class="p-1.5 rounded-lg transition-colors">
-                                    <svg class="w-5 h-5 text-gray-700 group-hover:text-sky-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                </div>
-                                <span>Dashboard</span>
                             </a>
 
                             @if(auth()->user()->canManageProducts())
@@ -504,6 +506,14 @@
                             @endif
                             
                             @if(auth()->user()->is_admin())
+                                <a href="{{ route('admin.construction-requests.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-gray-700 hover:text-sky-blue hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
+                                    <div class="p-1.5 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
+                                        <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                    </div>
+                                    <span>Demandes</span>
+                                </a>
                                 <a href="{{ route('admin.categories.index') }}" class="group flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-gray-700 hover:text-sky-blue hover:bg-gradient-to-r hover:from-sky-blue/10 hover:to-blue-accent/10 transition-all duration-300">
                                     <div class="p-1.5 bg-sky-blue/20 rounded-lg group-hover:bg-sky-blue transition-colors">
                                         <svg class="w-5 h-5 text-sky-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

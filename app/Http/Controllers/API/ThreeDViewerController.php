@@ -4,7 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductMetalOption;
+use App\Models\ProductCustomMetalOption;
 use App\Models\Concept;
+use App\Models\ConceptMetalOption;
+use App\Models\ConceptCustomMetalOption;
 use App\Models\Floor;
 use Illuminate\Http\Request;
 
@@ -114,11 +118,14 @@ class ThreeDViewerController extends Controller
             return null;
         }
 
-        $relativePath = str_replace($extractedPath . '/', '', $objFile);
+        // Normalize path separators for Windows/Linux compatibility before building relative URL path.
+        $normalizedExtractedPath = str_replace('\\', '/', $extractedPath);
+        $normalizedObjFile = str_replace('\\', '/', $objFile);
+        $relativePath = ltrim(str_replace($normalizedExtractedPath, '', $normalizedObjFile), '/');
 
         return [
             'type' => 'extracted',
-            'path' => $extractedUrl . '/' . $relativePath,
+            'path' => rtrim($extractedUrl, '/') . '/' . $relativePath,
             'name' => basename($objFile),
             'directory' => $extractedUrl,
             'size' => 1.0,
@@ -134,6 +141,140 @@ class ThreeDViewerController extends Controller
     {
         try {
             $materials = [];
+
+            // For concepts, prioritize designer-selected submaterials from concept_metal_option.
+            if ($model instanceof Concept) {
+                $selectedByMetal = ConceptMetalOption::with(['metal', 'metalOption'])
+                    ->where('concept_id', $model->id)
+                    ->get()
+                    ->groupBy('metal_id');
+
+                $customByMetal = ConceptCustomMetalOption::with('metal')
+                    ->where('concept_id', $model->id)
+                    ->get()
+                    ->groupBy('metal_id');
+
+                if ($selectedByMetal->isNotEmpty() || $customByMetal->isNotEmpty()) {
+                    foreach ($model->metals as $metal) {
+                        $metalId = (int) $metal->id;
+                        $rows = $selectedByMetal->get($metalId, collect());
+                        $customRows = $customByMetal->get($metalId, collect());
+
+                        if ($rows->isEmpty() && $customRows->isEmpty()) {
+                            continue;
+                        }
+
+                        if (!$metal) {
+                            continue;
+                        }
+
+                        $metalKey = strtolower(str_replace(' ', '_', $metal->name));
+
+                        $selectedMaterials = $rows
+                            ->map(function ($row) use ($metal) {
+                                $option = $row->metalOption;
+                                if (!$option) {
+                                    return null;
+                                }
+
+                                return [
+                                    'url' => $option->image_url ?: 'https://via.placeholder.com/200?text=' . urlencode($option->name),
+                                    'name' => $option->name,
+                                    '_categoryName' => $metal->name,
+                                    '_categoryIcon' => $metal->image_url ?: null,
+                                    '_categoryRef' => $metal->ref,
+                                ];
+                            })
+                            ->filter()
+                            ->values()
+                            ->toArray();
+
+                        $customMaterials = $customRows
+                            ->map(function ($row) use ($metal) {
+                                return [
+                                    'url' => $row->image_url ?: 'https://via.placeholder.com/200?text=' . urlencode($row->name),
+                                    'name' => $row->name,
+                                    '_categoryName' => $metal->name,
+                                    '_categoryIcon' => $metal->image_url ?: null,
+                                    '_categoryRef' => $metal->ref,
+                                ];
+                            })
+                            ->values()
+                            ->toArray();
+
+                        $materials[$metalKey] = array_merge($selectedMaterials, $customMaterials);
+                    }
+
+                    return $materials;
+                }
+            }
+
+            // For products, prioritize selected/custom submaterials exactly like concepts.
+            if ($model instanceof Product) {
+                $selectedByMetal = ProductMetalOption::with(['metal', 'metalOption'])
+                    ->where('product_id', $model->id)
+                    ->get()
+                    ->groupBy('metal_id');
+
+                $customByMetal = ProductCustomMetalOption::with('metal')
+                    ->where('product_id', $model->id)
+                    ->get()
+                    ->groupBy('metal_id');
+
+                if ($selectedByMetal->isNotEmpty() || $customByMetal->isNotEmpty()) {
+                    foreach ($model->metals as $metal) {
+                        $metalId = (int) $metal->id;
+                        $rows = $selectedByMetal->get($metalId, collect());
+                        $customRows = $customByMetal->get($metalId, collect());
+
+                        if ($rows->isEmpty() && $customRows->isEmpty()) {
+                            continue;
+                        }
+
+                        if (!$metal) {
+                            continue;
+                        }
+
+                        $metalKey = strtolower(str_replace(' ', '_', $metal->name));
+
+                        $selectedMaterials = $rows
+                            ->map(function ($row) use ($metal) {
+                                $option = $row->metalOption;
+                                if (!$option) {
+                                    return null;
+                                }
+
+                                return [
+                                    'url' => $option->image_url ?: 'https://via.placeholder.com/200?text=' . urlencode($option->name),
+                                    'name' => $option->name,
+                                    '_categoryName' => $metal->name,
+                                    '_categoryIcon' => $metal->image_url ?: null,
+                                    '_categoryRef' => $metal->ref,
+                                ];
+                            })
+                            ->filter()
+                            ->values()
+                            ->toArray();
+
+                        $customMaterials = $customRows
+                            ->map(function ($row) use ($metal) {
+                                return [
+                                    'url' => $row->image_url ?: 'https://via.placeholder.com/200?text=' . urlencode($row->name),
+                                    'name' => $row->name,
+                                    '_categoryName' => $metal->name,
+                                    '_categoryIcon' => $metal->image_url ?: null,
+                                    '_categoryRef' => $metal->ref,
+                                ];
+                            })
+                            ->values()
+                            ->toArray();
+
+                        $materials[$metalKey] = array_merge($selectedMaterials, $customMaterials);
+                    }
+
+                    return $materials;
+                }
+            }
             
             foreach ($model->metals()->with('metalOptions')->get() as $metal) {
                 if ($metal->metalOptions->isEmpty()) {

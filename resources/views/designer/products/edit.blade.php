@@ -146,6 +146,18 @@
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+
+                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm">
+                                    <label class="flex items-center gap-3 text-sm font-semibold text-gray-700">
+                                        <input type="checkbox" name="style_type" value="artisant"
+                                            {{ old('style_type', $product->style_type) === 'artisant' ? 'checked' : '' }}
+                                            class="h-5 w-5 rounded border-2 border-teal-200 text-teal-600 focus:ring-2 focus:ring-teal-500">
+                                        <span>Artisant</span>
+                                    </label>
+                                    @error('style_type')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm mt-6">
@@ -376,12 +388,6 @@
                                                 </svg>
                                                 <div>
                                                     <p class="font-semibold text-gray-900">{{ $product->threedmodels->name }}</p>
-                                                    <a href="{{ $product->threedmodels->url }}" download class="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-1">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                        </svg>
-                                                        Télécharger
-                                                    </a>
                                                 </div>
                                             </div>
                                         </div>

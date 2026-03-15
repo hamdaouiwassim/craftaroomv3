@@ -28,14 +28,21 @@
                     @if($requests->count() > 0)
                         <div class="grid gap-6">
                             @foreach($requests as $request)
+                                @php
+                                    $isProductRequest = $request->request_type === 'product' && $request->product;
+                                    $subject = $isProductRequest ? $request->product : $request->concept;
+                                    $subjectPhotos = $subject?->photos;
+                                    $subjectName = $subject?->name ?? ($isProductRequest ? 'Unknown Product' : 'Unknown Concept');
+                                    $subjectCategory = $subject?->category;
+                                @endphp
                                 <div class="bg-white rounded-xl border-2 border-orange-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
                                     <div class="p-6">
                                         <div class="flex items-start gap-6">
-                                            <!-- Concept Image -->
+                                            <!-- Request Subject Image -->
                                             <div class="w-32 h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-orange-100 to-amber-100">
-                                                @if($request->concept && $request->concept->photos->count() > 0)
-                                                    <img src="{{ $request->concept->photos->first()->url }}" 
-                                                         alt="{{ $request->concept->name }}" 
+                                                @if($subject && $subjectPhotos && $subjectPhotos->count() > 0)
+                                                    <img src="{{ $subjectPhotos->first()->url }}" 
+                                                         alt="{{ $subjectName }}" 
                                                          class="w-full h-full object-cover">
                                                 @else
                                                     <div class="w-full h-full flex items-center justify-center">
@@ -50,8 +57,11 @@
                                             <div class="flex-1">
                                                 <div class="flex items-start justify-between mb-3">
                                                     <div>
+                                                        <p class="text-xs uppercase tracking-wide font-semibold text-orange-500 mb-1">
+                                                            {{ $isProductRequest ? 'Product Request' : 'Concept Request' }}
+                                                        </p>
                                                         <h3 class="text-xl font-bold text-gray-900 mb-1">
-                                                            {{ $request->concept->name ?? 'Unknown Concept' }}
+                                                            {{ $subjectName }}
                                                         </h3>
                                                         <div class="flex items-center gap-3 text-sm text-gray-600">
                                                             <span class="flex items-center gap-1">
@@ -64,7 +74,7 @@
                                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                                 </svg>
-                                                                {{ $request->created_at->diffForHumans() }}
+                                                                {{ ($request->submitted_at ?? $request->created_at)->diffForHumans() }}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -87,9 +97,9 @@
                                                     </div>
                                                 @endif
 
-                                                @if($request->concept->category)
+                                                @if($subjectCategory)
                                                     <span class="inline-flex items-center px-2 py-1 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 rounded text-xs font-medium">
-                                                        {{ $request->concept->category->name }}
+                                                        {{ $subjectCategory->name }}
                                                     </span>
                                                 @endif
 

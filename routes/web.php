@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ReelController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\FavoriteController;
 use Illuminate\Support\Facades\Route;
@@ -21,11 +22,12 @@ Route::get('/products', [LandingController::class, 'products'])->name('products.
 Route::get('/products/{id}', [LandingController::class, 'show'])->name('products.show');
 Route::get('/concepts', [LandingController::class, 'concepts'])->name('concepts.index');
 Route::get('/concepts/{id}', [LandingController::class, 'showConcept'])->name('concepts.show');
-Route::get('/producer/{id}', [LandingController::class, 'showProducer'])->name('producer.show');
+Route::get('/reels', [ReelController::class, 'index'])->name('reels.index');
 
 // Construction Requests (authenticated users)
 Route::middleware('auth')->group(function () {
     Route::post('/concepts/{concept}/request-construction', [\App\Http\Controllers\ConstructionRequestController::class, 'store'])->name('construction-requests.store');
+    Route::post('/products/{product}/request-construction', [\App\Http\Controllers\ConstructionRequestController::class, 'storeForProduct'])->name('construction-requests.store-product');
 });
 
 // Cart Routes (public)
@@ -110,6 +112,11 @@ require __DIR__.'/constructor.php';
 // Customer Routes
 require __DIR__.'/customer.php';
 
+// Public profile routes must be loaded after role route files so they do not
+// intercept /designer/dashboard or similar role-prefixed pages.
+Route::get('/designer/{id}', [LandingController::class, 'showDesigner'])->name('designer.show');
+Route::get('/producer/{id}', [LandingController::class, 'showProducer'])->name('producer.show');
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated User Routes
@@ -138,6 +145,11 @@ Route::middleware('auth')->group(function () {
     // Favorite Routes (available to all authenticated users)
     Route::post('/products/{product}/favorite', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
     Route::get('/products/{product}/favorite/check', [FavoriteController::class, 'check'])->name('favorites.check');
+
+    // Reel interaction routes (available to all authenticated users)
+    Route::post('/reels/{type}/{id}/like', [ReelController::class, 'toggleLike'])->name('reels.like');
+    Route::post('/reels/{type}/{id}/comments', [ReelController::class, 'storeComment'])->name('reels.comments.store');
+    Route::post('/reels/{type}/{id}/share', [ReelController::class, 'storeShare'])->name('reels.share');
 });
 
 // Authentication Routes

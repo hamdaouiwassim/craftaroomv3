@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Concept extends Model
 {
@@ -14,11 +15,17 @@ class Concept extends Model
         'name',
         'size',
         'category_id',
+        'style_type',
         'description',
         'reel',
         'user_id',
         'status',
         'source',
+        'is_resizable',
+    ];
+
+    protected $casts = [
+        'is_resizable' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -56,11 +63,34 @@ class Concept extends Model
         return $this->hasOne(ConceptMeasure::class, 'concept_id', 'id');
     }
 
+    public function reelLikes(): MorphMany
+    {
+        return $this->morphMany(ReelLike::class, 'reelable');
+    }
+
+    public function reelComments(): MorphMany
+    {
+        return $this->morphMany(ReelComment::class, 'reelable');
+    }
+
+    public function reelShares(): MorphMany
+    {
+        return $this->morphMany(ReelShare::class, 'reelable');
+    }
+
     /**
      * Designer's chosen sub-metal (metal option) per metal for customization.
      */
     public function conceptMetalOptions(): HasMany
     {
         return $this->hasMany(ConceptMetalOption::class);
+    }
+
+    /**
+     * Custom submaterials created specifically for this concept.
+     */
+    public function conceptCustomMetalOptions(): HasMany
+    {
+        return $this->hasMany(ConceptCustomMetalOption::class);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Metal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MetalController extends Controller
 {
@@ -44,8 +45,14 @@ class MetalController extends Controller
         $data = $request->validate([
             'ref' => ['nullable', 'string', 'max:100', 'unique:metals,ref'],
             'name' => ['required', 'string', 'max:255'],
-            'image_url' => ['nullable', 'url', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         ]);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('metals', 'public');
+            $data['image_url'] = Storage::url($imagePath);
+        }
 
         Metal::create($data);
 
@@ -78,8 +85,20 @@ class MetalController extends Controller
         $data = $request->validate([
             'ref' => ['nullable', 'string', 'max:100', 'unique:metals,ref,' . $metal->id],
             'name' => ['required', 'string', 'max:255'],
-            'image_url' => ['nullable', 'url', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         ]);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($metal->image_url) {
+                $oldPath = str_replace('/storage/', '', $metal->image_url);
+                Storage::disk('public')->delete($oldPath);
+            }
+            
+            $imagePath = $request->file('image')->store('metals', 'public');
+            $data['image_url'] = Storage::url($imagePath);
+        }
 
         $metal->update($data);
 

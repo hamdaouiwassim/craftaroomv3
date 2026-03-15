@@ -19,8 +19,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             CategoryList::class,
-            RoomList::class,
-            MetalList::class,
+            RoomSeeder::class,
+            MetalList::class, 
+            MetalOptionList::class,
             CountryCurrencySeeder::class,
         ]);
     }

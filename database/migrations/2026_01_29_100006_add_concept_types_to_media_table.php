@@ -10,7 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE media MODIFY COLUMN type ENUM('avatar', 'product', 'threedmodel', 'material', 'category', 'concept', 'concept_threedmodel', 'other') DEFAULT 'other'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE media MODIFY COLUMN type ENUM('avatar', 'product', 'threedmodel', 'material', 'category', 'concept', 'concept_threedmodel', 'other') DEFAULT 'other'");
+        }
     }
 
     /**
@@ -18,6 +20,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE media MODIFY COLUMN type ENUM('avatar', 'product', 'threedmodel', 'material', 'category', 'other') DEFAULT 'other'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE media MODIFY COLUMN type ENUM('avatar', 'product', 'threedmodel', 'material', 'category', 'other') DEFAULT 'other'");
+        }
     }
 };

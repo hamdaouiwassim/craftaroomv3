@@ -35,16 +35,35 @@
                         </div>
                     @endif
 
-                    <div class="mb-6">
-                        <form method="GET" action="{{ route('admin.library-concepts.index') }}" class="flex flex-wrap gap-4 items-end">
+                    <!-- Search Bar - Real-time -->
+                    <div class="mb-6" x-data="realtimeSearch({ endpoint: '{{ route('admin.library-concepts.index') }}' })">
+                        <div class="flex flex-wrap gap-4 items-end">
                             <div class="flex-1 min-w-[200px] relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
                                 </div>
-                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher un concept..."
-                                       class="block w-full pl-12 pr-4 py-3 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                <input type="text" 
+                                       x-model="searchQuery"
+                                       @input="onSearchInput()"
+                                       placeholder="Rechercher un concept en temps réel..."
+                                       class="block w-full pl-12 pr-12 py-3 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400">
+                                
+                                <!-- Loading spinner -->
+                                <div x-show="isLoading" class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                                    <svg class="animate-spin h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Clear button -->
+                                <button x-show="searchQuery" @click="clearSearch()" type="button" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
                             <div class="flex-shrink-0">
                                 <label for="status" class="sr-only">Statut</label>
@@ -54,15 +73,12 @@
                                     <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactif</option>
                                 </select>
                             </div>
-                            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl">
-                                Filtrer
-                            </button>
-                            @if(request()->hasAny(['search', 'status']))
-                                <a href="{{ route('admin.library-concepts.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
-                                    Réinitialiser
-                                </a>
-                            @endif
-                        </form>
+                        </div>
+                        
+                        <!-- Search Results Count -->
+                        <div x-show="searchQuery && !isLoading" class="mt-2 text-sm text-gray-600" x-cloak>
+                            <span x-text="results.length || {{ $concepts->count() }}"></span> résultat(s) trouvé(s)
+                        </div>
                     </div>
 
                     @if($concepts->count() > 0)
@@ -81,11 +97,11 @@
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($concepts as $concept)
-                                            <tr class="hover:bg-purple-50/50 transition-colors">
+                                            <tr class="hover:bg-purple-50/50 transition-colors" data-search-name="{{ strtolower($concept->name) }}">
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $loop->iteration }}</td>
                                                 <td class="px-6 py-4">
                                                     <div class="flex items-center gap-3">
-                                                        <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        <a href="{{ route('admin.library-concepts.show', $concept) }}" class="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center overflow-hidden flex-shrink-0 hover:ring-2 hover:ring-purple-300 transition" title="Voir le concept">
                                                             @if($concept->photos->count() > 0)
                                                                 <img src="{{ $concept->photos->first()->url }}" alt="{{ $concept->name }}" class="w-full h-full object-cover">
                                                             @else
@@ -93,7 +109,7 @@
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                                 </svg>
                                                             @endif
-                                                        </div>
+                                                        </a>
                                                         <div class="min-w-0">
                                                             <div class="text-sm font-bold text-gray-900 truncate">{{ $concept->name }}</div>
                                                             @if($concept->description)

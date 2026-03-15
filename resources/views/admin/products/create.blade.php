@@ -112,11 +112,15 @@
                                     class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
                                     <option value="">Sélectionner une catégorie</option>
                                 @foreach ($categories as $category)
-                                    <optgroup label="{{ $category->name }}">
-                                        @foreach ($category->sub_categories as $cat)
+                                    @if($category->sub_categories && $category->sub_categories->isNotEmpty())
+                                        <optgroup label="{{ $category->name }}">
+                                            @foreach ($category->sub_categories as $cat)
                                                 <option value="{{ $cat->id }}" {{ old('category_id', optional($concept)->category_id ?? null) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
-                                        @endforeach
-                                    </optgroup>
+                                            @endforeach
+                                        </optgroup>
+                                    @else
+                                        <option value="{{ $category->id }}" {{ old('category_id', optional($concept)->category_id ?? null) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                                 @error('category_id')
@@ -214,7 +218,7 @@
                                         class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white">
                                         <option value="">Sélectionner une devise</option>
                                         @foreach ($currencies as $currency)
-                                            <option value="{{ $currency->symbol }}">{{ $currency->name }} ({{ $currency->symbol }})</option>
+                                            <option value="{{ $currency->symbol }}" {{ old('currency') == $currency->symbol ? 'selected' : '' }}>{{ $currency->name }} ({{ $currency->symbol }})</option>
                                         @endforeach
                                     </select>
                                     @error('currency')
@@ -343,10 +347,10 @@
                                             <div>
                                                 <p class="text-xs font-semibold text-amber-800 mb-2">Modèle 3D du concept</p>
                                                 <div class="flex items-center gap-2">
-                                                    <a href="{{ $concept->threedmodels->url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
+                                                    <span class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                                                        {{ $concept->threedmodels->name ?? 'Télécharger' }}
-                                                    </a>
+                                                        {{ $concept->threedmodels->name ?? 'Modèle 3D disponible' }}
+                                                    </span>
                                                     <input type="hidden" name="concept_3d_model" value="{{ $concept->threedmodels->url }}">
                                                 </div>
                                                 <p class="text-xs text-gray-500 mt-1">Le modèle 3D du concept sera utilisé si vous n'en téléchargez pas un nouveau.</p>
@@ -409,7 +413,44 @@
                             @enderror
                             </div>
 
-                            <!-- 3D Model Dropzone -->
+                            <!-- 3D Model Dropzone - Only show if NOT creating from concept -->
+                            @if($concept)
+                            <!-- Inherited 3D Model from Concept - Read only -->
+                            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-200 shadow-sm">
+                                <label class="flex items-center gap-2 text-sm font-semibold text-indigo-700 mb-3">
+                                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                    Modèle 3D (Hérité du concept)
+                                </label>
+                                <div class="flex items-center gap-3 p-4 bg-white rounded-lg border border-indigo-100">
+                                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Modèle 3D inclus</p>
+                                        <p class="text-xs text-gray-500">Le modèle 3D sera copié automatiquement du concept</p>
+                                    </div>
+                                </div>
+                                @if($concept->threedmodels && $concept->threedmodels->count() > 0)
+                                    <div class="mt-3 flex items-center gap-2 text-sm text-indigo-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Modèle disponible: {{ $concept->threedmodels->first()->name ?? 'Modèle 3D' }}</span>
+                                    </div>
+                                @else
+                                    <div class="mt-3 flex items-center gap-2 text-sm text-amber-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <span>Ce concept n'a pas de modèle 3D</span>
+                                    </div>
+                                @endif
+                            </div>
+                            @else
                             <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm">
                                 <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
                                     <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -437,6 +478,7 @@
                                     </p>
                                 @enderror
                             </div>
+                            @endif
 
                             <!-- Reel Dropzone -->
                             <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm">
@@ -565,6 +607,21 @@
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                         @enderror
                                     </div>
+                                </div>
+
+                                <div class="mt-6 pt-4 border-t border-amber-200">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="checkbox" name="is_resizable" id="is_resizable" value="1"
+                                            {{ old('is_resizable') ? 'checked' : '' }}
+                                            class="rounded border-gray-300 text-amber-500 shadow-sm focus:ring-amber-300">
+                                        <div class="flex-1">
+                                            <span class="block text-sm font-semibold text-gray-700 group-hover:text-amber-600 transition-colors">Produit redimensionnable</span>
+                                            <span class="block text-xs text-gray-500">Ce produit peut être redimensionné sur demande</span>
+                                        </div>
+                                    </label>
+                                    @error('is_resizable')
+                                        <p class="text-red-500 text-sm mt-2">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
                         </div>

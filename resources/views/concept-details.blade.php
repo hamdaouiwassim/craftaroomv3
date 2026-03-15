@@ -14,23 +14,37 @@
                     <span>Back to Concepts</span>
                 </a>
             </div>
-            <div class="flex items-center gap-3 mb-3">
-                @if($concept->source === 'designer')
-                    <span class="px-3 py-1 bg-purple-500/30 backdrop-blur-sm border border-purple-300/50 rounded-full text-sm font-semibold">
-                        Designer Concept
-                    </span>
-                @else
-                    <span class="px-3 py-1 bg-indigo-500/30 backdrop-blur-sm border border-indigo-300/50 rounded-full text-sm font-semibold">
-                        Library Collection
-                    </span>
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <div class="flex items-center gap-3 mb-3">
+                        @if($concept->source === 'designer')
+                            <span class="px-3 py-1 bg-purple-500/30 backdrop-blur-sm border border-purple-300/50 rounded-full text-sm font-semibold">
+                                Designer Concept
+                            </span>
+                        @else
+                            <span class="px-3 py-1 bg-indigo-500/30 backdrop-blur-sm border border-indigo-300/50 rounded-full text-sm font-semibold">
+                                Library Collection
+                            </span>
+                        @endif
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                        {{ $concept->name }}
+                    </h1>
+                    @if($concept->category)
+                        <p class="text-purple-200 text-lg">{{ $concept->category->name }}</p>
+                    @endif
+                </div>
+                @if($concept->style_type === 'artisant')
+                    <div class="md:pt-2 md:flex-shrink-0">
+                        <span class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-400/25 via-orange-400/25 to-rose-400/25 backdrop-blur-md border border-amber-200/50 rounded-full text-sm font-bold text-amber-50 shadow-lg shadow-orange-900/20">
+                            <svg class="w-4 h-4 text-amber-200" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81H7.03a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            Artisant
+                        </span>
+                    </div>
                 @endif
             </div>
-            <h1 class="text-3xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
-                {{ $concept->name }}
-            </h1>
-            @if($concept->category)
-                <p class="text-purple-200 text-lg">{{ $concept->category->name }}</p>
-            @endif
         </div>
     </section>
 
@@ -69,7 +83,7 @@
 
                     <!-- 3D Model Viewer -->
                     @if($concept->threedmodels)
-                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
+                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-purple-100 js-order-viewer">
                             <div class="flex items-center gap-3 mb-4">
                                 <div class="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg">
                                     <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,22 +99,17 @@
                                 :model-id="$concept->id"
                                 height="600px"
                             />
-                            
-                            <!-- Download Option -->
-                            <div class="mt-4 flex items-center gap-3 p-3 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
-                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                                </svg>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-gray-900 text-sm">{{ $concept->threedmodels->name ?? '3D Model File' }}</p>
-                                    <p class="text-xs text-gray-600">Download original files</p>
-                                </div>
-                                <a href="{{ $concept->threedmodels->url }}" 
-                                   download
-                                   class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm">
-                                    Download
-                                </a>
-                            </div>
+
+                            @auth
+                                @if(auth()->user()->role === 2)
+                                    <button
+                                        type="button"
+                                        onclick="openConstructionRequestModal()"
+                                        class="mt-4 w-full py-3 bg-gradient-to-r from-purple-600 to-rose-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-rose-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                        Save Design &amp; Order
+                                    </button>
+                                @endif
+                            @endauth
                         </div>
                     @endif
 
@@ -233,25 +242,35 @@
                                 </div>
                             @endif
 
-                            <!-- Creator Info -->
-                            @if($concept->user && $concept->source === 'designer')
-                                <div class="pt-4 border-t border-gray-200">
-                                    <p class="text-sm text-gray-600 mb-2">Created by</p>
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-200 to-pink-200 flex items-center justify-center overflow-hidden">
-                                            @if($concept->user->photoUrl)
-                                                <img src="{{ $concept->user->photoUrl }}" alt="{{ $concept->user->name }}" class="w-full h-full object-cover">
-                                            @else
-                                                <span class="text-sm font-bold text-purple-600">{{ substr($concept->user->name, 0, 1) }}</span>
-                                            @endif
+                            <!-- Owner -->
+                            <div class="pt-4 border-t border-gray-200">
+                                <p class="text-sm text-gray-600 mb-3">Owner</p>
+                                <div class="rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50 p-4">
+                                    <div class="flex items-center justify-between gap-4">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-200 to-pink-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                @if($concept->source === 'designer' && $concept->user?->photoUrl)
+                                                    <img src="{{ $concept->user->photoUrl }}" alt="{{ $concept->user->name }}" class="w-full h-full object-cover">
+                                                @else
+                                                    <span class="text-base font-bold text-purple-600">{{ $concept->source === 'designer' ? substr($concept->user->name ?? 'D', 0, 1) : 'C' }}</span>
+                                                @endif
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-semibold uppercase tracking-wide text-purple-600">{{ $concept->source === 'designer' ? 'Designer' : 'Library Owner' }}</p>
+                                                <p class="truncate font-semibold text-gray-900">{{ $concept->source === 'designer' && $concept->user ? $concept->user->name : 'CraftARoom' }}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p class="font-semibold text-gray-900">{{ $concept->user->name }}</p>
-                                            <p class="text-xs text-gray-500">Designer</p>
-                                        </div>
+                                        @if($concept->source === 'designer' && $concept->user)
+                                            <a href="{{ route('designer.show', $concept->user->id) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors">
+                                                View Profile
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
-                            @endif
+                            </div>
                         </div>
 
                         <!-- Request Construction Button -->
@@ -264,15 +283,15 @@
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                         </svg>
-                                        Request Construction
+                                        Save Design &amp; Order
                                     </button>
                                     <p class="text-xs text-gray-500 text-center mt-2">
-                                        Send this concept to all constructors for quotes
+                                        Send this concept with your customization to all constructors for quotes
                                     </p>
                                 @endif
                             @else
                                 <a href="{{ route('login') }}" class="block w-full py-4 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-xl font-bold text-lg text-center hover:from-gray-500 hover:to-gray-600 transition-all duration-300 shadow-lg">
-                                    Login to Request Construction
+                                    Login to Save Design &amp; Order
                                 </a>
                             @endauth
                         </div>
@@ -307,6 +326,13 @@
                                     <h3 class="text-lg font-bold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors line-clamp-1">
                                         {{ $relatedConcept->name }}
                                     </h3>
+                                    @if($relatedConcept->style_type === 'artisant')
+                                        <div class="mb-2">
+                                            <span class="inline-flex items-center px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold">
+                                                Artisant
+                                            </span>
+                                        </div>
+                                    @endif
                                     @if($relatedConcept->category)
                                         <p class="text-sm text-gray-600">{{ $relatedConcept->category->name }}</p>
                                     @endif
@@ -320,17 +346,108 @@
     </section>
 
     <script>
+        function isUsableViewerState(state) {
+            if (!state || typeof state !== 'object') {
+                return false;
+            }
+
+            if (Array.isArray(state.materials) && state.materials.length > 0) {
+                return true;
+            }
+
+            return Boolean(state.model || state.floor || state.backgroundColor);
+        }
+
         function openConstructionRequestModal() {
-            document.getElementById('constructionRequestModal').classList.remove('hidden');
+            const modal = document.getElementById('constructionRequestModal');
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+
+            captureConceptViewerState().then((serializedState) => {
+                const hiddenInput = document.getElementById('concept_viewer_state_json');
+                if (hiddenInput && serializedState) {
+                    hiddenInput.value = serializedState;
+                }
+            });
         }
 
         function closeConstructionRequestModal() {
-            document.getElementById('constructionRequestModal').classList.add('hidden');
+            const modal = document.getElementById('constructionRequestModal');
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.add('hidden');
             document.body.style.overflow = '';
         }
 
-        // Close modal on escape key
+        async function captureConceptViewerState() {
+            for (let attempt = 0; attempt < 30; attempt++) {
+                const viewerIframe = document.querySelector('.js-order-viewer iframe');
+                const iframeWindow = viewerIframe?.contentWindow;
+
+                if (iframeWindow && typeof iframeWindow.captureCustomizationState === 'function') {
+                    try {
+                        const state = await iframeWindow.captureCustomizationState();
+                        if (isUsableViewerState(state)) {
+                            return JSON.stringify(state);
+                        }
+                    } catch (e) {
+                    }
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            return null;
+        }
+
+        const conceptRequestForm = document.getElementById('constructionRequestForm');
+        if (conceptRequestForm) {
+            const actionInput = document.getElementById('concept_submission_action');
+
+            conceptRequestForm.querySelectorAll('[data-submission-action]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    if (actionInput) {
+                        actionInput.value = this.dataset.submissionAction || 'send';
+                    }
+                });
+            });
+
+            conceptRequestForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const submitBtn = document.getElementById('conceptRequestSubmitBtn');
+                const hiddenInput = document.getElementById('concept_viewer_state_json');
+                const trigger = event.submitter;
+                const submissionAction = actionInput?.value ?? trigger?.dataset?.submissionAction ?? 'send';
+
+                if (actionInput) {
+                    actionInput.value = submissionAction;
+                }
+
+                if (trigger) {
+                    trigger.disabled = true;
+                    trigger.textContent = submissionAction === 'draft' ? 'Saving...' : 'Sending...';
+                }
+
+                if (submitBtn && trigger !== submitBtn) {
+                    submitBtn.disabled = true;
+                }
+
+                if (typeof window.showAppLoader === 'function') {
+                    window.showAppLoader(submissionAction === 'draft' ? 'Enregistrement du brouillon en cours...' : 'Envoi de votre demande en cours...');
+                }
+
+                hiddenInput.value = await captureConceptViewerState() ?? hiddenInput.value ?? '';
+                conceptRequestForm.submit();
+            });
+        }
+
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeConstructionRequestModal();
@@ -344,14 +461,16 @@
             <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="closeConstructionRequestModal()"></div>
             <div class="relative bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 border border-purple-200">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Request Construction</h3>
+                    <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Save Design &amp; Order</h3>
                     <button type="button" onclick="closeConstructionRequestModal()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
-                <form action="{{ route('construction-requests.store', $concept->id) }}" method="POST" class="space-y-6">
+                <form id="constructionRequestForm" action="{{ route('construction-requests.store', $concept->id) }}" method="POST" class="space-y-6">
                     @csrf
+                    <input type="hidden" id="concept_viewer_state_json" name="viewer_state_json">
+                    <input type="hidden" id="concept_submission_action" name="submission_action" value="draft">
                     <div class="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
                         <div class="flex items-start gap-3 mb-3">
                             <svg class="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -359,8 +478,37 @@
                             </svg>
                             <div>
                                 <p class="font-semibold text-purple-900 mb-1">Concept: {{ $concept->name }}</p>
-                                <p class="text-sm text-purple-700">Your request will be sent to all constructors on the platform. They will review your request and may contact you with quotes and timelines.</p>
+                                <p class="text-sm text-purple-700">Your current 3D customization will be saved with this request and sent to all constructors for quotes.</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="concept_requested_size" class="block text-sm font-semibold text-gray-700 mb-2">Preferred Size</label>
+                        <select id="concept_requested_size" name="requested_size" required class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
+                            <option value="" disabled {{ in_array(($concept->measure?->size ?? ''), ['SMALL', 'MEDIUM', 'LARGE'], true) ? '' : 'selected' }}>Select a size</option>
+                            <option value="SMALL" {{ ($concept->measure?->size ?? null) === 'SMALL' ? 'selected' : '' }}>Small</option>
+                            <option value="MEDIUM" {{ ($concept->measure?->size ?? null) === 'MEDIUM' ? 'selected' : '' }}>Medium</option>
+                            <option value="LARGE" {{ ($concept->measure?->size ?? null) === 'LARGE' ? 'selected' : '' }}>Large</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="requested_length" class="block text-sm font-semibold text-gray-700 mb-2">Length</label>
+                            <input id="requested_length" name="requested_length" type="number" step="0.01" min="0" value="{{ $concept->measure?->dimension?->length }}" class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
+                        </div>
+                        <div>
+                            <label for="requested_width" class="block text-sm font-semibold text-gray-700 mb-2">Width</label>
+                            <input id="requested_width" name="requested_width" type="number" step="0.01" min="0" value="{{ $concept->measure?->dimension?->width }}" class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
+                        </div>
+                        <div>
+                            <label for="requested_height" class="block text-sm font-semibold text-gray-700 mb-2">Height</label>
+                            <input id="requested_height" name="requested_height" type="number" step="0.01" min="0" value="{{ $concept->measure?->dimension?->height }}" class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
+                        </div>
+                        <div>
+                            <label for="requested_unit" class="block text-sm font-semibold text-gray-700 mb-2">Unit</label>
+                            <input id="requested_unit" name="requested_unit" type="text" maxlength="20" value="{{ $concept->measure?->dimension?->unit ?? 'cm' }}" class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
                         </div>
                     </div>
 
@@ -398,6 +546,18 @@
                         </button>
                         <button 
                             type="submit"
+                            name="submission_action"
+                            value="draft"
+                            data-submission-action="draft"
+                            class="flex-1 px-6 py-3 bg-white text-purple-700 border-2 border-purple-200 rounded-xl font-bold hover:bg-purple-50 transition-all duration-300">
+                            Save Draft
+                        </button>
+                        <button 
+                            id="conceptRequestSubmitBtn"
+                            type="submit"
+                            name="submission_action"
+                            value="send"
+                            data-submission-action="send"
                             class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white rounded-xl font-bold hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                             Send Request
                         </button>

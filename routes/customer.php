@@ -30,6 +30,15 @@ Route::prefix('customer')->name('customer.')->middleware(['auth', 'isCustomer'])
     
     // Construction Requests
     Route::get('/construction-requests', [\App\Http\Controllers\ConstructionRequestController::class, 'customerIndex'])->name('construction-requests.index');
+    Route::get('/drafts', [\App\Http\Controllers\ConstructionRequestController::class, 'customerDraftIndex'])->name('drafts.index');
+    Route::get('/drafts/{id}/edit', [\App\Http\Controllers\ConstructionRequestController::class, 'editDraft'])->name('drafts.edit');
+    Route::put('/drafts/{id}', [\App\Http\Controllers\ConstructionRequestController::class, 'updateDraft'])->name('drafts.update');
+    Route::post('/drafts/{id}/send', [\App\Http\Controllers\ConstructionRequestController::class, 'sendDraft'])->name('drafts.send');
+    Route::delete('/drafts/{id}', [\App\Http\Controllers\ConstructionRequestController::class, 'destroyDraft'])->name('drafts.destroy');
+    Route::get('/construction-requests/{id}/edit', [\App\Http\Controllers\ConstructionRequestController::class, 'editCustomerRequest'])->name('construction-requests.edit');
+    Route::put('/construction-requests/{id}', [\App\Http\Controllers\ConstructionRequestController::class, 'updateCustomerRequest'])->name('construction-requests.update');
+    Route::get('/construction-requests/{id}', [\App\Http\Controllers\ConstructionRequestController::class, 'customerShow'])->name('construction-requests.show');
+    Route::delete('/construction-requests/{id}', [\App\Http\Controllers\ConstructionRequestController::class, 'customerCancel'])->name('construction-requests.cancel');
     Route::get('/construction-requests/{id}/offers', [\App\Http\Controllers\ConstructionRequestController::class, 'showOffers'])->name('construction-requests.offers');
     Route::post('/construction-requests/{requestId}/offers/{offerId}/accept', [\App\Http\Controllers\ConstructionRequestController::class, 'acceptOffer'])->name('construction-requests.accept-offer');
     

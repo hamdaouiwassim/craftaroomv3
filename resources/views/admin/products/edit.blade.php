@@ -135,6 +135,18 @@
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+
+                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm">
+                                    <label class="flex items-center gap-3 text-sm font-semibold text-gray-700">
+                                        <input type="checkbox" name="style_type" value="artisant"
+                                            {{ old('style_type', $product->style_type) === 'artisant' ? 'checked' : '' }}
+                                            class="h-5 w-5 rounded border-2 border-teal-200 text-teal-600 focus:ring-2 focus:ring-teal-500">
+                                        <span>Artisant</span>
+                                    </label>
+                                    @error('style_type')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm mt-6">
@@ -297,6 +309,21 @@
                                         @enderror
                                     </div>
                                 </div>
+
+                                <div class="mt-6 pt-4 border-t border-amber-200">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="checkbox" name="is_resizable" id="is_resizable" value="1"
+                                            {{ old('is_resizable', $product->is_resizable ?? false) ? 'checked' : '' }}
+                                            class="rounded border-gray-300 text-amber-500 shadow-sm focus:ring-amber-300">
+                                        <div class="flex-1">
+                                            <span class="block text-sm font-semibold text-gray-700 group-hover:text-amber-600 transition-colors">Produit redimensionnable</span>
+                                            <span class="block text-xs text-gray-500">Ce produit peut être redimensionné sur demande</span>
+                                        </div>
+                                    </label>
+                                    @error('is_resizable')
+                                        <p class="text-red-500 text-sm mt-2">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
@@ -405,32 +432,21 @@
 
                             <!-- Current 3D Model -->
                             @if($product->threedmodels)
-                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-teal-100 shadow-sm mt-6">
-                                    <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
-                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                        </svg>
-                                        Modèle 3D actuel
-                                    </label>
-                                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-dashed border-indigo-200 mb-4">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <svg class="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                                </svg>
-                                                <div>
-                                                    <p class="font-semibold text-gray-900">{{ $product->threedmodels->name }}</p>
-                                                    <a href="{{ $product->threedmodels->url }}" download class="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-1">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                        </svg>
-                                                        Télécharger
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 overflow-hidden shadow-xl rounded-2xl border border-teal-100 mt-6">
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                            </svg>
+                                            Modèle 3D Viewer
+                                        </h3>
+
+                                        <x-3d-viewer-original 
+                                            model-type="product" 
+                                            :model-id="$product->id"
+                                            height="600px"
+                                        />
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-2">Téléchargez un nouveau modèle ci-dessous pour remplacer le modèle actuel</p>
                                 </div>
                             @endif
 

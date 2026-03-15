@@ -112,11 +112,15 @@
                                     class="mt-1 block w-full border-2 border-purple-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all bg-white">
                                     <option value="">Sélectionner une catégorie</option>
                                 @foreach ($categories as $category)
-                                    <optgroup label="{{ $category->name }}">
-                                        @foreach ($category->sub_categories as $cat)
+                                    @if($category->sub_categories && $category->sub_categories->isNotEmpty())
+                                        <optgroup label="{{ $category->name }}">
+                                            @foreach ($category->sub_categories as $cat)
                                                 <option value="{{ $cat->id }}" {{ old('category_id', optional($concept)->category_id ?? null) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
-                                        @endforeach
-                                    </optgroup>
+                                            @endforeach
+                                        </optgroup>
+                                    @else
+                                        <option value="{{ $category->id }}" {{ old('category_id', optional($concept)->category_id ?? null) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                                 @error('category_id')
@@ -215,7 +219,7 @@
                                         class="mt-1 block w-full border-2 border-indigo-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white">
                                         <option value="">Sélectionner une devise</option>
                                         @foreach ($currencies as $currency)
-                                            <option value="{{ $currency->symbol }}">{{ $currency->name }} ({{ $currency->symbol }})</option>
+                                            <option value="{{ $currency->symbol }}" {{ old('currency') == $currency->symbol ? 'selected' : '' }}>{{ $currency->name }} ({{ $currency->symbol }})</option>
                                         @endforeach
                                     </select>
                                     @error('currency')
@@ -344,10 +348,10 @@
                                             <div>
                                                 <p class="text-xs font-semibold text-amber-800 mb-2">Modèle 3D du concept</p>
                                                 <div class="flex items-center gap-2">
-                                                    <a href="{{ $concept->threedmodels->url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">
+                                                    <span class="inline-flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                                                        {{ $concept->threedmodels->name ?? 'Télécharger' }}
-                                                    </a>
+                                                        {{ $concept->threedmodels->name ?? 'Modèle 3D disponible' }}
+                                                    </span>
                                                     <input type="hidden" name="concept_3d_model" value="{{ $concept->threedmodels->url }}">
                                                 </div>
                                                 <p class="text-xs text-gray-500 mt-1">Le modèle 3D du concept sera utilisé si vous n'en téléchargez pas un nouveau.</p>
@@ -416,27 +420,43 @@
                                     <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
-                                    Modèle 3D (ZIP) *
+                                    {{ $concept ? 'Modèle 3D du concept' : 'Modèle 3D (ZIP) *' }}
                                 </label>
-                                <div id="model-dropzone" class="dropzone border-2 border-dashed border-indigo-300 rounded-xl p-8 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300 bg-gradient-to-br from-white to-indigo-50/30">
-                                    <div class="dz-message">
-                                        <div class="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                                            <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                            </svg>
+                                @if($concept && $concept->threedmodels)
+                                    <div class="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-semibold text-indigo-900">{{ $concept->threedmodels->name ?? 'Modèle 3D du concept disponible' }}</p>
+                                                <p class="text-xs text-indigo-700 mt-1">Ce produit utilisera automatiquement le modèle 3D du concept sélectionné. Le remplacement par un ZIP est désactivé dans ce workflow.</p>
+                                            </div>
                                         </div>
-                                        <p class="mt-2 text-sm font-medium text-gray-700">Glissez-déposez votre modèle 3D (ZIP) ici</p>
-                                        <p class="mt-1 text-xs text-gray-500">Fichier ZIP jusqu'à 50MB</p>
                                     </div>
-                                </div>
-                                @error('folderModel')
-                                    <p class="text-red-500 text-sm mt-2 flex items-center gap-1">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                        {{ $message }}
-                                    </p>
-                                @enderror
+                                @else
+                                    <div id="model-dropzone" class="dropzone border-2 border-dashed border-indigo-300 rounded-xl p-8 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300 bg-gradient-to-br from-white to-indigo-50/30">
+                                        <div class="dz-message">
+                                            <div class="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                                                <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
+                                            </div>
+                                            <p class="mt-2 text-sm font-medium text-gray-700">Glissez-déposez votre modèle 3D (ZIP) ici</p>
+                                            <p class="mt-1 text-xs text-gray-500">Fichier ZIP jusqu'à 50MB</p>
+                                        </div>
+                                    </div>
+                                    @error('folderModel')
+                                        <p class="text-red-500 text-sm mt-2 flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+                                @endif
                             </div>
 
                             <!-- Reel Dropzone -->
@@ -569,6 +589,21 @@
                                         @enderror
                                     </div>
                                 </div>
+
+                                <div class="mt-6 pt-4 border-t border-amber-200">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="checkbox" name="is_resizable" id="is_resizable" value="1"
+                                            {{ old('is_resizable') ? 'checked' : '' }}
+                                            class="rounded border-gray-300 text-amber-500 shadow-sm focus:ring-amber-300">
+                                        <div class="flex-1">
+                                            <span class="block text-sm font-semibold text-gray-700 group-hover:text-amber-600 transition-colors">Produit redimensionnable</span>
+                                            <span class="block text-xs text-gray-500">Ce produit peut être redimensionné sur demande</span>
+                                        </div>
+                                    </label>
+                                    @error('is_resizable')
+                                        <p class="text-red-500 text-sm mt-2">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
@@ -640,7 +675,7 @@
                                         </svg>
                                         Modèle 3D:
                                     </div>
-                                    <span id="review-model" class="text-sm text-gray-600 font-medium">-</span>
+                                    <span id="review-model" class="text-sm text-gray-600 font-medium">{{ $concept && $concept->threedmodels ? ($concept->threedmodels->name ?? 'Modèle 3D du concept') : '-' }}</span>
                                 </div>
                             </div>
                         </div>

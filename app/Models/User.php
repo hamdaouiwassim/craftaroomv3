@@ -122,6 +122,21 @@ class User extends Authenticatable
         return $this->hasMany(Favorite::class);
     }
 
+    public function reelLikes(): HasMany
+    {
+        return $this->hasMany(ReelLike::class);
+    }
+
+    public function reelComments(): HasMany
+    {
+        return $this->hasMany(ReelComment::class);
+    }
+
+    public function reelShares(): HasMany
+    {
+        return $this->hasMany(ReelShare::class);
+    }
+
     public function is_admin(){
         return $this->role === 0;
     }

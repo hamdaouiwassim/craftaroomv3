@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\ConstructionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -25,6 +26,7 @@ class DashboardController extends Controller
             'favorites_count' => $user->favorites()->count(),
             'reviews_count' => $user->reviews()->count(),
             'cart_count' => $cartCount,
+            'draft_requests_count' => ConstructionRequest::where('customer_id', $user->id)->where('status', 'draft')->count(),
             'recent_favorites' => $user->favorites()->with(['product.photos', 'product.category'])->latest()->take(6)->get(),
             'recent_reviews' => $user->reviews()->with(['product.photos'])->latest()->take(5)->get(),
         ];

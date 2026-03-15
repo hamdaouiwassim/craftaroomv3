@@ -29,11 +29,11 @@
     <!-- Sidebar -->
     <aside 
         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 ease-in-out md:translate-x-0 bg-white border-r border-gray-200 shadow-xl">
+        class="fixed top-0 left-0 z-40 w-64 h-screen flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 bg-white border-r border-gray-200 shadow-xl">
         
         <!-- Logo -->
         <div class="p-6 border-b border-gray-200">
-            <a href="/" class="flex items-center space-x-3 group">
+            <a href="{{ route('landing') }}" class="flex items-center space-x-3 group">
                 <div class="p-2 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-110">
                     <x-application-logo class="h-8 w-8 fill-current text-white" />
                 </div>
@@ -47,7 +47,7 @@
         </div>
 
         <!-- Navigation Links -->
-        <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+        <nav class="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
             <a href="/" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all duration-300 {{ request()->routeIs('concepts.*') && !request()->routeIs('customer.construction-requests.*') ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' : 'text-gray-700 hover:bg-green-50' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,6 +69,13 @@
              </svg>
              <span>Demandes</span>
          </a>
+            <a href="{{ route('customer.drafts.index') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all duration-300 {{ request()->routeIs('customer.drafts.*') ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' : 'text-gray-700 hover:bg-green-50' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Mes brouillons</span>
+            </a>
             <a href="{{ route('customer.orders.index') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all duration-300 {{ request()->routeIs('customer.orders.*') ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' : 'text-gray-700 hover:bg-green-50' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

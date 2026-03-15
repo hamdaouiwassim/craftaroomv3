@@ -276,6 +276,10 @@ export function productFormData() {
                 }
             }
 
+            if (typeof window.showAppLoader === 'function') {
+                window.showAppLoader('Création du produit et upload des fichiers en cours...');
+            }
+
             try {
                 const routePrefix = form.dataset.routePrefix || 'admin';
                 const formData = new FormData(form);
@@ -393,13 +397,23 @@ export function productFormData() {
                 }
 
                 if (uploadErrors.length === 0) {
-                    window.location.href = `/${routePrefix}/products?success=Product created successfully`;
+                    if (result.redirect_url) {
+                        window.location.href = result.redirect_url;
+                    } else {
+                        window.location.href = `/${routePrefix}/products?success=Product created successfully`;
+                    }
                 } else {
+                    if (typeof window.hideAppLoader === 'function') {
+                        window.hideAppLoader();
+                    }
                     alert('Produit créé mais certaines erreurs sont survenues:\n' + uploadErrors.join('\n'));
                     window.location.href = `/${routePrefix}/products`;
                 }
             } catch (error) {
                 console.error('Error:', error.message);
+                if (typeof window.hideAppLoader === 'function') {
+                    window.hideAppLoader();
+                }
                 alert('Erreur lors de la création du produit: ' + error.message);
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -801,6 +815,10 @@ export function productFormWithConceptData(conceptPhotos = [], hasConceptReel = 
                 }
             }
 
+            if (typeof window.showAppLoader === 'function') {
+                window.showAppLoader('Création du produit et upload des fichiers en cours...');
+            }
+
             try {
                 const routePrefix = form.dataset.routePrefix || 'admin';
                 const formData = new FormData(form);
@@ -918,13 +936,23 @@ export function productFormWithConceptData(conceptPhotos = [], hasConceptReel = 
                 }
 
                 if (uploadErrors.length === 0) {
-                    window.location.href = `/${routePrefix}/products?success=Product created successfully`;
+                    if (result.redirect_url) {
+                        window.location.href = result.redirect_url;
+                    } else {
+                        window.location.href = `/${routePrefix}/products?success=Product created successfully`;
+                    }
                 } else {
+                    if (typeof window.hideAppLoader === 'function') {
+                        window.hideAppLoader();
+                    }
                     alert('Produit créé mais certaines erreurs sont survenues:\n' + uploadErrors.join('\n'));
                     window.location.href = `/${routePrefix}/products`;
                 }
             } catch (error) {
                 console.error('Error:', error.message);
+                if (typeof window.hideAppLoader === 'function') {
+                    window.hideAppLoader();
+                }
                 alert('Erreur lors de la création du produit: ' + error.message);
                 if (submitBtn) {
                     submitBtn.disabled = false;

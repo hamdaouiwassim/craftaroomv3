@@ -1,4 +1,10 @@
 <x-customer-layout>
+    @php
+        $isProductRequest = $request->request_type === 'product' && $request->product;
+        $subject = $isProductRequest ? $request->product : $request->concept;
+        $subjectName = $subject?->name ?? ($isProductRequest ? 'Produit inconnu' : 'Concept inconnu');
+    @endphp
+
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             Offres de Construction
@@ -21,7 +27,8 @@
                 </div>
                 <div>
                     <h1 class="text-3xl lg:text-4xl font-bold mb-2">Offres des Constructeurs</h1>
-                    <p class="text-green-100 text-lg">Pour: {{ $request->concept->name }}</p>
+                    <p class="text-green-100 text-lg">Pour: {{ $subjectName }}</p>
+                    <p class="text-green-100/80 text-sm mt-1">{{ $isProductRequest ? 'Demande produit (direct producteur)' : 'Demande concept (multi-offres)' }}</p>
                 </div>
             </div>
         </div>
